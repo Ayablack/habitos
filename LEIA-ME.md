@@ -38,23 +38,41 @@ No Chrome, clique no ícone de instalar na barra de endereço, ou em **⋮ › T
 
 No repositório, clique em **Add file › Upload files**, arraste o `index.html` e o `sw.js` novos e clique em **Commit changes**. Em 1 ou 2 minutos o site atualiza. Seus registros e o companheiro salvo continuam no navegador: a nova versão converte o companheiro antigo sozinha, sem mudar a aparência, e guarda uma cópia do formato antigo. A imagem que você já tinha vira a **imagem 1**, em 100%.
 
-## Tela
+## Painel do Hoje
 
-Em **Configurações › Lembretes e aparência › Tela**:
+No PC, clique no **lápis** no topo do Hoje pra entrar no modo de edição:
+
+- **Mudar de lugar:** arraste o quadro ou use ◀ ▶.
+- **Tamanho:** **P** (1/4 da linha), **M** (1/3), **G** (metade) ou **Inteira**. Os quadros de uma linha esticam pra ocupar o espaço que sobra.
+- **Esconder:** × no quadro. Pra trazer de volta, **+ Adicionar quadro**.
+- **Desfazer** e **Restaurar padrão** ficam na barra de cima. Clique em **Concluir** pra sair.
+- O quadro **Horários** aparece sozinho quando o dia tem tarefa com horário (remédio, alarme) e some quando não tem.
+
+O arranjo fica salvo na hora e vai junto no **QR** e no **backup**. O celular não edita: ele mostra os mesmos quadros, na mesma ordem, em uma coluna. Depois de mudar no PC, leia o QR no celular pra atualizar.
+
+Ainda no modo de edição, **Tela deste aparelho** ajusta só o aparelho onde você está:
 
 - **Largura:** "Tela inteira" ocupa o monitor todo; "Centralizada" limita a 1360 px.
 - **Tamanho da interface:** "Automático" aumenta em telas largas (2560 px → 130%), ou escolha de 80% a 200%.
-- **Altura da tela Hoje:**
-  - **Preencher a janela** (padrão): a página não rola; se um período tiver muitas tarefas, só aquele quadro rola. Em janelas baixas, a faixa de sequência e mapa some pra sobrar espaço.
+- **Altura:**
+  - **Preencher a janela** (padrão): a página não rola. As listas de tarefas ganham a altura que sobra e rolam por dentro. Em janelas baixas, Sequência e o mapa somem pra sobrar espaço.
   - **Encaixar tudo:** diminui ou aumenta o tamanho pra caber inteira.
   - **Rolar a página:** o jeito antigo.
-- **Animar mesmo com “reduzir movimento”:** se o Windows estiver com os efeitos de animação desligados, o companheiro fica parado. Ligue essa opção pra animar só no app.
 
-Esses ajustes valem só pro aparelho onde foram feitos.
+## Configurações
+
+Ficam em 5 abas: **Tarefas**, **Rotina e lembretes**, **Companheiro**, **Aparência** e **Dados**. O que se usa pouco fica recolhido em **Mais opções**.
+
+- **Tarefa nova:** nome, **Quando** (Manhã, Dia, Noite, Com horário ou Manhã e noite) e dias. Tolerância do horário, "conta como copo" e temporária ficam em Mais opções.
+- **Aparência:** tema, som, confete e **Animar mesmo com "reduzir movimento"** (se o Windows estiver com os efeitos de animação desligados, o companheiro fica parado; ligue essa opção pra animar só no app).
+- **Dados:** QR pro outro aparelho e backup.
 
 ## Companheiro: importação rápida
 
-1. Em **Configurações › Companheiro**, clique em **Importação rápida** e escolha a folha de sprites (PNG). Também dá pra arrastar o arquivo.
+A aba **Companheiro** abre num **resumo** com os 4 estados: Repouso, Comemoração, Desânimo e Subida de nível. Em cada um, **Escolher quadros** e **Prévia** levam direto pra etapa certa. As 5 etapas completas ficam em **Modo avançado**. **Importar** e **Exportar** ficam no topo e funcionam mesmo sem nenhum companheiro salvo.
+
+
+1. Em **Configurações › Companheiro**, clique em **Importação rápida** e escolha a folha de sprites (PNG). Também dá pra arrastar o arquivo na etapa Imagens.
 2. Se o fundo for de uma cor sólida ou um quadriculado pintado na própria imagem (comum em imagens baixadas que "parecem" transparentes), ele é removido sozinho. Se ficar uma borda clara em volta do personagem, use **Limpar contorno claro**. Na etapa **Imagem** dá pra comparar **Original** e **Processada** e trocar o modo:
    - **Só o fundo ligado às bordas:** protege partes do personagem com a mesma cor do fundo.
    - **Essa cor na imagem toda:** remove também o fundo preso entre braço e corpo.
@@ -83,14 +101,14 @@ Nada vai pro companheiro da tela Hoje até você salvar. **Desfazer** (ou Ctrl+Z
 ## Seus dados
 
 - Ficam **só no navegador** onde você usa o app. Cada endereço tem seus próprios dados: o app aberto pelo arquivo no PC e o app no GitHub Pages **não enxergam os dados um do outro**.
-- **Pra mudar de endereço ou de aparelho**, use **Configurações › Sincronização e backup › Exportar backup** e depois **Importar backup** no outro lugar. Deixe marcado **Incluir as imagens do companheiro**: sem elas, o companheiro chega sem as imagens. O app avisa quando o arquivo passa de 5 MB.
-- **Pra passar os dias recentes pro celular**, use **Mostrar QR** no PC e aponte a câmera do celular. Com o app no GitHub Pages, a própria câmera do celular abre o link e junta os dados. Os dados se juntam sem apagar nada. Desmarcar uma tarefa num aparelho não desmarca no outro.
+- **Pra mudar de endereço ou de aparelho**, use **Configurações › Dados › Exportar backup** e depois **Importar backup** no outro lugar. Deixe marcado **Incluir as imagens do companheiro**: sem elas, o companheiro chega sem as imagens. O app avisa quando o arquivo passa de 5 MB.
+- **Pra passar os dias recentes pro celular**, use **Configurações › Dados › Mostrar QR** no PC e aponte a câmera do celular. O QR leva também as tarefas e o arranjo do painel. Com o app no GitHub Pages, a própria câmera do celular abre o link e junta os dados. Os dados se juntam sem apagar nada. Desmarcar uma tarefa num aparelho não desmarca no outro.
 - Limpar os dados do site no navegador apaga tudo. Faça backups de vez em quando.
 
 ## Lembretes
 
 - As notificações do navegador só aparecem **com o app aberto** (numa aba ou instalado). Sem um servidor, nenhum navegador consegue avisar com o app fechado.
-- Pra lembrete garantido no celular, use **Horários pro calendário (.ics)** em Configurações e importe o arquivo no Google Agenda. Se mudar os horários, gere e importe de novo.
+- Pra lembrete garantido no celular, use **Horários pro calendário (.ics)** em **Configurações › Rotina e lembretes › Mais opções** e importe o arquivo no Google Agenda. Se mudar os horários, gere e importe de novo.
 
 ## Regras de XP
 
