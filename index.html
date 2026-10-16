@@ -256,6 +256,10 @@ html.wide .app{max-width:none}
 .statebar button[aria-checked="true"] .n{color:inherit}
 .cfgnav{align-self:flex-start;position:sticky;top:8px;z-index:4;box-shadow:0 4px 14px rgba(0,0,0,.25)}
 .cfgnav button{min-height:38px}
+.kcolors{display:flex;gap:6px;flex-wrap:wrap;min-height:28px;align-items:center}
+.kc{display:inline-flex;align-items:center;gap:6px;padding:2px 2px 2px 4px;border:1px solid var(--ln);border-radius:8px;background:var(--bg);font-size:11px}
+.kc i{width:20px;height:20px;border-radius:5px;border:1px solid var(--ln)}
+.kc button{border:none;background:transparent;color:var(--mu);cursor:pointer;min-width:26px;min-height:26px;border-radius:6px}
 @media (max-width:720px){
   .app{padding:16px 14px 104px}
   .tabs{display:none}
@@ -266,10 +270,21 @@ html.wide .app{max-width:none}
   .trow,.thead{grid-template-columns:minmax(0,1fr) 44px 52px 92px}
 }
 @media (prefers-reduced-motion: reduce){
-  .pt,.ring,.confetti{display:none!important}
-  .float,.stage.hop canvas{animation:none!important}
+  html:not(.anim-force) .pt,html:not(.anim-force) .ring,html:not(.anim-force) .confetti{display:none!important}
+  html:not(.anim-force) .float,html:not(.anim-force) .stage.hop canvas{animation:none!important}
   .tg::after{transition:none}
 }
+/* Hoje preenchendo a janela: a página não rola; só a lista de cada período rola dentro do quadro */
+.plist{display:flex;flex-direction:column;gap:8px}
+html.panel,html.panel body{overflow:hidden}
+html.panel .app{padding-bottom:18px}
+html.panel #view-hoje{flex:1 1 0;min-height:0}
+html.panel #view-hoje>*{flex:none}
+html.panel #periods{flex:1 1 0;min-height:0;grid-auto-rows:minmax(0,1fr)}
+html.panel #periods .period{min-height:0;overflow:hidden}
+html.panel #periods .plist{flex:1 1 0;min-height:0;overflow-y:auto;padding-right:4px;margin-right:-4px;overscroll-behavior:contain}
+html.panel.compact #view-hoje>.grid2{display:none}
+html.panel #periods .plist.more{-webkit-mask-image:linear-gradient(#000 calc(100% - 28px),transparent);mask-image:linear-gradient(#000 calc(100% - 28px),transparent)}
 </style>
 </head>
 <body>
@@ -489,7 +504,9 @@ html.wide .app{max-width:none}
       <div class="setrow"><div class="txt"><span>Largura</span><span class="xs mu">em monitores grandes, use a tela inteira</span></div>
         <div class="seg" id="lyWidth" role="radiogroup" aria-label="Largura"><button type="button" role="radio" data-v="center">Centralizada</button><button type="button" role="radio" data-v="full">Tela inteira</button></div></div>
       <div class="setrow"><div class="txt"><span>Tamanho da interface</span><span class="xs mu" id="lyAutoV"></span></div><select id="lyZoom" aria-label="Tamanho da interface"></select></div>
-      <div class="setrow"><div class="txt"><span>Encaixar o Hoje na janela</span><span class="xs mu">ajusta o tamanho pra tela Hoje caber inteira, sem rolar. Bom pra deixar o painel aberto num monitor.</span></div><button type="button" class="tg" id="tgFit" aria-label="Encaixar o Hoje na janela"></button></div>
+      <div class="setrow" style="flex-wrap:wrap;padding:8px 0"><div class="txt" style="flex:1 1 220px"><span>Altura da tela Hoje</span><span class="xs mu" id="lyHeightHint"></span></div>
+        <div class="seg" id="lyHeight" role="radiogroup" aria-label="Altura da tela Hoje"><button type="button" role="radio" data-v="fill">Preencher a janela</button><button type="button" role="radio" data-v="fit">Encaixar tudo</button><button type="button" role="radio" data-v="scroll">Rolar a página</button></div></div>
+      <div class="setrow"><div class="txt"><span>Animar mesmo com “reduzir movimento”</span><span class="xs mu" id="lyAnimHint"></span></div><button type="button" class="tg" id="tgAnim" aria-label="Animar mesmo com reduzir movimento"></button></div>
       <p class="info" id="lyInfo" style="margin-top:12px"></p>
       <span class="xs mu" style="display:block;margin-top:8px">Esses ajustes valem só pra este aparelho. Pra tela cheia de verdade, use o botão de tela cheia no topo ou a tecla F.</span>
     </section>
@@ -524,8 +541,10 @@ html.wide .app{max-width:none}
           <fieldset>
             <legend>Fundo</legend>
             <div class="seg" id="ceKeyMode" role="radiogroup" aria-label="Como remover o fundo"><button type="button" role="radio" data-v="borda">Só o fundo ligado às bordas</button><button type="button" role="radio" data-v="global">Essa cor na imagem toda</button></div>
-            <div class="keyrow"><span class="swatch" id="ceKeySw"></span><span class="mono xs" id="ceKeyHex">sem cor</span><button type="button" class="btn sm" id="ceKeyPick">Pegar cor na imagem</button><button type="button" class="btn sm" id="ceKeyCorner">Cor do canto</button></div>
+            <div class="keyrow"><span class="kcolors" id="ceKeyColors"></span></div>
+            <div class="keyrow"><button type="button" class="btn sm" id="ceKeyPick">Adicionar cor da imagem</button><button type="button" class="btn sm" id="ceKeyCorner">Usar cores das bordas</button></div>
             <label class="field">Tolerância <input type="range" id="ceKeyTol" min="0" max="120"><span class="mono xs" id="ceKeyTolV"></span></label>
+            <label class="field">Limpar contorno claro em volta do personagem<select id="ceKeyTrim" style="width:auto"><option value="0">Não limpar</option><option value="1">1 px</option><option value="2">2 px</option><option value="3">3 px</option></select><span class="xs mu">Útil quando a imagem foi ampliada e ficou uma borda clara do fundo.</span></label>
             <div class="btnrow"><button type="button" class="btn sm pri" id="ceKeyApply">Remover fundo</button><button type="button" class="btn sm" id="ceKeyUndo">Restaurar fundo</button></div>
             <span class="xs mu" id="ceKeyHint"></span>
           </fieldset>
@@ -719,7 +738,8 @@ const STATE_COLORS = { idle: '#3DDC97', celebrate: '#F5B83D', tired: '#9AA0AA', 
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const reduced = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+// Respeita o “reduzir movimento” do sistema, a menos que a pessoa peça pra animar mesmo assim (Configurações › Tela).
+const reduced = () => !document.documentElement.classList.contains('anim-force') && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const isNarrow = () => window.matchMedia('(max-width: 720px)').matches;
 const pad = n => String(n).padStart(2, '0');
 const ymd = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
@@ -938,7 +958,7 @@ const ALIGNS = ['pes', 'centro', 'recorte'];
 const toInt = (v, d, a, b) => { const n = parseInt(v, 10); return isNaN(n) ? d : clamp(n, a, b); };
 function emptyState(fps = 8) { return { seq: [], fps, loop: true, align: 'pes', name: '' }; }
 function defaultComp() {
-  return { v: 2, image: null, scale: 3, alpha: 8, key: { on: false, mode: 'borda', color: null, tol: 24 }, grid: { fw: 32, fh: 32, mx: 0, my: 0, sx: 0, sy: 0 },
+  return { v: 2, image: null, scale: 3, alpha: 8, key: { on: false, mode: 'borda', colors: [], tol: 24, trim: 0 }, grid: { fw: 32, fh: 32, mx: 0, my: 0, sx: 0, sy: 0 },
     frames: [], states: { idle: emptyState(), celebrate: emptyState(), tired: emptyState(), levelup: emptyState() }, nextId: 1, legacy: null };
 }
 function gridDims(g, W, H) { return { cols: Math.max(0, Math.floor((W - g.mx + g.sx) / (g.fw + g.sx))), rows: Math.max(0, Math.floor((H - g.my + g.sy) / (g.fh + g.sy))) }; }
@@ -955,7 +975,7 @@ function migrateComp1(c) {
   o.legacy = clone(c); o.grid = g; o.scale = toInt(c.scale, 3, 1, 8);
   o.image = c.image && c.image.w ? { name: c.image.name, size: c.image.size, w: c.image.w, h: c.image.h } : null;
   const k = c.key || {};
-  o.key = { on: !!k.on, mode: 'global', color: Array.isArray(k.color) ? k.color.slice(0, 3) : null, tol: toInt(k.tol, 24, 0, 255) };
+  o.key = { on: !!k.on, mode: 'global', colors: Array.isArray(k.color) ? [k.color.slice(0, 3)] : [], tol: toInt(k.tol, 24, 0, 255) };
   const fps = toInt(c.fps, 8, 1, 24), mode = c.mode === 'free' ? 'free' : 'grid', lists = (c.frames || {})[mode] || {}, byKey = {};
   for (const s of SKEYS) {
     const st = emptyState(fps); st.align = 'recorte';
@@ -970,14 +990,16 @@ function migrateComp1(c) {
     }
     o.states[s] = st;
   }
-  return o;
+  return sanitizeComp(o);   // passa pela normalização da v2 pra ficar idêntico ao que é salvo
 }
 function sanitizeComp(c) {
   if (!c || typeof c !== 'object') return defaultComp();
   if (c.v !== 2) return migrateComp1(c);
   const o = Object.assign(defaultComp(), c);
   o.key = Object.assign(defaultComp().key, c.key || {}); if (!['borda', 'global'].includes(o.key.mode)) o.key.mode = 'borda';
-  o.key.on = !!o.key.on; o.key.tol = toInt(o.key.tol, 24, 0, 255); o.key.color = Array.isArray(o.key.color) ? o.key.color.slice(0, 3).map(v => toInt(v, 0, 0, 255)) : null;
+  const rgb = c => Array.isArray(c) && c.length >= 3 ? c.slice(0, 3).map(v => toInt(v, 0, 0, 255)) : null;
+  const cols = (Array.isArray(o.key.colors) ? o.key.colors : [o.key.color]).map(rgb).filter(Boolean).slice(0, 6);
+  o.key = { on: !!o.key.on && cols.length > 0, mode: o.key.mode, colors: cols, tol: toInt(o.key.tol, 24, 0, 255), trim: toInt(o.key.trim, 0, 0, 3) };
   const g = Object.assign(defaultComp().grid, c.grid || {});
   o.grid = { fw: toInt(g.fw, 32, 1, 4096), fh: toInt(g.fh, 32, 1, 4096), mx: toInt(g.mx, 0, 0, 4096), my: toInt(g.my, 0, 0, 4096), sx: toInt(g.sx, 0, 0, 4096), sy: toInt(g.sy, 0, 0, 4096) };
   o.frames = (Array.isArray(c.frames) ? c.frames : []).filter(f => f && typeof f.id === 'string' && [f.x, f.y, f.w, f.h].every(Number.isFinite) && f.w >= 1 && f.h >= 1)
@@ -1018,10 +1040,23 @@ function loadImage(blob) {
 const yieldUI = () => new Promise(r => { let done = false; const f = () => { if (!done) { done = true; r(); } }; requestAnimationFrame(() => setTimeout(f, 0)); setTimeout(f, 50); });
 const hexOf = c => '#' + c.map(v => pad(v.toString(16))).join('').toUpperCase();
 function colorNear(p, i, k, t) { return Math.abs(p[i] - k[0]) <= t && Math.abs(p[i + 1] - k[1]) <= t && Math.abs(p[i + 2] - k[2]) <= t; }
-// Preenche a partir das bordas tudo que for da cor do fundo (ou transparente). Protege pixels do personagem com a mesma cor.
-function floodEdges(p, W, H, k, t) {
-  const vis = new Uint8Array(W * H), q = new Int32Array(W * H); let qh = 0, qt = 0;
-  const ok = j => { const i = j * 4; return p[i + 3] === 0 || colorNear(p, i, k, t); };
+// Testa se um pixel é do fundo: perto de alguma das cores ou, com várias cores (quadriculado), entre elas,
+// o que cobre as bordas borradas dos quadradinhos quando a imagem foi ampliada.
+function bgMatcher(colors, t, between) {
+  const lo = [0, 1, 2].map(c => Math.min(...colors.map(k => k[c])) - t), hi = [0, 1, 2].map(c => Math.max(...colors.map(k => k[c])) + t);
+  const chroma = Math.max(...colors.map(k => Math.max(...k) - Math.min(...k))) + t, multi = between && colors.length > 1;
+  return (p, i) => {
+    for (const k of colors) if (colorNear(p, i, k, t)) return true;
+    if (!multi) return false;
+    const r = p[i], g = p[i + 1], b = p[i + 2];
+    return r >= lo[0] && r <= hi[0] && g >= lo[1] && g <= hi[1] && b >= lo[2] && b <= hi[2] && Math.max(r, g, b) - Math.min(r, g, b) <= chroma;
+  };
+}
+const keyColors = key => key && Array.isArray(key.colors) && key.colors.length ? key.colors : key && Array.isArray(key.color) ? [key.color] : [];
+// Preenche a partir das bordas tudo que for fundo (ou transparente). Protege pixels do personagem com a mesma cor.
+function floodEdges(p, W, H, colors, t) {
+  const vis = new Uint8Array(W * H), q = new Int32Array(W * H); let qh = 0, qt = 0; const m = bgMatcher(colors, t, true);
+  const ok = j => { const i = j * 4; return p[i + 3] === 0 || m(p, i); };
   const push = j => { if (!vis[j] && ok(j)) { vis[j] = 1; q[qt++] = j; } };
   for (let x = 0; x < W; x++) { push(x); push((H - 1) * W + x); }
   for (let y = 0; y < H; y++) { push(y * W); push(y * W + W - 1); }
@@ -1033,15 +1068,23 @@ function floodEdges(p, W, H, k, t) {
 }
 function analyzeSheet(p, W, H) {
   let transp = 0; for (let i = 3; i < p.length; i += 4) if (p[i] < 250) transp++;
+  // Cores das bordas, agrupadas por semelhança (ruído de compressão e marca d'água leve caem no mesmo grupo).
   const counts = new Map(); let border = 0;
   const add = j => { const i = j * 4; if (p[i + 3] < 250) return; border++; const k = (p[i] << 16) | (p[i + 1] << 8) | p[i + 2]; counts.set(k, (counts.get(k) || 0) + 1); };
   for (let x = 0; x < W; x++) { add(x); if (H > 1) add((H - 1) * W + x); }
   for (let y = 1; y < H - 1; y++) { add(y * W); if (W > 1) add(y * W + W - 1); }
-  let best = -1, bestN = 0; for (const [k, n] of counts) if (n > bestN) { best = k; bestN = n; }
-  const total = 2 * W + 2 * Math.max(0, H - 2), frac = total ? bestN / total : 0;
-  const hasAlpha = transp > W * H * 0.001;
-  const bg = best >= 0 && frac >= 0.3 ? [(best >> 16) & 255, (best >> 8) & 255, best & 255] : null;
-  return { hasAlpha, transpFrac: transp / (W * H), bg, bgFrac: frac, solid: !hasAlpha && !!bg && frac >= 0.5 };
+  const groups = [];
+  for (const [k, n] of [...counts.entries()].sort((a, b) => b[1] - a[1])) {
+    const c = [(k >> 16) & 255, (k >> 8) & 255, k & 255], g = groups.find(x => Math.abs(x.c[0] - c[0]) <= 14 && Math.abs(x.c[1] - c[1]) <= 14 && Math.abs(x.c[2] - c[2]) <= 14);
+    if (g) g.n += n; else if (groups.length < 256) groups.push({ c, n });
+  }
+  groups.sort((a, b) => b.n - a.n);
+  const total = Math.max(1, border), pal = []; let cum = 0;
+  for (const g of groups) { if (pal.length >= 4 || g.n / total < 0.04) break; pal.push(g.c); cum += g.n; }
+  const hasAlpha = transp > W * H * 0.001, top = groups.length ? groups[0].n / total : 0, frac = cum / total;
+  let bgSet = null;
+  if (!hasAlpha && pal.length) { if (top >= 0.85) bgSet = [pal[0]]; else if (frac >= 0.85) bgSet = pal; else if (top >= 0.5) bgSet = [pal[0]]; }
+  return { hasAlpha, transpFrac: transp / (W * H), bg: bgSet ? bgSet[0] : null, bgSet, bgFrac: frac, solid: !!bgSet && bgSet.length === 1, pattern: !!bgSet && bgSet.length > 1 };
 }
 class SheetImage {
   constructor() { this.clear(); }
@@ -1059,16 +1102,30 @@ class SheetImage {
   // Gera a versão exibida (sem fundo, se pedido) e a máscara do personagem. Só refaz quando o fundo ou a transparência mínima mudam.
   ensure(key, alpha = 8) {
     if (!this.img) return;
-    const sig = JSON.stringify([!!(key && key.on), key && key.mode, key && key.color, key && key.tol, alpha]);
+    const kc = keyColors(key), sig = JSON.stringify([!!(key && key.on), key && key.mode, kc, key && key.tol, key && key.trim, alpha]);
     if (sig === this.sig && this.src) return;
     const W = this.w, H = this.h, d = new ImageData(new Uint8ClampedArray(this.orig.data), W, H), p = d.data;
-    if (key && key.on && key.color) {
-      if (key.mode === 'global') { for (let i = 0; i < p.length; i += 4) if (colorNear(p, i, key.color, key.tol)) p[i + 3] = 0; }
-      else { const fl = floodEdges(p, W, H, key.color, key.tol); for (let j = 0; j < fl.length; j++) if (fl[j]) p[j * 4 + 3] = 0; }
+    if (key && key.on && kc.length) {
+      if (key.mode === 'global') { const m = bgMatcher(kc, key.tol, false); for (let i = 0; i < p.length; i += 4) if (m(p, i)) p[i + 3] = 0; }
+      else { const fl = floodEdges(p, W, H, kc, key.tol); for (let j = 0; j < fl.length; j++) if (fl[j]) p[j * 4 + 3] = 0; }
+      // Limpar contorno: tira 1 a 3 camadas de pixels claros grudados no fundo (sobra de imagem ampliada com suavização).
+      if (key.trim) {
+        const m2 = bgMatcher(kc, key.tol * 2 + 16, true);
+        for (let pass = 0; pass < key.trim; pass++) {
+          const kill = [];
+          for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+            const j = y * W + x, i = j * 4; if (!p[i + 3]) continue;
+            const edge = (x > 0 && !p[i - 1]) || (x < W - 1 && !p[i + 7]) || (y > 0 && !p[i - W * 4 + 3]) || (y < H - 1 && !p[i + W * 4 + 3]);
+            if (edge && m2(p, i)) kill.push(i);
+          }
+          if (!kill.length) break; for (const i of kill) p[i + 3] = 0;
+        }
+      }
     }
     const c = document.createElement('canvas'); c.width = W; c.height = H; c.getContext('2d').putImageData(d, 0, 0);
     const m = new Uint8Array(W * H); for (let j = 0; j < m.length; j++) m[j] = p[j * 4 + 3] > alpha ? 1 : 0;
-    if (!(key && key.on) && this.info.solid && this.info.bg) { const fl = floodEdges(this.orig.data, W, H, this.info.bg, 24); for (let j = 0; j < fl.length; j++) if (fl[j]) m[j] = 0; }
+    // Fundo ainda não removido: a detecção ignora mesmo assim o fundo ligado às bordas.
+    if (!(key && key.on) && this.info.bgSet) { const fl = floodEdges(this.orig.data, W, H, this.info.bgSet, 24); for (let j = 0; j < fl.length; j++) if (fl[j]) m[j] = 0; }
     this.src = c; this.mask = m; this.sig = sig; this.bb.clear();
   }
   // Caixa dos pixels do personagem dentro de um recorte (coordenadas relativas ao recorte), ou null se vazio.
@@ -1320,6 +1377,8 @@ function takeDose(oid) { commit(d => { d.done[oid] = hhmm(now()); }); }
 function changeAgua(n) { commit(d => { const before = d.agua || 0; d.agua = clamp(before + n, 0, 30); if (d.agua > before) d.aguaLast = hhmm(now()); }); }
 
 /* ===================== Tela Hoje ===================== */
+function markMore(el) { el.classList.toggle('more', el.scrollHeight - el.scrollTop - el.clientHeight > 4); }
+document.addEventListener('scroll', e => { if (e.target.classList && e.target.classList.contains('plist')) markMore(e.target); }, true);
 const expanded = {};
 function renderHoje() {
   const n = now(), tk = logicalDate(n), day = DATA.days[tk] || { done: {}, agua: 0 }, nm = nowMin(n), st = ST();
@@ -1399,13 +1458,14 @@ function renderHoje() {
 
   // Tarefas
   const nextId = nextDose ? nextDose.o.oid : null, hl = nextDose ? (nextDose.st.k === 'aguardando' ? 'var(--nt)' : nextDose.st.k === 'janela' ? 'var(--xp)' : 'var(--bad)') : '';
+  const keepScroll = {}; $$('#periods .plist').forEach(el => { keepScroll[el.dataset.p] = el.scrollTop; });
   $('#periods').innerHTML = PERIODS.map(([p, name, color]) => {
     const list = occ.filter(o => o.p === p), done = list.filter(o => isDone(day.done[o.oid])).length, complete = list.length > 0 && done === list.length;
     if (isNarrow() && complete && !expanded[p]) {
       return `<button type="button" class="collapsed" data-expand="${p}" aria-expanded="false"><span class="box" style="background:var(--ok);border-color:var(--ok);color:var(--okt)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L19 7"/></svg></span><span style="flex:1;font-weight:600;color:${color}">${name}</span><span class="mono xs mu">${done}/${list.length} concluído</span></button>`;
     }
     return `<section class="card period" aria-label="${name}"><button type="button" class="phead" data-expand="${p}" ${isNarrow() && complete ? 'aria-expanded="true"' : 'tabindex="-1"'}><h2 class="h" style="color:${color}">${name}</h2><span class="mono sm mu">${done}/${list.length}</span></button>
-      ${list.length ? '' : '<div class="empty-card">Nada neste período hoje.</div>'}
+      <div class="plist" data-p="${p}">${list.length ? '' : '<div class="empty-card">Nada neste período hoje.</div>'}
       ${list.map(o => {
         const v = day.done[o.oid], on = isDone(v), isNext = o.oid === nextId;
         let meta = '+' + o.xp + ' XP';
@@ -1413,8 +1473,9 @@ function renderHoje() {
         else if (on) meta = o.time ? v + (onTime(v, o) ? ' · ok' : ' · fora') : v;
         return `<button type="button" class="task ${on ? 'on' : ''} ${isNext ? 'next' : ''}" style="${isNext ? '--hl:' + hl : ''}" data-task="${o.oid}" aria-pressed="${on}"><span class="box" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L19 7"/></svg></span><span class="lbl">${esc(o.label)}${o.time ? ' · ' + o.time : ''}</span>${isNext ? '<span class="selo">PRÓXIMA</span>' : ''}<span class="meta mono">${meta}</span></button>`;
       }).join('')}
-      ${p === 'd' ? `<div class="xs mu" style="margin-top:4px;padding:10px 12px;border-radius:12px;border:1px dashed var(--ln)">A água fica no contador acima · +${CFG.xp.aguaMeta} XP ao bater a meta</div>` : ''}</section>`;
+      ${p === 'd' ? `<div class="xs mu" style="margin-top:4px;padding:10px 12px;border-radius:12px;border:1px dashed var(--ln)">A água fica no contador acima · +${CFG.xp.aguaMeta} XP ao bater a meta</div>` : ''}</div></section>`;
   }).join('');
+  $$('#periods .plist').forEach(el => { if (keepScroll[el.dataset.p]) el.scrollTop = keepScroll[el.dataset.p]; markMore(el); });
 
   // Sequência e mapa
   $('#streakBig').textContent = S.streak;
@@ -1923,8 +1984,9 @@ const median = a => { const s = a.slice().sort((x, y) => x - y); return s.length
 function bgLine(info, key) {
   if (!info) return '';
   if (info.hasAlpha) return 'Fundo transparente: a imagem já tem canal alfa, não precisa remover nada.';
+  if (info.pattern) return 'Fundo quadriculado (ou de várias cores) pintado na própria imagem: parece transparente, mas não é. ' + (key.on ? 'Removido na prévia.' : 'Remova abaixo pra ficar transparente de verdade.');
   if (info.solid) return key.on ? `Fundo sólido ${hexOf(info.bg)}: removido na prévia.` : `Fundo sólido ${hexOf(info.bg)} detectado. Remova abaixo pra ficar transparente.`;
-  return 'Sem transparência e sem uma cor de fundo dominante nas bordas: escolha a cor do fundo na imagem, se houver.';
+  return 'Sem transparência e sem um fundo claro nas bordas. Se houver fundo, clique em “Adicionar cor da imagem” e depois no fundo (repita pra cada cor, como num quadriculado).';
 }
 
 /* ===================== Editor de companheiros ===================== */
@@ -2008,11 +2070,12 @@ const Ed = {
     if (sh.w * sh.h > 16e6) { this.loading(null); toast('Imagem grande demais (máximo de 16 megapixels).'); return; }
     ED.adopt(sh);
     this.d.image = { name: file.name, size: file.size, w: sh.w, h: sh.h };
-    this.d.frames = []; for (const s of SKEYS) this.d.states[s].seq = [];
-    this.d.key = { on: !!(sh.info.solid && this.quick), mode: 'borda', color: sh.info.bg ? sh.info.bg.slice() : null, tol: 24 };
+    // Imagem nova: começa do zero, com alinhamento pelos pés (o “pelo recorte” só existia pra manter companheiros antigos iguais).
+    this.d.frames = []; for (const s of SKEYS) { this.d.states[s].seq = []; this.d.states[s].align = 'pes'; }
+    this.d.key = { on: !!(sh.info.bgSet && this.quick), mode: 'borda', colors: sh.info.bgSet ? clone(sh.info.bgSet) : [], tol: 24, trim: sh.info.pattern ? 1 : 0 };
     this.hist = []; this.sel = []; this.seqSel = []; this.pick = []; this.report = null; this.suggest = null; this.imgDirty = true; this.view = 'proc';
     ED.ensure(this.d.key, this.d.alpha); this.loading(null); this.touch();
-    if (this.quick) { if (sh.info.solid) toast('Fundo sólido removido. Compare em Original e Processada.'); await this.detect(); }
+    if (this.quick) { if (sh.info.bgSet) toast(sh.info.pattern ? 'Fundo quadriculado pintado na imagem removido. Compare em Original e Processada.' : 'Fundo sólido removido. Compare em Original e Processada.'); await this.detect(); }
   },
   loading(msg) { const el = $('#ceLoading'); el.hidden = !msg; el.textContent = msg || ''; },
   removeImage() {
@@ -2023,7 +2086,9 @@ const Ed = {
   setKey(patch, snap = true) { if (snap) this.snap(); Object.assign(this.d.key, patch); ED.ensure(this.d.key, this.d.alpha); this.touch(); },
   pickAt(x, y) {
     if (!ED.img || x < 0 || y < 0 || x >= ED.w || y >= ED.h) return;
-    this.picking = false; this.setKey({ color: ED.pixel(Math.floor(x), Math.floor(y)).slice(0, 3), on: true });
+    const c = ED.pixel(Math.floor(x), Math.floor(y)).slice(0, 3), cs = keyColors(this.d.key).slice();
+    if (!cs.some(k => Math.abs(k[0] - c[0]) <= 6 && Math.abs(k[1] - c[1]) <= 6 && Math.abs(k[2] - c[2]) <= 6)) cs.push(c);
+    this.picking = false; this.setKey({ colors: cs.slice(-6), on: true });
   },
 
   /* ---------- etapa 2: detecção, grade e recortes ---------- */
@@ -2365,8 +2430,9 @@ const Ed = {
     on('#ceView', 'click', e => { const b = e.target.closest('[data-v]'); if (b) { this.view = b.dataset.v; this.touch(); } });
     on('#ceKeyMode', 'click', e => { const b = e.target.closest('[data-v]'); if (b) this.setKey({ mode: b.dataset.v }); });
     on('#ceKeyPick', 'click', () => { this.picking = !this.picking; this.touch(); });
-    on('#ceKeyCorner', 'click', () => { if (ED.img) this.setKey({ color: ED.pixel(0, 0).slice(0, 3) }); });
-    on('#ceKeyApply', 'click', () => { if (!this.d.key.color) { toast('Escolha a cor do fundo primeiro.'); return; } this.setKey({ on: true }); this.view = 'proc'; });
+    on('#ceKeyCorner', 'click', () => { if (!ED.img) return; const set = ED.info.bgSet ? clone(ED.info.bgSet) : [ED.pixel(0, 0).slice(0, 3)]; this.setKey({ colors: set, on: true }); this.view = 'proc'; });
+    on('#ceKeyApply', 'click', () => { if (!keyColors(this.d.key).length) { toast('Escolha a cor do fundo primeiro: clique em “Adicionar cor da imagem” e depois no fundo.'); return; } this.setKey({ on: true }); this.view = 'proc'; });
+    on('#ceKeyColors', 'click', e => { const b = e.target.closest('[data-rmc]'); if (!b) return; const cs = keyColors(this.d.key).slice(); cs.splice(+b.dataset.rmc, 1); this.setKey({ colors: cs, on: this.d.key.on && cs.length > 0 }); });
     on('#ceKeyUndo', 'click', () => this.setKey({ on: false }));
     on('#ceKeyTol', 'input', e => {
       if (!this._tolSnap) { this.snap(); this._tolSnap = true; }
@@ -2374,6 +2440,7 @@ const Ed = {
       clearTimeout(this._tolT); this._tolT = setTimeout(() => { ED.ensure(this.d.key, this.d.alpha); this.touch(); }, 90);
     });
     on('#ceKeyTol', 'change', () => { this._tolSnap = false; });
+    on('#ceKeyTrim', 'change', e => this.setKey({ trim: +e.target.value }));
     on('#ceImgPrev', 'click', e => { if (!this.picking || !ED.img) return; const cv = e.currentTarget, r = cv.getBoundingClientRect(); this.pickAt((e.clientX - r.left) / r.width * ED.w, (e.clientY - r.top) / r.height * ED.h); });
     on('#ceImgRemove', 'click', () => this.removeImage());
     on('#ceDetect1', 'click', () => this.detect());
@@ -2491,11 +2558,11 @@ const Ed = {
     $('#ceBgInfo').textContent = bgLine(ED.info, k);
     $$('#ceView [data-v]').forEach(b => b.setAttribute('aria-checked', String(b.dataset.v === this.view)));
     $$('#ceKeyMode [data-v]').forEach(b => b.setAttribute('aria-checked', String(b.dataset.v === k.mode)));
-    $('#ceKeySw').style.background = k.color ? `rgb(${k.color.join(',')})` : '';
-    $('#ceKeyHex').textContent = k.color ? hexOf(k.color) : 'sem cor';
-    $('#ceKeyTol').value = k.tol; $('#ceKeyTolV').textContent = k.tol;
-    $('#ceKeyPick').textContent = this.picking ? 'Cancelar' : 'Pegar cor na imagem';
-    $('#ceKeyApply').disabled = k.on || !k.color; $('#ceKeyUndo').disabled = !k.on;
+    const kc = keyColors(k);
+    $('#ceKeyColors').innerHTML = kc.length ? kc.map((c, i) => `<span class="kc"><i style="background:rgb(${c.join(',')})"></i><span class="mono">${hexOf(c)}</span><button type="button" data-rmc="${i}" aria-label="Tirar a cor ${hexOf(c)}">×</button></span>`).join('') : '<span class="xs mu">Nenhuma cor de fundo escolhida.</span>';
+    $('#ceKeyTol').value = k.tol; $('#ceKeyTolV').textContent = k.tol; $('#ceKeyTrim').value = String(k.trim || 0);
+    $('#ceKeyPick').textContent = this.picking ? 'Cancelar' : 'Adicionar cor da imagem';
+    $('#ceKeyApply').disabled = k.on || !kc.length; $('#ceKeyUndo').disabled = !k.on;
     $('#ceKeyHint').textContent = this.picking ? 'Clique num pixel do fundo na imagem ao lado.' : k.on ? (k.mode === 'borda' ? 'Fundo removido só onde encosta nas bordas: partes do personagem com a mesma cor ficam. Se sobrar fundo preso entre braço e corpo, use “Essa cor na imagem toda”.' : 'Essa cor sumiu da imagem toda. Se o personagem perdeu partes, volte pra “Só o fundo ligado às bordas”.') : 'A remoção só vale pra exibição: o arquivo original não muda.';
     const cv = $('#ceImgPrev'), avail = Math.max(120, cv.parentElement.clientWidth - 22);
     let z = avail / ED.w >= 1 ? Math.min(4, Math.floor(avail / ED.w)) : avail / ED.w;
@@ -2534,7 +2601,7 @@ const Ed = {
         if (res.grid) lines.push(`Parece uma grade regular de ${res.grid.cols} × ${res.grid.rows} quadros de ${res.grid.fw}×${res.grid.fh} px. <button type="button" class="btn sm" id="ceUseGrid">Usar grade sugerida</button>`);
         else lines.push(`Organização irregular, em ${readingRows(bs).length} linha${readingRows(bs).length === 1 ? '' : 's'}. Tamanhos de ${Math.min(...ws)}×${Math.min(...hs)} a ${Math.max(...ws)}×${Math.max(...hs)} px.`);
         const area = ED.w * ED.h, big = bs.map((b, i) => [b, i]).filter(([b]) => b.w * b.h > area * 0.25).map(([, i]) => i + 1);
-        if (big.length) warn.push(`O recorte ${big.join(', ')} ocupa boa parte da imagem: o fundo pode não ter sido removido, ou os personagens estão encostados.`);
+        if (big.length) warn.push(`O recorte ${big.join(', ')} ocupa boa parte da imagem: o fundo não foi separado dos personagens. Se a imagem tem um quadriculado ou outro fundo pintado, volte na etapa 1, use “Adicionar cor da imagem” em cada cor do fundo e detecte de novo.`);
         // Compara a largura com sprites de altura parecida: um recorte bem mais largo pode ser dois personagens encostados.
         const wide = bs.map((b, i) => { const peers = bs.filter(o => Math.abs(o.h - b.h) <= b.h * 0.25); return peers.length >= 3 && b.w > median(peers.map(o => o.w)) * 1.7 && b.w > 8 ? i + 1 : 0; }).filter(Boolean);
         if (wide.length) warn.push(`Recorte${wide.length > 1 ? 's' : ''} ${wide.slice(0, 8).join(', ')}${wide.length > 8 ? '…' : ''} bem mais larg${wide.length > 1 ? 'os' : 'o'} que os outros: pode ser dois personagens encostados ou um efeito. Selecione e use Dividir.`);
@@ -2650,12 +2717,18 @@ async function importBackup(file) {
   applyTheme(); renderAll(); toast('Backup importado.');
 }
 
-/* ===================== Tela: largura, tamanho e encaixe ===================== */
+/* ===================== Tela: largura, tamanho, altura e animação ===================== */
 // Preferências por aparelho (não entram no QR nem no backup).
 const LKEY = 'habitos.tela';
 const Layout = {
-  o: (() => { const d = { width: 'full', zoom: 'auto', fit: false }; try { return Object.assign(d, JSON.parse(localStorage.getItem(LKEY) || '{}')); } catch (e) { return d; } })(),
-  cur: 100, _sig: '', _t: 0,
+  o: (() => {
+    const d = { width: 'full', zoom: 'auto', height: 'fill', anim: false };
+    let o; try { o = Object.assign(d, JSON.parse(localStorage.getItem(LKEY) || '{}')); } catch (e) { o = d; }
+    delete o.fit;
+    if (!['fill', 'fit', 'scroll'].includes(o.height)) o.height = 'fill';
+    return o;
+  })(),
+  cur: 100, mode: 'scroll', _sig: '', _t: 0,
   save() { try { localStorage.setItem(LKEY, JSON.stringify(this.o)); } catch (e) {} },
   // Automático: 100% até ~2200 px de largura; acima disso cresce junto com a tela (2560 → 130%, 3840 → 195%).
   auto() { const w = window.innerWidth; return w < 2200 ? 100 : clamp(Math.round(w / 1960 * 20) * 5, 100, 200); },
@@ -2670,29 +2743,55 @@ const Layout = {
     return lo;
   },
   apply() {
-    document.documentElement.classList.toggle('wide', this.o.width === 'full');
-    let z = this.base();
-    if (this.o.fit && VIEW === 'hoje' && !isNarrow()) z = this.fitZoom();
-    this.setZoom(z); this.cur = z; this.paint();
+    const H = document.documentElement, app = $('.app');
+    H.classList.toggle('wide', this.o.width === 'full');
+    H.classList.toggle('anim-force', !!this.o.anim);
+    H.classList.remove('panel', 'compact'); app.style.height = '';
+    const hoje = VIEW === 'hoje' && !isNarrow();
+    let z = this.base(), mode = 'scroll';
+    if (hoje && this.o.height === 'fit') { z = this.fitZoom(); mode = 'fit'; }
+    this.setZoom(z); this.cur = z;
+    if (hoje && this.o.height === 'fill') {
+      // Preenche exatamente a janela; as tarefas rolam dentro de cada quadro.
+      H.classList.add('panel'); app.style.height = (window.innerHeight / (z / 100)) + 'px'; mode = 'fill';
+      // Tela baixa: primeiro esconde a faixa de baixo (sequência e mapa, que também estão no topo e no Histórico).
+      H.classList.toggle('compact', $('#periods').getBoundingClientRect().height < 260);
+      if ($('#periods').getBoundingClientRect().height < 150) {
+        // Janela baixa demais pra sobrar espaço às tarefas: diminui o tamanho até caber, sem passar de 70%.
+        let zz = z;
+        while (zz > 70 && $('#periods').getBoundingClientRect().height < 150) { zz -= 5; this.setZoom(zz); app.style.height = (window.innerHeight / (zz / 100)) + 'px'; }
+        if ($('#periods').getBoundingClientRect().height < 150) { H.classList.remove('panel', 'compact'); app.style.height = ''; this.setZoom(z); mode = 'scroll'; }
+        else { z = zz; this.cur = zz; }
+      }
+      $$('#periods .plist').forEach(markMore);
+    }
+    this.mode = mode; this.paint();
   },
-  maybeRefit(sig) { if (!this.o.fit || VIEW !== 'hoje') return; if (sig !== this._sig) { this._sig = sig; this.apply(); } },
+  maybeRefit(sig) { if (VIEW !== 'hoje' || this.o.height === 'scroll') return; if (sig !== this._sig) { this._sig = sig; this.apply(); } },
   init() {
     $('#lyZoom').innerHTML = '<option value="auto">Automático</option>' + [80, 90, 100, 110, 125, 150, 175, 200].map(z => `<option value="${z}">${z}%</option>`).join('');
     $('#lyWidth').addEventListener('click', e => { const b = e.target.closest('[data-v]'); if (!b) return; this.o.width = b.dataset.v; this.save(); this.apply(); });
     $('#lyZoom').addEventListener('change', e => { this.o.zoom = e.target.value; this.save(); this.apply(); });
-    $('#tgFit').addEventListener('click', () => { this.o.fit = !this.o.fit; this.save(); this.apply(); toast(this.o.fit ? 'A tela Hoje vai se ajustar pra caber na janela.' : 'Encaixe desligado.'); });
+    $('#lyHeight').addEventListener('click', e => { const b = e.target.closest('[data-v]'); if (!b) return; this.o.height = b.dataset.v; this.save(); this._sig = ''; this.apply(); });
+    $('#tgAnim').addEventListener('click', () => { this.o.anim = !this.o.anim; this.save(); this.apply(); Comp.player.restart(); Ed.pvPlaying = !reduced(); Ed.pvSync(); Ed.render(); });
     document.querySelector('.cfgnav').addEventListener('click', e => { const b = e.target.closest('[data-jump]'); if (b) document.getElementById(b.dataset.jump).scrollIntoView({ behavior: reduced() ? 'auto' : 'smooth', block: 'start' }); });
     window.addEventListener('resize', () => { clearTimeout(this._t); this._t = setTimeout(() => { this._sig = ''; this.apply(); }, 150); });
+    window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', () => this.paint());
   },
   paint() {
     $$('#lyWidth [data-v]').forEach(b => b.setAttribute('aria-checked', String(b.dataset.v === this.o.width)));
+    $$('#lyHeight [data-v]').forEach(b => b.setAttribute('aria-checked', String(b.dataset.v === this.o.height)));
+    $('#lyHeightHint').textContent = { fill: 'A tela Hoje ocupa exatamente a janela, sem rolar a página. Quando um período tem muitas tarefas, só aquele quadro rola.', fit: 'Diminui ou aumenta o tamanho de tudo pra tela Hoje caber inteira, sem rolar.', scroll: 'Página comum: rola pra baixo quando não cabe.' }[this.o.height];
     $('#lyZoom').value = String(this.o.zoom);
-    $('#tgFit').setAttribute('aria-pressed', String(!!this.o.fit));
     $('#lyAutoV').textContent = 'no automático, esta tela usa ' + this.auto() + '%';
+    $('#tgAnim').setAttribute('aria-pressed', String(!!this.o.anim));
+    const sys = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    $('#lyAnimHint').textContent = sys ? (this.o.anim ? 'Seu sistema pede menos movimento, mas o companheiro e os efeitos estão animando porque esta opção está ligada.' : 'Seu sistema está pedindo menos movimento, por isso o companheiro fica parado. No Windows isso vem de Configurações › Acessibilidade › Efeitos visuais › Efeitos de animação. Ligue aqui pra animar só neste app.') : 'O sistema não pede menos movimento: as animações já estão ligadas.';
     const dpr = window.devicePixelRatio || 1;
     $('#lyInfo').textContent = `Sua tela: ${Math.round(screen.width * dpr)} × ${Math.round(screen.height * dpr)} px, com escala de ${Math.round(dpr * 100)}% (sistema e zoom do navegador). Janela: ${window.innerWidth} × ${window.innerHeight}. Tamanho atual da interface: ${this.cur}%.`;
   }
 };
+document.documentElement.classList.toggle('anim-force', !!Layout.o.anim);
 
 /* ===================== Navegação e inicialização ===================== */
 let VIEW = 'hoje';

@@ -44,14 +44,18 @@ Em **Configurações › Lembretes e aparência › Tela**:
 
 - **Largura:** "Tela inteira" ocupa o monitor todo; "Centralizada" limita a 1360 px.
 - **Tamanho da interface:** "Automático" aumenta em telas largas (2560 px → 130%), ou escolha de 80% a 200%.
-- **Encaixar o Hoje na janela:** ajusta o tamanho pra tela Hoje caber inteira, sem rolar.
+- **Altura da tela Hoje:**
+  - **Preencher a janela** (padrão): a página não rola; se um período tiver muitas tarefas, só aquele quadro rola. Em janelas baixas, a faixa de sequência e mapa some pra sobrar espaço.
+  - **Encaixar tudo:** diminui ou aumenta o tamanho pra caber inteira.
+  - **Rolar a página:** o jeito antigo.
+- **Animar mesmo com “reduzir movimento”:** se o Windows estiver com os efeitos de animação desligados, o companheiro fica parado. Ligue essa opção pra animar só no app.
 
 Esses ajustes valem só pro aparelho onde foram feitos.
 
 ## Companheiro: importação rápida
 
 1. Em **Configurações › Companheiro**, clique em **Importação rápida** e escolha a folha de sprites (PNG). Também dá pra arrastar o arquivo.
-2. Se o fundo for de uma cor sólida, ele é removido sozinho. Na etapa **Imagem** dá pra comparar **Original** e **Processada** e trocar o modo:
+2. Se o fundo for de uma cor sólida ou um quadriculado pintado na própria imagem (comum em imagens baixadas que "parecem" transparentes), ele é removido sozinho. Se ficar uma borda clara em volta do personagem, use **Limpar contorno claro**. Na etapa **Imagem** dá pra comparar **Original** e **Processada** e trocar o modo:
    - **Só o fundo ligado às bordas:** protege partes do personagem com a mesma cor do fundo.
    - **Essa cor na imagem toda:** remove também o fundo preso entre braço e corpo.
 3. O app detecta os sprites e mostra o relatório na etapa **Recortes**. Pra corrigir:
