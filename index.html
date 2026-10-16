@@ -260,6 +260,16 @@ html.wide .app{max-width:none}
 .kc{display:inline-flex;align-items:center;gap:6px;padding:2px 2px 2px 4px;border:1px solid var(--ln);border-radius:8px;background:var(--bg);font-size:11px}
 .kc i{width:20px;height:20px;border-radius:5px;border:1px solid var(--ln)}
 .kc button{border:none;background:transparent;color:var(--mu);cursor:pointer;min-width:26px;min-height:26px;border-radius:6px}
+.imglist{display:flex;gap:8px;flex-wrap:wrap}
+.imgcard{display:flex;gap:10px;align-items:center;padding:8px 12px 8px 8px;border-radius:12px;border:1px solid var(--ln);background:var(--sf2);cursor:pointer;text-align:left;color:var(--tx);min-width:0;max-width:300px}
+.imgcard canvas{width:56px;height:56px;border-radius:8px;flex:none}
+.imgcard[aria-pressed="true"]{border-color:var(--tx);box-shadow:0 0 0 1px var(--tx) inset}
+.ell{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px;display:block}
+.fthumb .ib{position:absolute;bottom:22px;right:6px;min-width:16px;height:16px;padding:0 3px;border-radius:5px;background:var(--wa);color:#fff;font-size:10px;font-weight:700;display:grid;place-items:center}
+.fthumb.other{opacity:.72}
+.modal .choice{flex-direction:column;align-items:flex-start;gap:3px;padding:10px 14px;min-height:56px;text-align:left;white-space:normal}
+.modal .choice .xs{font-weight:400}
+.task .cup{color:var(--wa);font-weight:600}
 @media (max-width:720px){
   .app{padding:16px 14px 104px}
   .tabs{display:none}
@@ -446,6 +456,7 @@ html.panel #periods .plist.more{-webkit-mask-image:linear-gradient(#000 calc(100
         <label>Tolerância (min)<input type="number" id="tfTol" min="0" max="120"></label>
       </div>
       <div class="field"><span>Dias da semana</span><div class="days" id="tfDays"></div></div>
+      <label class="check"><input type="checkbox" id="tfAgua"> Conta como 1 copo de água (soma no contador ao marcar)</label>
       <label class="check"><input type="checkbox" id="tfTemp"> Temporária (some sozinha no fim)</label>
       <div class="nums" id="tfTempBox">
         <label>Início<input type="date" id="tfStart"></label>
@@ -479,7 +490,7 @@ html.panel #periods .plist.more{-webkit-mask-image:linear-gradient(#000 calc(100
             <div class="btnrow"><button type="button" class="btn sm" id="qrShow">Mostrar QR</button><button type="button" class="btn sm" id="qrRead">Ler QR</button></div>
           </div>
         </div>
-        <label class="check"><input type="checkbox" id="bkImg"> Incluir a imagem do companheiro no backup</label>
+        <label class="check"><input type="checkbox" id="bkImg" checked> <span id="bkImgL">Incluir as imagens do companheiro no backup</span></label>
         <span class="xs mu" id="bkSize"></span>
         <div class="btnrow"><button type="button" class="btn sm" id="bkShare">Compartilhar backup</button><button type="button" class="btn sm" id="bkExport">Exportar backup</button><label class="btn sm" style="cursor:pointer">Importar backup<input type="file" id="bkImport" accept="application/json,.json" hidden></label></div>
       </section>
@@ -528,16 +539,28 @@ html.panel #periods .plist.more{-webkit-mask-image:linear-gradient(#000 calc(100
     <nav class="steps" id="ceSteps" aria-label="Etapas do editor"></nav>
 
     <div id="ceStep1" class="cestep stack">
+      <div class="imglist" id="ceImgList" role="group" aria-label="Imagens do companheiro" hidden></div>
       <label class="drop" id="ceDrop">
         <input type="file" id="ceFile" accept="image/png,.png" hidden>
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></svg>
-        <span class="b">Arraste uma folha de sprites (PNG) aqui</span>
-        <span class="sm mu">ou clique pra escolher. A imagem fica só neste navegador e o arquivo original nunca é alterado.</span>
+        <span class="b" id="ceDropT">Arraste uma folha de sprites (PNG) aqui</span>
+        <span class="sm mu" id="ceDropS">ou clique pra escolher. A imagem fica só neste navegador e o arquivo original nunca é alterado.</span>
       </label>
       <div id="ceLoading" class="info" role="status" hidden></div>
-      <div class="cfg-cols" id="ceImgBox" hidden>
+      <div id="ceImgBox" class="stack" hidden>
+      <div id="ceMissing" class="info stack" style="gap:10px" hidden>
+        <span class="sm" id="ceMissingTxt"></span>
+        <div class="btnrow"><button type="button" class="btn sm pri" id="ceRelink">Escolher o arquivo</button></div>
+        <input type="file" id="ceRelinkFile" accept="image/png,.png" hidden>
+      </div>
+      <div class="cfg-cols" id="ceImgMain">
         <div class="cfg-left">
           <div class="stack" style="gap:6px"><span class="b" id="ceImgName"></span><span class="xs mu" id="ceImgInfo"></span><span class="sm" id="ceBgInfo"></span></div>
+          <fieldset>
+            <legend>Tamanho no companheiro</legend>
+            <div class="keyrow"><select id="ceImgK" style="width:auto" aria-label="Tamanho desta imagem no companheiro"></select><button type="button" class="btn sm" id="ceImgMatch">Igualar à imagem 1</button></div>
+            <span class="xs mu" id="ceImgKHint"></span>
+          </fieldset>
           <fieldset>
             <legend>Fundo</legend>
             <div class="seg" id="ceKeyMode" role="radiogroup" aria-label="Como remover o fundo"><button type="button" role="radio" data-v="borda">Só o fundo ligado às bordas</button><button type="button" role="radio" data-v="global">Essa cor na imagem toda</button></div>
@@ -548,7 +571,6 @@ html.panel #periods .plist.more{-webkit-mask-image:linear-gradient(#000 calc(100
             <div class="btnrow"><button type="button" class="btn sm pri" id="ceKeyApply">Remover fundo</button><button type="button" class="btn sm" id="ceKeyUndo">Restaurar fundo</button></div>
             <span class="xs mu" id="ceKeyHint"></span>
           </fieldset>
-          <div class="btnrow"><button type="button" class="btn sm danger" id="ceImgRemove">Remover imagem</button></div>
         </div>
         <div class="cfg-right">
           <div class="between"><div class="seg" id="ceView" role="radiogroup" aria-label="Ver imagem"><button type="button" role="radio" data-v="orig">Original</button><button type="button" role="radio" data-v="proc">Processada</button></div><span class="xs mu">o quadriculado mostra onde é transparente</span></div>
@@ -556,9 +578,12 @@ html.panel #periods .plist.more{-webkit-mask-image:linear-gradient(#000 calc(100
           <div class="btnrow"><button type="button" class="btn pri" id="ceDetect1">Detectar sprites automaticamente</button><button type="button" class="btn" id="ceManual">Recortar manualmente</button></div>
         </div>
       </div>
+      <div class="btnrow"><button type="button" class="btn sm danger" id="ceImgRemove">Remover imagem</button></div>
+      </div>
     </div>
 
     <div id="ceStep2" class="cestep stack" hidden>
+      <div class="btnrow" id="ceImgSelBox" style="align-items:center" hidden><span class="xs mu">Recortar na</span><div class="seg" id="ceImgSel" role="radiogroup" aria-label="Imagem"></div></div>
       <div class="btnrow toolbar">
         <button type="button" class="btn sm pri" id="ceDetect">Detectar sprites automaticamente</button>
         <button type="button" class="btn sm" id="ceGridBtn" aria-expanded="false">Gerar por grade</button>
@@ -613,12 +638,13 @@ html.panel #periods .plist.more{-webkit-mask-image:linear-gradient(#000 calc(100
           </details>
         </div>
       </div>
-      <div class="between"><span class="lab" id="frCount"></span><span class="xs mu">Arraste as miniaturas pra reordenar</span></div>
+      <div class="between"><span class="lab" id="frCount"></span><div class="btnrow" style="align-items:center"><div class="seg" id="frFilter" role="radiogroup" aria-label="Mostrar recortes" hidden><button type="button" role="radio" data-v="cur">Desta imagem</button><button type="button" role="radio" data-v="all">Todas as imagens</button></div><span class="xs mu">Arraste as miniaturas pra reordenar</span></div></div>
       <div class="gallery" id="frGallery"></div>
     </div>
 
     <div id="ceStep3" class="cestep stack" hidden>
       <div class="seg statebar" role="radiogroup" aria-label="Estado"></div>
+      <div class="seg" id="seqFilter" role="radiogroup" aria-label="Recortes de qual imagem" hidden></div>
       <div class="between"><span class="lab">1. Clique nos recortes na ordem da animação</span><div class="btnrow"><button type="button" class="btn sm pri" id="seqAddSel">Adicionar selecionados</button><button type="button" class="btn sm" id="seqAddAll">Adicionar todos</button><button type="button" class="btn sm" id="seqPickClear">Limpar seleção</button></div></div>
       <div class="gallery pick" id="seqLib"></div>
       <div class="between"><span class="lab">2. Sequência de <b class="stname"></b> · <span id="seqCount"></span></span>
@@ -681,6 +707,15 @@ html.panel #periods .plist.more{-webkit-mask-image:linear-gradient(#000 calc(100
     </div>
 
     <div class="between stepnav"><button type="button" class="btn" id="ceBack">← Voltar</button><span></span><button type="button" class="btn pri" id="ceNext">Próximo →</button></div>
+    <div id="ceChoice" class="modal" hidden>
+      <div class="card" role="dialog" aria-modal="true" aria-labelledby="ceChoiceT">
+        <h3 class="h" id="ceChoiceT">Importação rápida</h3>
+        <span class="sm" id="ceChoiceTxt"></span>
+        <button type="button" class="btn pri choice" data-ch="add" id="ceChAdd"><b>Adicionar ao companheiro atual</b><span class="xs">Recomendado. A nova imagem entra junto; nenhum recorte nem sequência é apagado.</span></button>
+        <button type="button" class="btn choice" data-ch="fresh" id="ceChFresh"><b>Começar do zero</b><span class="xs mu">Tira as imagens, os recortes e as sequências do rascunho. O companheiro salvo só muda quando você salvar, e Desfazer volta tudo.</span></button>
+        <button type="button" class="btn" data-ch="cancel" id="ceChCancel" style="align-self:flex-end">Cancelar</button>
+      </div>
+    </div>
   </section>
 </main>
 </div>
@@ -715,7 +750,7 @@ const ALLDAYS = [0, 1, 2, 3, 4, 5, 6];
 const DEFAULT_SETTINGS = { wake: '08:00', sleep: '22:00', cutoffHour: 4, aguaMeta: 10, copoMl: 200, notif: false, notifDose: true, doseLead: 5, notifAgua: false, aguaGap: 120, som: true, confete: true, updatedAt: 0 };
 const DEFAULT_TASKS = [
   { id: 'd1', label: 'Escovar os dentes', type: 'simples', p: 'm' },
-  { id: 'a1', label: 'Copo d’água ao acordar', type: 'simples', p: 'm' },
+  { id: 'a1', label: 'Copo d’água ao acordar', type: 'simples', p: 'm', agua: 1 },
   { id: 'r1', label: 'Remédio', type: 'horario', times: ['08:00'], tol: 10 },
   { id: 'c1', label: 'Tomar café', type: 'simples', p: 'm' },
   { id: 'b1', label: 'Arrumar a cama', type: 'simples', p: 'm' },
@@ -728,7 +763,7 @@ const DEFAULT_TASKS = [
   { id: 'bn', label: 'Tomar banho', type: 'simples', p: 'n' },
   { id: 'pr', label: 'Deixar o dia de amanhã pronto', type: 'simples', p: 'n' },
   { id: 'tl', label: 'Largar a tela 30 min antes', type: 'simples', p: 'n' }
-].map((t, i) => Object.assign({ p: null, times: [], tol: 10, days: ALLDAYS.slice(), start: null, end: null, order: i, updatedAt: 0 }, t));
+].map((t, i) => Object.assign({ p: null, times: [], tol: 10, days: ALLDAYS.slice(), start: null, end: null, order: i, updatedAt: 0, agua: 0 }, t));
 const PERIODS = [['m', 'Manhã', 'var(--xp)'], ['d', 'Durante o dia', 'var(--ok)'], ['n', 'Noite', 'var(--nt)']];
 const PNAME = { m: 'Manhã', d: 'Dia', n: 'Noite' };
 const STATES = [['idle', 'Repouso'], ['celebrate', 'Comemoração'], ['tired', 'Desânimo'], ['levelup', 'Subida de nível']];
@@ -796,48 +831,61 @@ function periodOf(tm) { const m = toMinL(tm); return m < 720 ? 'm' : m < 1080 ? 
 function taskOccs(t) {
   if (t.type === 'horario') {
     const times = (t.times || []).slice().sort((a, b) => toMinL(a) - toMinL(b)), multi = times.length > 1;
-    return times.map(tm => ({ oid: multi ? t.id + '@' + tm : t.id, tid: t.id, label: t.label, p: periodOf(tm), time: tm, tol: t.tol ?? 10, xp: CFG.xp.horario }));
+    return times.map(tm => ({ oid: multi ? t.id + '@' + tm : t.id, tid: t.id, label: t.label, p: periodOf(tm), time: tm, tol: t.tol ?? 10, xp: CFG.xp.horario, w: t.agua ? 1 : 0 }));
   }
   if (t.type === 'duplo') return [
-    { oid: t.id + '@m', tid: t.id, label: t.label, p: 'm', part: 'manhã', xp: CFG.xp.simples },
-    { oid: t.id + '@n', tid: t.id, label: t.label, p: 'n', part: 'noite', xp: CFG.xp.simples }];
-  return [{ oid: t.id, tid: t.id, label: t.label, p: t.p || 'm', xp: CFG.xp.simples }];
+    { oid: t.id + '@m', tid: t.id, label: t.label, p: 'm', part: 'manhã', xp: CFG.xp.simples, w: t.agua ? 1 : 0 },
+    { oid: t.id + '@n', tid: t.id, label: t.label, p: 'n', part: 'noite', xp: CFG.xp.simples, w: t.agua ? 1 : 0 }];
+  return [{ oid: t.id, tid: t.id, label: t.label, p: t.p || 'm', xp: CFG.xp.simples, w: t.agua ? 1 : 0 }];
 }
 const sortTasks = tasks => tasks.slice().sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 function occurrencesFor(k, tasks = DATA.tasks) { return sortTasks(tasks).filter(t => isScheduled(t, k)).flatMap(taskOccs); }
-function snapshot(k, tasks = DATA.tasks) { return occurrencesFor(k, tasks).map(o => o.time ? { oid: o.oid, xp: o.xp, time: o.time, tol: o.tol } : { oid: o.oid, xp: o.xp }); }
+// Retrato das tarefas do dia. A marca “conta como copo” (w) só vale a partir do dia em que a ligação com o contador de água existe (aguaSince).
+function snapshot(k, tasks = DATA.tasks, since = DATA.aguaSince) { return occurrencesFor(k, tasks).map(o => { const s = o.time ? { oid: o.oid, xp: o.xp, time: o.time, tol: o.tol } : { oid: o.oid, xp: o.xp }; if (o.w && (!since || k >= since)) s.w = 1; return s; }); }
 function occLabel(o) { return o.label + (o.part ? ' (' + o.part + ')' : '') + (o.time ? ' · ' + o.time : ''); }
 function migrate(d) {
   if (!d || typeof d !== 'object' || !d.days || typeof d.days !== 'object') return null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(d.aguaSince || '')) d.aguaSince = logicalDate();
   if (d.version === 1) {
     d.version = 2; d.tasks = clone(DEFAULT_TASKS); d.settings = Object.assign({}, DEFAULT_SETTINGS);
-    for (const k of Object.keys(d.days)) { const day = d.days[k]; day.done = day.done || {}; day.agua = day.agua || 0; day.sched = snapshot(k, d.tasks); day.meta = 10; }
+    for (const k of Object.keys(d.days)) { const day = d.days[k]; day.done = day.done || {}; day.agua = day.agua || 0; day.sched = snapshot(k, d.tasks, d.aguaSince); day.meta = 10; }
   }
   if (d.version !== 2) return null;
   d.settings = Object.assign({}, DEFAULT_SETTINGS, d.settings || {});
   if (!Array.isArray(d.tasks)) d.tasks = clone(DEFAULT_TASKS);
+  for (const t of d.tasks) if (t && t.id === 'a1' && t.agua === undefined && /[áa]gua/i.test(t.label || '')) t.agua = 1;
   if (!d.createdAt) d.createdAt = logicalDate();
   if (!['dark', 'light', 'auto'].includes(d.theme)) d.theme = 'dark';
   // Congela o retrato de dias que ainda não têm um, pra mudanças futuras em tarefas e metas não alterarem o passado.
-  for (const k of Object.keys(d.days)) { const day = d.days[k]; if (!day || typeof day !== 'object') { delete d.days[k]; continue; } day.done = day.done || {}; if (!day.sched) day.sched = snapshot(k, d.tasks); if (!day.meta) day.meta = d.settings.aguaMeta; }
+  for (const k of Object.keys(d.days)) { const day = d.days[k]; if (!day || typeof day !== 'object') { delete d.days[k]; continue; } day.done = day.done || {}; if (!day.sched) day.sched = snapshot(k, d.tasks, d.aguaSince); if (!day.meta) day.meta = d.settings.aguaMeta; }
   return d;
 }
-function freshData() { return { version: 2, createdAt: null, theme: 'dark', settings: Object.assign({}, DEFAULT_SETTINGS), tasks: clone(DEFAULT_TASKS), days: {} }; }
+function freshData() { return { version: 2, createdAt: null, aguaSince: null, theme: 'dark', settings: Object.assign({}, DEFAULT_SETTINGS), tasks: clone(DEFAULT_TASKS), days: {} }; }
 function loadData() {
   let d = null;
   try { d = migrate(JSON.parse(localStorage.getItem(KEY))); } catch (e) { d = null; }
-  if (!d) { DATA = freshData(); DATA.createdAt = logicalDate(); return DATA; }
+  if (!d) { DATA = freshData(); DATA.createdAt = DATA.aguaSince = logicalDate(); return DATA; }
   return d;
 }
 DATA = loadData();
 const ST = () => DATA.settings;
 function saveData() { DATA_VER++; try { localStorage.setItem(KEY, JSON.stringify(DATA)); } catch (e) { toast('Não consegui salvar no navegador.'); } }
-saveData();
 function todayDay() { const k = logicalDate(); if (!DATA.days[k]) DATA.days[k] = { done: {}, agua: 0 }; return DATA.days[k]; }
 function touchToday() { const day = todayDay(); day.sched = snapshot(logicalDate()); day.meta = ST().aguaMeta; return day; }
+if (DATA.days[logicalDate()]) touchToday();
+saveData();
 const isDone = v => !!v && v !== 'skip';
 const schedOf = (day, k) => day && day.sched ? day.sched : snapshot(k);
 const metaOf = day => day && day.meta ? day.meta : ST().aguaMeta;
+// Copos do dia: os do contador (day.agua) mais as tarefas marcadas que contam como copo, como “Copo d’água ao acordar”.
+// O copo da tarefa vem do estado dela: marcar de novo ou recarregar não soma duas vezes, e desmarcar tira o copo.
+const taskCups = (day, k) => day ? schedOf(day, k).filter(o => o.w && isDone((day.done || {})[o.oid])).length : 0;
+const aguaOf = (day, k) => day ? (day.agua || 0) + taskCups(day, k) : 0;
+function aguaLastOf(day, k) {
+  let last = day && day.aguaLast ? day.aguaLast : null;
+  if (day) for (const o of schedOf(day, k)) { const v = (day.done || {})[o.oid]; if (o.w && isDone(v) && (!last || toMinL(v) > toMinL(last))) last = v; }
+  return last;
+}
 function sleepMin() { const w = toMin(ST().wake), s = toMin(ST().sleep); return s <= w ? s + 1440 : s; }
 function onTime(v, o) { return isDone(v) && Math.abs(toMinL(v) - toMin(o.time) - (toMin(o.time) < cutoff() * 60 ? 1440 : 0)) <= (o.tol ?? 10); }
 
@@ -848,13 +896,13 @@ const Game = {
     if (!day) return 0;
     const s = schedOf(day, k); let xp = 0, all = s.length > 0;
     for (const o of s) { if (isDone(day.done[o.oid])) xp += o.xp; else all = false; }
-    const ok = (day.agua || 0) >= metaOf(day);
+    const ok = aguaOf(day, k) >= metaOf(day);
     if (ok) xp += CFG.xp.aguaMeta;
     if (ok && all) xp += CFG.xp.diaCompleto;
     return xp;
   },
-  complete(day, k) { if (!day) return false; const s = schedOf(day, k); return s.length > 0 && s.every(o => isDone(day.done[o.oid])) && (day.agua || 0) >= metaOf(day); },
-  ratio(day, k) { if (!day) return 0; const s = schedOf(day, k), m = metaOf(day); return (s.filter(o => isDone(day.done[o.oid])).length + Math.min(day.agua || 0, m) / m) / (s.length + 1); },
+  complete(day, k) { if (!day) return false; const s = schedOf(day, k); return s.length > 0 && s.every(o => isDone(day.done[o.oid])) && aguaOf(day, k) >= metaOf(day); },
+  ratio(day, k) { if (!day) return 0; const s = schedOf(day, k), m = metaOf(day); return (s.filter(o => isDone(day.done[o.oid])).length + Math.min(aguaOf(day, k), m) / m) / (s.length + 1); },
   active(day) { return !!day && ((day.agua || 0) > 0 || Object.values(day.done || {}).some(isDone)); },
   summary() {
     const t = logicalDate(), key = DATA_VER + '|' + t;
@@ -877,7 +925,7 @@ const Game = {
       }
       if (day) {
         for (const o of schedOf(day, k)) if (o.time && onTime(day.done[o.oid], o)) { cPont++; if (cPont >= 20 && !ach.pontual) ach.pontual = k; }
-        if ((day.agua || 0) >= metaOf(day)) { cHid++; if (cHid >= 5 && !ach.hidratado) ach.hidratado = k; }
+        if (aguaOf(day, k) >= metaOf(day)) { cHid++; if (cHid >= 5 && !ach.hidratado) ach.hidratado = k; }
         if (!ach.perfeito && this.complete(day, k)) ach.perfeito = k;
         if (isDone(day.done.fd)) { cFd++; if (cFd >= 14 && !ach.sorriso) ach.sorriso = k; }
       }
@@ -950,27 +998,62 @@ const IDB = {
 };
 
 /* ===================== Companheiro: modelo de dados ===================== */
-// v2: cada recorte tem posição e tamanho próprios; cada estado tem sequência, velocidade, repetição, alinhamento e nome.
+// v3: o companheiro pode ter várias imagens (folhas de sprites). Cada imagem tem fundo, grade e tamanho próprios;
+// cada recorte aponta pra sua imagem; cada estado tem sequência, velocidade, repetição, alinhamento e nome.
 const CKEY = 'habitos.companheiro';
 const SKEYS = ['idle', 'celebrate', 'tired', 'levelup'];
 const SNAME = { idle: 'Repouso', celebrate: 'Comemoração', tired: 'Desânimo', levelup: 'Subida de nível' };
 const ALIGNS = ['pes', 'centro', 'recorte'];
+const MAX_IMAGES = 12;
+const BIG_FILE = 5 * 1048576;   // acima disso, avisa que o arquivo exportado ficou grande
 const toInt = (v, d, a, b) => { const n = parseInt(v, 10); return isNaN(n) ? d : clamp(n, a, b); };
+const imgDbKey = id => 'companion.img.' + id;
+const pctOf = k => Math.round(k * 100) + '%';
 function emptyState(fps = 8) { return { seq: [], fps, loop: true, align: 'pes', name: '' }; }
-function defaultComp() {
-  return { v: 2, image: null, scale: 3, alpha: 8, key: { on: false, mode: 'borda', colors: [], tol: 24, trim: 0 }, grid: { fw: 32, fh: 32, mx: 0, my: 0, sx: 0, sy: 0 },
-    frames: [], states: { idle: emptyState(), celebrate: emptyState(), tired: emptyState(), levelup: emptyState() }, nextId: 1, legacy: null };
-}
+const emptyStates = () => ({ idle: emptyState(), celebrate: emptyState(), tired: emptyState(), levelup: emptyState() });
+const defaultKey = () => ({ on: false, mode: 'borda', colors: [], tol: 24, trim: 0 });
+const defaultGrid = () => ({ fw: 32, fh: 32, mx: 0, my: 0, sx: 0, sy: 0 });
+function defaultComp() { return { v: 3, scale: 3, alpha: 8, images: [], frames: [], states: emptyStates(), nextId: 1, nextImg: 1, legacy: null }; }
+function newImage(id, name, size, w, h) { return { id, name: String(name || 'imagem').slice(0, 120), size: size || 0, w, h, k: 1, key: defaultKey(), grid: defaultGrid() }; }
 function gridDims(g, W, H) { return { cols: Math.max(0, Math.floor((W - g.mx + g.sx) / (g.fw + g.sx))), rows: Math.max(0, Math.floor((H - g.my + g.sy) / (g.fh + g.sy))) }; }
 function gridRect(g, i, W, H) {
   const { cols, rows } = gridDims(g, W, H);
   if (!cols || !rows || i < 0 || i >= cols * rows) return null;
   return { x: g.mx + (i % cols) * (g.fw + g.sx), y: g.my + Math.floor(i / cols) * (g.fh + g.sy), w: g.fw, h: g.fh };
 }
+const rgbOf = c => Array.isArray(c) && c.length >= 3 ? c.slice(0, 3).map(v => toInt(v, 0, 0, 255)) : null;
+function sanitizeKey(k) {
+  k = Object.assign(defaultKey(), k || {});
+  const cols = (Array.isArray(k.colors) ? k.colors : [k.color]).map(rgbOf).filter(Boolean).slice(0, 6);
+  return { on: !!k.on && cols.length > 0, mode: ['borda', 'global'].includes(k.mode) ? k.mode : 'borda', colors: cols, tol: toInt(k.tol, 24, 0, 255), trim: toInt(k.trim, 0, 0, 3) };
+}
+function sanitizeGrid(g) {
+  g = Object.assign(defaultGrid(), g || {});
+  return { fw: toInt(g.fw, 32, 1, 4096), fh: toInt(g.fh, 32, 1, 4096), mx: toInt(g.mx, 0, 0, 4096), my: toInt(g.my, 0, 0, 4096), sx: toInt(g.sx, 0, 0, 4096), sy: toInt(g.sy, 0, 0, 4096) };
+}
+// Tamanho da imagem no companheiro (1 = 100%). Fica entre 25% e 400%.
+const sanitizeK = v => { const n = +v; return Number.isFinite(n) && n > 0 ? clamp(Math.round(n * 100) / 100, 0.25, 4) : 1; };
+function sanitizeFrames(list) {
+  return (Array.isArray(list) ? list : []).filter(f => f && typeof f.id === 'string' && [f.x, f.y, f.w, f.h].every(Number.isFinite) && f.w >= 1 && f.h >= 1)
+    .map(f => { const r = { x: Math.round(f.x), y: Math.round(f.y), w: Math.round(f.w), h: Math.round(f.h) }, q = f.o && [f.o.x, f.o.y, f.o.w, f.o.h].every(Number.isFinite) ? f.o : r;
+      return { id: f.id, img: typeof f.img === 'string' ? f.img : '', x: r.x, y: r.y, w: r.w, h: r.h, o: { x: Math.round(q.x), y: Math.round(q.y), w: Math.round(q.w), h: Math.round(q.h) } }; });
+}
+function sanitizeStates(states, ids) {
+  const out = {};
+  for (const s of SKEYS) {
+    const src = (states || {})[s] || {};
+    out[s] = {
+      seq: (Array.isArray(src.seq) ? src.seq : []).filter(it => it && ids.has(it.f)).map(it => ({ f: it.f, dx: Math.round(+it.dx || 0), dy: Math.round(+it.dy || 0) })),
+      fps: toInt(src.fps, 8, 1, 24), loop: src.loop !== false, align: ALIGNS.includes(src.align) ? src.align : 'pes', name: String(src.name || '').slice(0, 40)
+    };
+  }
+  return out;
+}
+const maxNum = (ids, p) => ids.reduce((m, id) => { const n = parseInt(String(id).slice(p.length), 10); return String(id).startsWith(p) && n > m ? n : m; }, 0);
 // Formato antigo (v1): todos os quadros com o mesmo tamanho, índices de grade ou posições livres por estado.
 // A migração cria um recorte por quadro e alinha "pelo recorte", que reproduz exatamente a aparência antiga.
 function migrateComp1(c) {
-  const o = defaultComp();
+  const o = { v: 2, image: null, scale: 3, alpha: 8, key: defaultKey(), grid: defaultGrid(), frames: [], states: emptyStates(), nextId: 1, legacy: null };
   const g = { fw: toInt(c.fw, 32, 1, 4096), fh: toInt(c.fh, 32, 1, 4096), mx: toInt(c.mx, 0, 0, 4096), my: toInt(c.my, 0, 0, 4096), sx: toInt(c.sx, 0, 0, 4096), sy: toInt(c.sy, 0, 0, 4096) };
   o.legacy = clone(c); o.grid = g; o.scale = toInt(c.scale, 3, 1, 8);
   o.image = c.image && c.image.w ? { name: c.image.name, size: c.image.size, w: c.image.w, h: c.image.h } : null;
@@ -990,38 +1073,42 @@ function migrateComp1(c) {
     }
     o.states[s] = st;
   }
-  return sanitizeComp(o);   // passa pela normalização da v2 pra ficar idêntico ao que é salvo
+  return o;
+}
+// v2 → v3: a imagem única vira a “imagem 1”, com o mesmo fundo, a mesma grade e 100% de tamanho. Nada muda na aparência.
+function migrateComp2(c) {
+  const frames = sanitizeFrames(c.frames), ids = new Set(frames.map(f => f.id)), o = defaultComp();
+  const im = c.image && typeof c.image === 'object' ? c.image : null;
+  if (im || frames.length) {
+    o.images = [Object.assign(newImage('i1', im ? im.name : 'imagem', im ? toInt(im.size, 0, 0, 1e10) : 0, im ? toInt(im.w, 0, 0, 1e5) : 0, im ? toInt(im.h, 0, 0, 1e5) : 0), { key: sanitizeKey(c.key), grid: sanitizeGrid(c.grid) })];
+    o.nextImg = 2;
+  }
+  o.frames = frames.map(f => Object.assign(f, { img: 'i1' }));
+  o.states = sanitizeStates(c.states, ids);
+  o.scale = c.scale; o.alpha = c.alpha; o.nextId = c.nextId; o.legacy = c.legacy || null;
+  return o;
 }
 function sanitizeComp(c) {
   if (!c || typeof c !== 'object') return defaultComp();
-  if (c.v !== 2) return migrateComp1(c);
-  const o = Object.assign(defaultComp(), c);
-  o.key = Object.assign(defaultComp().key, c.key || {}); if (!['borda', 'global'].includes(o.key.mode)) o.key.mode = 'borda';
-  const rgb = c => Array.isArray(c) && c.length >= 3 ? c.slice(0, 3).map(v => toInt(v, 0, 0, 255)) : null;
-  const cols = (Array.isArray(o.key.colors) ? o.key.colors : [o.key.color]).map(rgb).filter(Boolean).slice(0, 6);
-  o.key = { on: !!o.key.on && cols.length > 0, mode: o.key.mode, colors: cols, tol: toInt(o.key.tol, 24, 0, 255), trim: toInt(o.key.trim, 0, 0, 3) };
-  const g = Object.assign(defaultComp().grid, c.grid || {});
-  o.grid = { fw: toInt(g.fw, 32, 1, 4096), fh: toInt(g.fh, 32, 1, 4096), mx: toInt(g.mx, 0, 0, 4096), my: toInt(g.my, 0, 0, 4096), sx: toInt(g.sx, 0, 0, 4096), sy: toInt(g.sy, 0, 0, 4096) };
-  o.frames = (Array.isArray(c.frames) ? c.frames : []).filter(f => f && typeof f.id === 'string' && [f.x, f.y, f.w, f.h].every(Number.isFinite) && f.w >= 1 && f.h >= 1)
-    .map(f => { const r = { x: Math.round(f.x), y: Math.round(f.y), w: Math.round(f.w), h: Math.round(f.h) }; const q = f.o && [f.o.x, f.o.y, f.o.w, f.o.h].every(Number.isFinite) ? f.o : r; return { id: f.id, x: r.x, y: r.y, w: r.w, h: r.h, o: { x: Math.round(q.x), y: Math.round(q.y), w: Math.round(q.w), h: Math.round(q.h) } }; });
+  if (c.v !== 3) return sanitizeComp(migrateComp2(c.v === 2 ? c : migrateComp1(c)));
+  const o = defaultComp(), seen = new Set();
+  o.images = (Array.isArray(c.images) ? c.images : []).filter(im => im && typeof im.id === 'string' && /^i\d+$/.test(im.id) && !seen.has(im.id) && seen.add(im.id)).slice(0, MAX_IMAGES)
+    .map(im => ({ id: im.id, name: String(im.name || 'imagem').slice(0, 120), size: toInt(im.size, 0, 0, 1e10), w: toInt(im.w, 0, 0, 1e5), h: toInt(im.h, 0, 0, 1e5), k: sanitizeK(im.k), key: sanitizeKey(im.key), grid: sanitizeGrid(im.grid) }));
+  const imgs = new Set(o.images.map(im => im.id));
+  o.frames = sanitizeFrames(c.frames).filter(f => imgs.has(f.img));
   const ids = new Set(o.frames.map(f => f.id));
-  o.states = {};
-  for (const s of SKEYS) {
-    const src = (c.states || {})[s] || {};
-    o.states[s] = {
-      seq: (Array.isArray(src.seq) ? src.seq : []).filter(it => it && ids.has(it.f)).map(it => ({ f: it.f, dx: Math.round(+it.dx || 0), dy: Math.round(+it.dy || 0) })),
-      fps: toInt(src.fps, 8, 1, 24), loop: src.loop !== false, align: ALIGNS.includes(src.align) ? src.align : 'pes', name: String(src.name || '').slice(0, 40)
-    };
-  }
-  o.scale = toInt(o.scale, 3, 1, 8); o.alpha = toInt(o.alpha, 8, 0, 254);
-  let max = 0; for (const f of o.frames) { const n = parseInt(f.id.slice(1), 10); if (n > max) max = n; }
-  o.nextId = Math.max(toInt(o.nextId, 1, 1, 1e9), max + 1);
+  o.states = sanitizeStates(c.states, ids);
+  o.scale = toInt(c.scale, 3, 1, 8); o.alpha = toInt(c.alpha, 8, 0, 254);
+  o.nextId = Math.max(toInt(c.nextId, 1, 1, 1e9), maxNum([...ids], 'f') + 1);
+  o.nextImg = Math.max(toInt(c.nextImg, 1, 1, 1e9), maxNum([...imgs], 'i') + 1);
+  o.legacy = c.legacy && typeof c.legacy === 'object' ? c.legacy : null;
   return o;
 }
 let CC = (() => {
   let raw = null; try { raw = JSON.parse(localStorage.getItem(CKEY)); } catch (e) {}
   const c = sanitizeComp(raw);
-  if (raw && raw.v !== 2) { try { localStorage.setItem(CKEY + '.v1-backup', JSON.stringify(raw)); localStorage.setItem(CKEY, JSON.stringify(c)); } catch (e) {} }
+  // Formato antigo: guarda uma cópia do jeito que estava antes de converter.
+  if (raw && raw.v !== 3) { try { localStorage.setItem(CKEY + '.v' + (raw.v === 2 ? 2 : 1) + '-backup', JSON.stringify(raw)); localStorage.setItem(CKEY, JSON.stringify(c)); } catch (e) {} }
   return c;
 })();
 let CC_VER = 0;
@@ -1098,7 +1185,8 @@ class SheetImage {
     const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(img, 0, 0);
     this.orig = x.getImageData(0, 0, this.w, this.h); this.info = analyzeSheet(this.orig.data, this.w, this.h);
   }
-  adopt(o) { this.img = o.img; this.blob = o.blob; this.orig = o.orig; this.info = o.info; this.src = null; this.mask = null; this.sig = ''; this.bb = new Map(); }
+  // Compartilha a imagem e a versão processada (nunca são alteradas no lugar: um fundo novo gera tela e máscara novas).
+  adopt(o) { this.img = o.img; this.blob = o.blob; this.orig = o.orig; this.info = o.info; this.src = o.src; this.mask = o.mask; this.sig = o.sig; this.bb = new Map(o.bb); }
   // Gera a versão exibida (sem fundo, se pedido) e a máscara do personagem. Só refaz quando o fundo ou a transparência mínima mudam.
   ensure(key, alpha = 8) {
     if (!this.img) return;
@@ -1126,7 +1214,7 @@ class SheetImage {
     const m = new Uint8Array(W * H); for (let j = 0; j < m.length; j++) m[j] = p[j * 4 + 3] > alpha ? 1 : 0;
     // Fundo ainda não removido: a detecção ignora mesmo assim o fundo ligado às bordas.
     if (!(key && key.on) && this.info.bgSet) { const fl = floodEdges(this.orig.data, W, H, this.info.bgSet, 24); for (let j = 0; j < fl.length; j++) if (fl[j]) m[j] = 0; }
-    this.src = c; this.mask = m; this.sig = sig; this.bb.clear();
+    this.src = c; this.mask = m; this.sig = sig; this.bb = new Map();
   }
   // Caixa dos pixels do personagem dentro de um recorte (coordenadas relativas ao recorte), ou null se vazio.
   bbox(r) {
@@ -1141,7 +1229,38 @@ class SheetImage {
   }
   pixel(x, y) { const i = (y * this.w + x) * 4, p = this.orig.data; return [p[i], p[i + 1], p[i + 2], p[i + 3]]; }
 }
-const SAVED = new SheetImage();
+// Conjunto das imagens de um companheiro, uma folha por imagem (id → SheetImage).
+class SheetSet {
+  constructor() { this.m = new Map(); this.v = 0; }
+  get(id) { return this.m.get(id) || null; }
+  has(id) { const s = this.m.get(id); return !!(s && s.img); }
+  put(id, sh) { this.m.set(id, sh); this.v++; return sh; }
+  async load(id, blob) { const sh = new SheetImage(); await sh.load(blob); return this.put(id, sh); }
+  clear() { this.m = new Map(); this.v++; }
+  // Copia as folhas de outro conjunto (só as da lista de ids, se houver).
+  adopt(o, only) { this.m = new Map(); for (const [id, sh] of o.m) if (!only || only.includes(id)) { const s = new SheetImage(); s.adopt(sh); this.m.set(id, s); } this.v++; }
+  any(cfg) { return cfg.images.some(im => this.has(im.id)); }
+  ensure(cfg) { for (const im of cfg.images) { const s = this.get(im.id); if (s && s.img) s.ensure(im.key, cfg.alpha); } }
+  sig(cfg) { return this.v + '|' + cfg.images.map(im => { const s = this.get(im.id); return im.id + ':' + im.k + ':' + (s && s.img ? s.w + 'x' + s.h + s.sig : '-'); }).join(','); }
+}
+const SAVED = new SheetSet();
+// Lê do navegador as imagens do companheiro salvo. A imagem do formato antigo (uma só) vira a imagem 1.
+async function loadSavedImages() {
+  SAVED.clear();
+  for (const im of CC.images) {
+    try {
+      let blob = await IDB.get(imgDbKey(im.id)), legacy = false;
+      if (!blob && im.id === 'i1') { blob = await IDB.get('companion.image'); legacy = !!blob; }
+      if (!blob) continue;
+      const sh = new SheetImage(); await sh.load(blob);
+      if (legacy) {
+        if (im.w && (sh.w !== im.w || sh.h !== im.h)) continue;
+        try { await IDB.set(imgDbKey(im.id), blob); } catch (e) {}
+      }
+      SAVED.put(im.id, sh);
+    } catch (e) { console.warn('Imagem do companheiro indisponível:', im.id, e); }
+  }
+}
 
 /* ===================== Alinhamento e área de exibição comum ===================== */
 // Âncora de cada quadro: pelos pés (base dos pixels), pelo centro dos pixels ou pela base do recorte.
@@ -1151,21 +1270,22 @@ function anchorOf(f, align, sheet) {
   return align === 'centro' ? { ax: bb.x + Math.floor(bb.w / 2), ay: bb.y + Math.floor(bb.h / 2) } : { ax: bb.x + Math.floor(bb.w / 2), ay: bb.y + bb.h };
 }
 // Calcula uma área comum a todos os estados: as âncoras coincidem e o personagem não pula entre poses de tamanhos diferentes.
-function stageLayout(cfg, sheet) {
-  const fmap = new Map(cfg.frames.map(f => [f.id, f])), per = {};
+// Cada imagem entra com o seu tamanho (k); os ajustes finos (dx, dy) ficam em pixels da área comum.
+function stageLayout(cfg, set) {
+  const fmap = new Map(cfg.frames.map(f => [f.id, f])), imap = new Map(cfg.images.map(im => [im.id, im])), per = {}, ks = new Set();
   let L = 0, R = 0, U = 0, D = 0, any = false;
   for (const s of SKEYS) {
     const st = cfg.states[s]; per[s] = [];
     st.seq.forEach((it, k) => {
-      const f = fmap.get(it.f); if (!f) return;
-      const a = anchorOf(f, st.align, sheet);
-      per[s].push({ r: f, ax: a.ax, ay: a.ay, dx: it.dx, dy: it.dy, k });
+      const f = fmap.get(it.f), im = f && imap.get(f.img), sh = f && set.get(f.img); if (!f || !im || !sh || !sh.src) return;
+      const sc = im.k, a = anchorOf(f, st.align, sh), ax = a.ax * sc, ay = a.ay * sc;
+      per[s].push({ r: f, sh, sc, ax, ay, dx: it.dx, dy: it.dy, k });
       // Pelo recorte, a área inclui o recorte inteiro (como nas grades antigas); pelos pés ou centro, só os pixels do personagem.
-      const e = st.align === 'recorte' ? { x: 0, y: 0, w: f.w, h: f.h } : (sheet.bbox(f) || { x: 0, y: 0, w: f.w, h: f.h });
-      L = Math.max(L, a.ax - e.x - it.dx); R = Math.max(R, e.x + e.w - a.ax + it.dx); U = Math.max(U, a.ay - e.y - it.dy); D = Math.max(D, e.y + e.h - a.ay + it.dy); any = true;
+      const e = st.align === 'recorte' ? { x: 0, y: 0, w: f.w, h: f.h } : (sh.bbox(f) || { x: 0, y: 0, w: f.w, h: f.h });
+      L = Math.max(L, ax - e.x * sc - it.dx); R = Math.max(R, (e.x + e.w) * sc - ax + it.dx); U = Math.max(U, ay - e.y * sc - it.dy); D = Math.max(D, (e.y + e.h) * sc - ay + it.dy); any = true; ks.add(sc);
     });
   }
-  return any ? { W: Math.max(1, L + R), H: Math.max(1, U + D), L, U, per } : null;
+  return any ? { W: Math.max(1, L + R), H: Math.max(1, U + D), L, U, per, ks: [...ks] } : null;
 }
 
 /* ===================== Reprodutor de animação ===================== */
@@ -1176,10 +1296,10 @@ class Player {
     this.state = 'idle'; this.i = 0; this.timer = null; this.paused = false; this.scaleOverride = null; this.bg = null; this.guides = false; this.onion = false; this._k = ''; this._lay = null; this.lastScale = 1;
   }
   layout() {
-    const sh = this.o.sheet(), cfg = this.o.cfg();
-    if (sh.img) sh.ensure(cfg.key, cfg.alpha);
-    const k = this.o.ver() + '|' + sh.sig + '|' + (sh.img ? sh.w + 'x' + sh.h : 0);
-    if (k !== this._k) { this._k = k; this._lay = sh.img ? stageLayout(cfg, sh) : null; }
+    const set = this.o.sheet(), cfg = this.o.cfg();
+    set.ensure(cfg);
+    const k = this.o.ver() + '|' + set.sig(cfg);
+    if (k !== this._k) { this._k = k; this._lay = stageLayout(cfg, set); }
     return this._lay;
   }
   seq() {
@@ -1205,13 +1325,17 @@ class Player {
   step(n) { const { f } = this.seq(); if (!f.length) return; this.i = ((this.i % f.length) + n + f.length * 4) % f.length; this.draw(); }
   index() { const { f } = this.seq(); return f.length ? this.i % f.length : 0; }
   current() { const { f } = this.seq(); return f.length ? f[this.i % f.length] : null; }
+  // Ampliação inteira sempre que possível; com imagens em 50%, prefere um valor que mantenha cada pixel inteiro.
   scale(lay) {
     if (this.scaleOverride) return this.scaleOverride;
     const m = Math.max(lay.W, lay.H), cap = this.o.cap ? this.o.cfg().scale : 8;
-    return m <= this.o.maxPx ? Math.max(1, Math.min(cap, Math.floor(this.o.maxPx / m))) : this.o.maxPx / m;
+    if (m > this.o.maxPx) return this.o.maxPx / m;
+    const s = Math.max(1, Math.min(cap, Math.floor(this.o.maxPx / m)));
+    for (let t = s; t >= 1; t--) if (lay.ks.every(k => Math.abs(t * k - Math.round(t * k)) < 1e-6)) return t;
+    return s;
   }
   draw() {
-    const { f, fb, lay } = this.seq(), sh = this.o.sheet(), empty = !sh.src || !f.length;
+    const { f, fb, lay } = this.seq(), empty = !f.length;
     this.wrap.classList.toggle('empty', empty); this.wrap.dataset.state = this.state; this.wrap.dataset.fallback = fb ? '1' : '';
     if (empty) { this.cv.width = 0; this.cv.height = 0; this.cv.dataset.frame = ''; this.cv.dataset.fid = ''; if (this.o.onDraw) this.o.onDraw(0, 0); return; }
     const s = this.lastScale = this.scale(lay), W = Math.max(1, Math.round(lay.W * s)), H = Math.max(1, Math.round(lay.H * s));
@@ -1219,7 +1343,7 @@ class Player {
     const c = this.ctx, n = f.length, idx = this.i % n;
     c.imageSmoothingEnabled = false; c.clearRect(0, 0, W, H);
     if (this.bg) { c.fillStyle = this.bg; c.fillRect(0, 0, W, H); }
-    const put = it => { const x = lay.L - it.ax + it.dx, y = lay.U - it.ay + it.dy; c.drawImage(sh.src, it.r.x, it.r.y, it.r.w, it.r.h, Math.round(x * s), Math.round(y * s), Math.round(it.r.w * s), Math.round(it.r.h * s)); };
+    const put = it => { const x = lay.L - it.ax + it.dx, y = lay.U - it.ay + it.dy; c.drawImage(it.sh.src, it.r.x, it.r.y, it.r.w, it.r.h, Math.round(x * s), Math.round(y * s), Math.round(it.r.w * it.sc * s), Math.round(it.r.h * it.sc * s)); };
     if (this.onion && n > 1) { c.globalAlpha = 0.35; put(f[(idx - 1 + n) % n]); c.globalAlpha = 1; }
     put(f[idx]);
     if (this.guides) {
@@ -1261,7 +1385,7 @@ const Comp = {
     else if (this.recovered) { label = 'Recuperado'; bg = 'var(--ok)'; fg = 'var(--okt)'; note = 'De volta ao normal'; }
     else { label = 'Repouso'; note = 'Toque para interagir'; }
     chip.textContent = label; chip.style.background = bg; chip.style.color = fg;
-    $('#compNote').textContent = SAVED.img && CC.states.idle.seq.length ? note : 'Configure o companheiro em Configurações.';
+    $('#compNote').textContent = SAVED.any(CC) && CC.states.idle.seq.length ? note : 'Configure o companheiro em Configurações.';
     $('#compStage').dataset.kind = this.kind || this.base;
   }
 };
@@ -1319,12 +1443,12 @@ const Remind = {
       if (st.doseLead > 0 && nm >= open - st.doseLead && nm < open && !this.sent.has(k1)) { this.mark(k1); notify(o.label + ' às ' + o.time, 'A janela abre em ' + (open - nm) + ' min.'); }
       else if (nm >= open && nm <= s + o.tol && !this.sent.has(k2)) { this.mark(k2); this.mark(k1); notify('Hora: ' + o.label + ' · ' + o.time, 'Janela até ' + fmtMin(s + o.tol) + '.'); }
     }
-    if (st.notifAgua && (day.agua || 0) < metaOf(day)) {
+    if (st.notifAgua && aguaOf(day, t) < metaOf(day)) {
       const wake = toMin(st.wake), sl = sleepMin();
       if (nm >= wake && nm <= sl) {
-        const last = Math.max(day.aguaLast ? toMinL(day.aguaLast) : wake, wake), slot = Math.floor((nm - last) / st.aguaGap);
+        const al = aguaLastOf(day, t), last = Math.max(al ? toMinL(al) : wake, wake), slot = Math.floor((nm - last) / st.aguaGap);
         const k = t + '|agua|' + last + '|' + slot;
-        if (slot >= 1 && !this.sent.has(k)) { this.mark(k); notify('Hora de um copo d’água', (day.agua || 0) + ' de ' + metaOf(day) + ' copos até agora.'); }
+        if (slot >= 1 && !this.sent.has(k)) { this.mark(k); notify('Hora de um copo d’água', aguaOf(day, t) + ' de ' + metaOf(day) + ' copos até agora.'); }
       }
     }
   }
@@ -1374,7 +1498,13 @@ function commit(mutator) {
 function toggleTask(oid) { commit(d => { if (d.done[oid]) delete d.done[oid]; else d.done[oid] = hhmm(now()); }); }
 function skipDose(oid) { commit(d => { d.done[oid] = 'skip'; }); }
 function takeDose(oid) { commit(d => { d.done[oid] = hhmm(now()); }); }
-function changeAgua(n) { commit(d => { const before = d.agua || 0; d.agua = clamp(before + n, 0, 30); if (d.agua > before) d.aguaLast = hhmm(now()); }); }
+function changeAgua(n) {
+  const tk = logicalDate(), day = DATA.days[tk];
+  if (n < 0 && !(day && day.agua > 0) && taskCups(day, tk)) {
+    const o = schedOf(day, tk).find(x => x.w && isDone(day.done[x.oid])), t = o && DATA.tasks.find(x => x.id === o.oid.split('@')[0]);
+    toast('Esse copo veio da tarefa “' + (t ? t.label : 'de água') + '”. Pra tirar, desmarque a tarefa.'); return;
+  }
+  commit(d => { const before = d.agua || 0; d.agua = clamp(before + n, 0, 30); if (d.agua > before) d.aguaLast = hhmm(now()); }); }
 
 /* ===================== Tela Hoje ===================== */
 function markMore(el) { el.classList.toggle('more', el.scrollHeight - el.scrollTop - el.clientHeight > 4); }
@@ -1411,7 +1541,7 @@ function renderHoje() {
 
   // Anéis
   const cnt = p => { const l = occ.filter(o => o.p === p); return [l.filter(o => isDone(day.done[o.oid])).length, l.length]; };
-  const [cm, tm] = cnt('m'), [cd, td] = cnt('d'), [cn, tn] = cnt('n'), agua = day.agua || 0, meta = st.aguaMeta;
+  const [cm, tm] = cnt('m'), [cd, td] = cnt('d'), [cn, tn] = cnt('n'), agua = aguaOf(day, tk), tc = taskCups(day, tk), meta = st.aguaMeta;
   const dash = (id, r, p) => { const c = 2 * Math.PI * r; $(id).setAttribute('stroke-dasharray', (c * clamp(p, 0, 1)).toFixed(1) + ' ' + c.toFixed(1)); };
   dash('#rM', 66, tm ? cm / tm : 0); dash('#rD', 53, td ? cd / td : 0); dash('#rN', 40, tn ? cn / tn : 0); dash('#rA', 27, agua / meta);
   $('#overall').textContent = Math.round((cm + cd + cn + Math.min(agua, meta) / meta) / (occ.length + 1) * 100) + '%';
@@ -1422,7 +1552,7 @@ function renderHoje() {
   // Água
   const L = x => (x * st.copoMl / 1000).toFixed(1).replace('.', ',') + ' L';
   $('#aguaL').textContent = L(agua); $('#aguaMetaL').textContent = L(meta);
-  $('#aguaSub').textContent = agua + ' de ' + meta + ' copos · copo de ' + st.copoMl + ' ml';
+  $('#aguaSub').textContent = agua + ' de ' + meta + ' copos' + (tc ? ' · ' + tc + (tc === 1 ? ' veio' : ' vieram') + ' das tarefas' : '') + ' · copo de ' + st.copoMl + ' ml';
   const aok = agua >= meta;
   $('#aguaMeta').textContent = aok ? 'Meta batida · +' + CFG.xp.aguaMeta + ' XP' : 'Meta: +' + CFG.xp.aguaMeta + ' XP ao chegar em ' + meta + ' copos';
   $('#aguaMeta').style.color = aok ? 'var(--ok)' : 'var(--mu)';
@@ -1468,9 +1598,9 @@ function renderHoje() {
       <div class="plist" data-p="${p}">${list.length ? '' : '<div class="empty-card">Nada neste período hoje.</div>'}
       ${list.map(o => {
         const v = day.done[o.oid], on = isDone(v), isNext = o.oid === nextId;
-        let meta = '+' + o.xp + ' XP';
+        let meta = '+' + o.xp + ' XP' + (o.w ? ' · <span class="cup">+1 copo</span>' : '');
         if (v === 'skip') meta = 'pulado';
-        else if (on) meta = o.time ? v + (onTime(v, o) ? ' · ok' : ' · fora') : v;
+        else if (on) meta = (o.time ? v + (onTime(v, o) ? ' · ok' : ' · fora') : v) + (o.w ? ' · <span class="cup">1 copo</span>' : '');
         return `<button type="button" class="task ${on ? 'on' : ''} ${isNext ? 'next' : ''}" style="${isNext ? '--hl:' + hl : ''}" data-task="${o.oid}" aria-pressed="${on}"><span class="box" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L19 7"/></svg></span><span class="lbl">${esc(o.label)}${o.time ? ' · ' + o.time : ''}</span>${isNext ? '<span class="selo">PRÓXIMA</span>' : ''}<span class="meta mono">${meta}</span></button>`;
       }).join('')}
       ${p === 'd' ? `<div class="xs mu" style="margin-top:4px;padding:10px 12px;border-radius:12px;border:1px dashed var(--ln)">A água fica no contador acima · +${CFG.xp.aguaMeta} XP ao bater a meta</div>` : ''}</div></section>`;
@@ -1520,7 +1650,7 @@ const Hist = {
     const t = logicalDate(); let due = 0, ok = 0, days = 0, water = 0;
     for (let i = from; i <= to; i++) {
       const k = addDays(t, -i); if (k < DATA.createdAt) break;
-      const day = DATA.days[k], s = schedOf(day, k); days++; water += day ? day.agua || 0 : 0;
+      const day = DATA.days[k], s = schedOf(day, k); days++; water += aguaOf(day, k);
       due += s.length; if (day) ok += s.filter(o => isDone(day.done[o.oid])).length;
     }
     return { due, ok, days, pct: due ? Math.round(ok / due * 100) : null, water: days ? water / days : null };
@@ -1546,7 +1676,7 @@ const Hist = {
       else {
         const day = DATA.days[k]; let r = 0;
         if (day) {
-          if (this.filter === 'agua') r = Math.min(day.agua || 0, metaOf(day)) / metaOf(day);
+          if (this.filter === 'agua') r = Math.min(aguaOf(day, k), metaOf(day)) / metaOf(day);
           else if (this.filter === 'horario') { const tm = schedOf(day, k).filter(o => o.time); r = tm.length ? tm.filter(o => isDone(day.done[o.oid])).length / tm.length : 0; }
           else r = Game.ratio(day, k);
         }
@@ -1636,6 +1766,7 @@ const Tasks = {
     else if (task.type === 'duplo') out.push(['Manhã + noite', '']);
     else out.push([PNAME[task.p] || 'Manhã', task.p === 'd' ? 'var(--ok)' : task.p === 'n' ? 'var(--nt)' : 'var(--xp)']);
     out.push([(task.type === 'horario' ? '20 XP' : '10 XP') + (taskOccs(task).length > 1 ? ' cada' : ''), 'var(--xp)']);
+    if (task.agua) out.push(['+1 copo' + (taskOccs(task).length > 1 ? ' cada' : ''), 'var(--wa)']);
     const d = Array.isArray(task.days) && task.days.length ? task.days : ALLDAYS;
     if (d.length < 7) out.push([d.map(i => WD1[i]).join(' '), '']);
     if (task.start && task.start > t) out.push(['começa ' + dm(task.start), '']);
@@ -1656,11 +1787,11 @@ const Tasks = {
   open(id) {
     const task = id ? DATA.tasks.find(x => x.id === id) : null; this.editing = id;
     const dur = task && task.start && task.end ? diffDays(task.end, task.start) + 1 : 7;
-    this.form = task ? { label: task.label, type: task.type, p: task.p || 'm', times: (task.times || []).join(', '), tol: task.tol ?? 10, days: (task.days && task.days.length ? task.days : ALLDAYS).slice(), temp: !!task.end, start: task.start || logicalDate(), dur }
-      : { label: '', type: 'simples', p: 'm', times: '08:00', tol: 10, days: ALLDAYS.slice(), temp: false, start: logicalDate(), dur: 7 };
+    this.form = task ? { label: task.label, type: task.type, p: task.p || 'm', times: (task.times || []).join(', '), tol: task.tol ?? 10, days: (task.days && task.days.length ? task.days : ALLDAYS).slice(), temp: !!task.end, start: task.start || logicalDate(), dur, agua: !!task.agua }
+      : { label: '', type: 'simples', p: 'm', times: '08:00', tol: 10, days: ALLDAYS.slice(), temp: false, start: logicalDate(), dur: 7, agua: false };
     $('#tfTitle').textContent = task ? 'Editar tarefa' : 'Nova tarefa';
     $('#tfName').value = this.form.label; $('#tfTimes').value = this.form.times; $('#tfTol').value = this.form.tol;
-    $('#tfStart').value = this.form.start; $('#tfDur').value = this.form.dur; $('#tfTemp').checked = this.form.temp;
+    $('#tfStart').value = this.form.start; $('#tfDur').value = this.form.dur; $('#tfTemp').checked = this.form.temp; $('#tfAgua').checked = this.form.agua;
     $('#tfArchive').hidden = !task; $('#tfErr').textContent = '';
     $('#taskForm').hidden = false; this.paintForm(); $('#tfName').focus();
   },
@@ -1674,7 +1805,7 @@ const Tasks = {
   },
   save() {
     const f = this.form, err = m => { $('#tfErr').textContent = m; };
-    f.label = $('#tfName').value.trim(); f.times = $('#tfTimes').value; f.tol = parseInt($('#tfTol').value, 10); f.start = $('#tfStart').value; f.dur = parseInt($('#tfDur').value, 10); f.temp = $('#tfTemp').checked;
+    f.label = $('#tfName').value.trim(); f.times = $('#tfTimes').value; f.tol = parseInt($('#tfTol').value, 10); f.start = $('#tfStart').value; f.dur = parseInt($('#tfDur').value, 10); f.temp = $('#tfTemp').checked; f.agua = $('#tfAgua').checked;
     if (!f.label) return err('Dê um nome pra tarefa.');
     if (!f.days.length) return err('Escolha pelo menos um dia da semana.');
     let times = [];
@@ -1692,7 +1823,7 @@ const Tasks = {
       start = f.start; end = addDays(f.start, f.dur - 1);
       if (end < logicalDate()) return err('Com essa data e duração, a tarefa já teria terminado.');
     }
-    const t = logicalDate(), fields = { label: f.label, type: f.type, p: f.type === 'simples' ? f.p : null, times, tol: f.type === 'horario' ? f.tol : 10, days: f.days.length === 7 ? ALLDAYS.slice() : f.days.slice(), updatedAt: Date.now() };
+    const t = logicalDate(), fields = { label: f.label, type: f.type, p: f.type === 'simples' ? f.p : null, times, tol: f.type === 'horario' ? f.tol : 10, days: f.days.length === 7 ? ALLDAYS.slice() : f.days.slice(), agua: f.agua ? 1 : 0, updatedAt: Date.now() };
     if (this.editing) {
       const task = DATA.tasks.find(x => x.id === this.editing);
       Object.assign(task, fields);
@@ -1786,12 +1917,12 @@ const Pack = {
     if (t.type === 'simples') o.p = t.p || 'm';
     if (t.type === 'horario') { o.t = (t.times || []).map(x => x.replace(':', '')).join(','); if ((t.tol ?? 10) !== 10) o.c = t.tol; }
     if (Array.isArray(t.days) && t.days.length && t.days.length < 7) o.d = t.days.join('');
-    if (t.start) o.s = t.start; if (t.end) o.e = t.end; if (t.updatedAt) o.u = t.updatedAt;
+    if (t.start) o.s = t.start; if (t.end) o.e = t.end; if (t.updatedAt) o.u = t.updatedAt; if (t.agua) o.w = 1;
     return o;
   },
   untask(o) {
     return { id: String(o.i), label: String(o.l || 'Tarefa'), type: CODE_TYPE[o.y] || 'simples', p: o.p || null, times: o.t ? String(o.t).split(',').filter(Boolean).map(x => x.slice(0, 2) + ':' + x.slice(2)) : [], tol: o.c ?? 10,
-      days: o.d ? String(o.d).split('').map(Number) : ALLDAYS.slice(), start: o.s || null, end: o.e || null, order: o.o ?? 0, updatedAt: o.u || 0 };
+      days: o.d ? String(o.d).split('').map(Number) : ALLDAYS.slice(), start: o.s || null, end: o.e || null, order: o.o ?? 0, updatedAt: o.u || 0, agua: o.w ? 1 : 0 };
   },
   day(d) { return [Object.entries(d.done || {}).map(([k, v]) => k + '=' + (v === 'skip' ? 'x' : v.replace(':', ''))).join(';'), d.agua || 0, d.aguaLast ? d.aguaLast.replace(':', '') : '']; },
   unday(a) {
@@ -1870,7 +2001,7 @@ const Sync = {
 };
 
 /* ===================== Editor de companheiros: detecção ===================== */
-const ED = new SheetImage();
+const ED = new SheetSet();
 // Rotulagem de componentes conectados (8 vizinhos) sobre a máscara, em blocos pra não travar a tela. Devolve caixas em coordenadas da imagem.
 async function ccl(mask, W, x0, y0, rw, rh, job, onProg) {
   const lab = new Int32Array(rw * rh); let parent = new Int32Array(1024), n = 1, t0 = performance.now();
@@ -1991,151 +2122,249 @@ function bgLine(info, key) {
 
 /* ===================== Editor de companheiros ===================== */
 const Ed = {
-  d: null, ver: 0, step: 1, state: 'idle', sel: [], seqSel: [], pick: [], hist: [], imgDirty: false, quick: false, view: 'proc', picking: false,
-  report: null, suggest: null, job: null, drag: null, pvDrag: null, pv: null, pvPlaying: true, z: 1, det: { gap: 2, min: 6 }, _raf: 0, _tolSnap: false, _tolT: 0,
+  d: null, ver: 0, step: 1, state: 'idle', img: null, sel: [], seqSel: [], pick: [], hist: [], newBlobs: new Set(), quick: false, fresh: false, view: 'proc', picking: false,
+  report: null, suggest: null, job: null, drag: null, pvDrag: null, pv: null, pvPlaying: true, z: 1, det: { gap: 2, min: 6 }, frFilter: 'cur', seqFilter: 'all', _raf: 0, _tolSnap: false, _tolT: 0,
 
   /* ---------- rascunho, desfazer e salvar ---------- */
   reset() {
-    this.d = clone(CC); ED.adopt(SAVED); this.imgDirty = false; this.hist = []; this.sel = []; this.seqSel = []; this.pick = []; this.report = null; this.suggest = null;
+    this.d = clone(CC); ED.adopt(SAVED); this.newBlobs = new Set(); this.hist = []; this.sel = []; this.seqSel = []; this.pick = []; this.report = null; this.suggest = null; this.quick = false; this.fresh = false;
+    if (!this.imOf(this.img)) this.img = this.d.images.length ? this.d.images[0].id : null;
+    if (this.seqFilter !== 'all' && !this.imOf(this.seqFilter)) this.seqFilter = 'all';
     this.touch();
   },
   norm() { return sanitizeComp(clone(this.d)); },
-  isDirty() { return !!this.d && (this.imgDirty || JSON.stringify(this.norm()) !== JSON.stringify(CC)); },
+  isDirty() { return !!this.d && (this.d.images.some(im => this.newBlobs.has(im.id)) || JSON.stringify(this.norm()) !== JSON.stringify(CC)); },
   touch() { this.ver++; this.schedule(); },
   schedule() { if (!this._raf) this._raf = requestAnimationFrame(() => { this._raf = 0; if (VIEW === 'config') this.render(); }); },
+  // Desfazer guarda imagens, recortes e sequências juntos: adicionar ou remover uma imagem também volta.
   snap() {
-    const s = JSON.stringify({ frames: this.d.frames, states: this.d.states, key: this.d.key, grid: this.d.grid, nextId: this.d.nextId, scale: this.d.scale, alpha: this.d.alpha });
+    const s = JSON.stringify({ images: this.d.images, frames: this.d.frames, states: this.d.states, nextId: this.d.nextId, nextImg: this.d.nextImg, scale: this.d.scale, alpha: this.d.alpha, img: this.img });
     if (this.hist[this.hist.length - 1] !== s) this.hist.push(s);
     if (this.hist.length > 80) this.hist.shift();
   },
   undo() {
     const s = this.hist.pop(); if (!s) return;
-    Object.assign(this.d, JSON.parse(s));
+    const o = JSON.parse(s), img = o.img; delete o.img; Object.assign(this.d, o);
+    this.img = this.imOf(img) ? img : this.d.images.length ? this.d.images[0].id : null;
+    if (this.seqFilter !== 'all' && !this.imOf(this.seqFilter)) this.seqFilter = 'all';
     const ids = new Set(this.d.frames.map(f => f.id)); this.sel = this.sel.filter(id => ids.has(id)); this.pick = this.pick.filter(id => ids.has(id)); this.seqSel = [];
+    if (this.report && !this.imOf(this.report.img)) this.report = null;
     this.touch(); toast('Desfeito.');
   },
   async save() {
-    const c = this.norm();
-    c.image = ED.img ? { name: (this.d.image && this.d.image.name) || 'sprites.png', size: ED.blob ? ED.blob.size : 0, w: ED.w, h: ED.h } : null;
-    if (this.imgDirty) {
-      try { if (ED.blob) await IDB.set('companion.image', ED.blob); else await IDB.del('companion.image'); }
-      catch (e) { toast('O navegador não deixou salvar a imagem. Nada foi alterado.'); return false; }
-    }
-    CC = c; saveComp(); SAVED.adopt(ED); this.imgDirty = false; this.d = clone(CC);
+    const c = this.norm(), had = new Set(CC.images.map(im => im.id));
+    for (const im of c.images) { const sh = this.sh(im.id); if (sh) { im.w = sh.w; im.h = sh.h; if (sh.blob) im.size = sh.blob.size; } }
+    // Primeiro grava as imagens novas; só depois troca a configuração. Se o navegador recusar, nada muda.
+    const store = c.images.filter(im => { const sh = this.sh(im.id); return sh && sh.blob && (!had.has(im.id) || this.newBlobs.has(im.id)); });
+    try { for (const im of store) await IDB.set(imgDbKey(im.id), this.sh(im.id).blob); }
+    catch (e) { toast('O navegador não deixou salvar as imagens. Nada foi alterado.'); return false; }
+    const gone = CC.images.filter(im => !c.images.some(x => x.id === im.id)).map(im => im.id);
+    CC = c; saveComp(); SAVED.adopt(ED, c.images.map(im => im.id));
+    for (const id of gone) { try { await IDB.del(imgDbKey(id)); } catch (e) {} }
+    this.newBlobs = new Set(); this.d = clone(CC);
     Comp.player.restart(); Comp.paint(); paintBackupSize();
     for (const id of ['#ceSaved', '#ceSaved2']) { const el = $(id); el.hidden = false; clearTimeout(el._t); el._t = setTimeout(() => { el.hidden = true; }, 4000); }
     toast('Companheiro salvo. Já aparece na tela Hoje.'); this.touch(); return true;
   },
   discard() { if (!this.isDirty() || !confirm('Descartar as alterações não salvas do companheiro?')) return; this.reset(); toast('Alterações descartadas.'); },
 
+  /* ---------- imagens ---------- */
+  imOf(id) { return this.d ? this.d.images.find(im => im.id === id) || null : null; },
+  im() { return this.imOf(this.img); },
+  imNum(id) { return this.d.images.findIndex(im => im.id === id) + 1; },
+  multi() { return this.d.images.length > 1; },
+  sh(id = this.img) { const s = ED.get(id); return s && s.img ? s : null; },
+  ensureSh(id = this.img) { const s = this.sh(id), im = this.imOf(id); if (s && im) s.ensure(im.key, this.d.alpha); return s && im ? s : null; },
+  setImg(id) { if (!this.imOf(id) || id === this.img) return; this.img = id; this.sel = []; this.picking = false; this.touch(); },
+  framesOf(id) { return this.d.frames.filter(f => f.img === id); },
+  nextImgId() {
+    let n = this.d.nextImg;
+    for (const id of [...ED.m.keys(), ...CC.images.map(im => im.id)]) n = Math.max(n, (parseInt(id.slice(1), 10) || 0) + 1);
+    return n;
+  },
+  // Altura típica do personagem numa imagem (mediana dos pixels visíveis dos recortes usados nas sequências, ou de todos).
+  charHeight(id) {
+    const sh = this.ensureSh(id); if (!sh) return null;
+    const used = this.usedIds(); let fs = this.framesOf(id).filter(f => used.has(f.id)); if (!fs.length) fs = this.framesOf(id);
+    const hs = fs.map(f => (sh.bbox(f) || f).h).filter(h => h > 0);
+    return hs.length ? median(hs) : null;
+  },
+  niceK(r) {
+    const c = [0.25, 0.5, 1, 1.5, 2, 3, 4]; let best = c[0];
+    for (const x of c) if (Math.abs(Math.log(x / r)) < Math.abs(Math.log(best / r))) best = x;
+    return Math.abs(best / r - 1) <= 0.12 ? best : sanitizeK(Math.round(r * 20) / 20);
+  },
+  setK(k) { const im = this.im(); if (!im) return; this.snap(); im.k = sanitizeK(k); this.touch(); },
+  matchSize() {
+    const base = this.d.images[0], cur = this.im(); if (!base || !cur || base.id === cur.id) return;
+    const h1 = this.charHeight(base.id), h2 = this.charHeight(cur.id), n = this.imNum(cur.id);
+    if (!this.sh(base.id)) { toast('O arquivo da imagem 1 não está neste navegador.'); return; }
+    if (!h1) { toast('A imagem 1 ainda não tem recortes. Recorte os sprites dela primeiro.'); return; }
+    if (!h2) { toast(`A imagem ${n} ainda não tem recortes. Detecte ou recorte os sprites dela primeiro.`); return; }
+    const k = this.niceK(h1 * base.k / h2);
+    this.snap(); cur.k = k; this.touch();
+    toast(`Imagem ${n} em ${pctOf(k)}: personagem com ${Math.round(h2 * k)} px de altura, como na imagem 1 (${Math.round(h1 * base.k)} px).`);
+  },
+  async readPng(file) {
+    if (!file) return null;
+    if (!(file.type === 'image/png' || /\.png$/i.test(file.name))) { toast('Escolha um arquivo PNG.'); return null; }
+    this.loading(file.size > 1.5e6 ? 'Carregando imagem grande… pode levar alguns segundos.' : 'Carregando imagem…');
+    await new Promise(r => setTimeout(r, 30));
+    const sh = new SheetImage();
+    try { await sh.load(new Blob([file], { type: 'image/png' })); }
+    catch (e) { this.loading(null); toast('Não consegui abrir essa imagem. Confira se é um PNG válido.'); return null; }
+    this.loading(null);
+    if (sh.w * sh.h > 16e6) { toast('Imagem grande demais (máximo de 16 megapixels).'); return null; }
+    return sh;
+  },
+  // Adiciona uma folha ao companheiro. Nunca apaga recortes nem sequências: “começar do zero” só acontece quando escolhido na importação rápida.
+  async addImageFile(file) {
+    const quick = this.quick, fresh = this.fresh; this.fresh = false;
+    if (!file) { this.quick = false; return; }
+    if (!fresh && this.d.images.length >= MAX_IMAGES) { this.quick = false; toast(`O companheiro já tem ${MAX_IMAGES} imagens, o máximo. Remova uma pra adicionar outra.`); return; }
+    const sh = await this.readPng(file); if (!sh) { this.quick = false; return; }
+    this.snap();
+    if (fresh) { this.d.images = []; this.d.frames = []; for (const s of SKEYS) this.d.states[s].seq = []; }
+    const first = !this.d.images.length && !this.d.frames.length, n = this.nextImgId(), id = 'i' + n;
+    const im = newImage(id, file.name, file.size, sh.w, sh.h);
+    im.key = { on: !!(sh.info.bgSet && quick), mode: 'borda', colors: sh.info.bgSet ? clone(sh.info.bgSet) : [], tol: 24, trim: sh.info.pattern ? 1 : 0 };
+    // Companheiro vazio: começa com alinhamento pelos pés (o “pelo recorte” existe pra manter companheiros antigos iguais).
+    if (first) for (const s of SKEYS) this.d.states[s].align = 'pes';
+    this.d.images.push(im); this.d.nextImg = n + 1; ED.put(id, sh);
+    this.img = id; this.sel = []; this.pick = []; this.seqSel = []; this.report = null; this.suggest = null; this.view = 'proc'; this.picking = false;
+    if (this.multi()) this.seqFilter = id;
+    sh.ensure(im.key, this.d.alpha); this.touch();
+    const k = this.d.images.length;
+    if (!quick) { toast(first ? 'Imagem carregada.' : `Imagem ${k} adicionada. Os recortes e as sequências que já existiam continuam iguais.`); return; }
+    if (sh.info.bgSet) toast(sh.info.pattern ? 'Fundo quadriculado pintado na imagem removido. Compare em Original e Processada.' : 'Fundo sólido removido. Compare em Original e Processada.');
+    else if (!first) toast(`Imagem ${k} adicionada. Os recortes e as sequências que já existiam continuam iguais.`);
+    await this.detect(false);
+  },
+  // Arquivo de uma imagem que não está neste navegador (backup importado sem as imagens): escolhe o mesmo PNG de novo.
+  async relinkImage(file) {
+    const im = this.im(); if (!im || !file) return;
+    const sh = await this.readPng(file); if (!sh) return;
+    if (im.w && (sh.w !== im.w || sh.h !== im.h) && !confirm(`Essa imagem tem ${sh.w}×${sh.h} px, mas a imagem ${this.imNum(im.id)} tinha ${im.w}×${im.h} px. Os recortes podem ficar fora do lugar. Usar mesmo assim?`)) return;
+    this.snap(); Object.assign(im, { name: String(file.name).slice(0, 120), size: file.size, w: sh.w, h: sh.h });
+    ED.put(im.id, sh); this.newBlobs.add(im.id); sh.ensure(im.key, this.d.alpha); this.touch(); toast('Arquivo da imagem recuperado. Salve pra guardar.');
+  },
+  quickStart() {
+    this.quick = false; this.fresh = false;
+    if (!this.d.images.length && !this.d.frames.length) { this.quick = true; this.go(1); $('#ceFile').click(); return; }
+    const nf = this.d.frames.length, ni = this.d.images.length, nq = SKEYS.reduce((a, s) => a + this.d.states[s].seq.length, 0);
+    $('#ceChoiceTxt').textContent = `O companheiro já tem ${ni} ${ni === 1 ? 'imagem' : 'imagens'}, ${nf} recorte${nf === 1 ? '' : 's'} e ${nq} quadro${nq === 1 ? '' : 's'} nas sequências. O que fazer com a nova imagem?`;
+    $('#ceChoice').hidden = false; $('#ceChAdd').focus();
+  },
+  choose(v) {
+    $('#ceChoice').hidden = true; if (v !== 'add' && v !== 'fresh') return;
+    this.quick = true; this.fresh = v === 'fresh'; this.go(1); $('#ceFile').click();
+  },
+  loading(msg) { const el = $('#ceLoading'); el.hidden = !msg; el.textContent = msg || ''; },
+  removeImage(id = this.img) {
+    const im = this.imOf(id); if (!im) return;
+    const n = this.imNum(id), ids = new Set(this.framesOf(id).map(f => f.id));
+    const sts = SKEYS.filter(s => this.d.states[s].seq.some(it => ids.has(it.f))), q = SKEYS.reduce((a, s) => a + this.d.states[s].seq.filter(it => ids.has(it.f)).length, 0);
+    let msg = `Remover a imagem ${n} (${im.name})?`;
+    if (ids.size) msg += ` Os ${ids.size} recorte${ids.size === 1 ? '' : 's'} dela saem junto` + (q ? ` e ${q} quadro${q === 1 ? '' : 's'} saem da${sts.length > 1 ? 's' : ''} sequência${sts.length > 1 ? 's' : ''} de ${sts.map(s => SNAME[s]).join(', ')}` : '') + '.';
+    msg += ' As outras imagens não mudam. Dá pra desfazer, e o companheiro salvo só muda quando você salvar.';
+    if (!confirm(msg)) return;
+    this.snap(); const map = {}; ids.forEach(x => { map[x] = null; });
+    this.d.frames = this.d.frames.filter(f => !ids.has(f.id)); this.remap(map);
+    this.d.images = this.d.images.filter(x => x.id !== id);
+    this.sel = this.sel.filter(x => !ids.has(x)); this.pick = this.pick.filter(x => !ids.has(x)); this.seqSel = [];
+    if (this.seqFilter === id) this.seqFilter = 'all';
+    if (this.report && this.report.img === id) { this.report = null; this.suggest = null; }
+    this.img = this.d.images.length ? this.d.images[Math.min(n - 1, this.d.images.length - 1)].id : null;
+    this.touch(); toast(`Imagem ${n} removida. Desfazer traz de volta.`);
+  },
+  setKey(patch, snap = true) { const im = this.im(); if (!im) return; if (snap) this.snap(); Object.assign(im.key, patch); this.ensureSh(); this.touch(); },
+  pickAt(x, y) {
+    const sh = this.sh(), im = this.im();
+    if (!sh || x < 0 || y < 0 || x >= sh.w || y >= sh.h) return;
+    const c = sh.pixel(Math.floor(x), Math.floor(y)).slice(0, 3), cs = keyColors(im.key).slice();
+    if (!cs.some(k => Math.abs(k[0] - c[0]) <= 6 && Math.abs(k[1] - c[1]) <= 6 && Math.abs(k[2] - c[2]) <= 6)) cs.push(c);
+    this.picking = false; this.setKey({ colors: cs.slice(-6), on: true });
+  },
+
   /* ---------- utilidades de recortes ---------- */
   frame(id) { return this.d.frames.find(f => f.id === id); },
   num(id) { return this.d.frames.findIndex(f => f.id === id) + 1; },
   usedIds() { const s = new Set(); for (const k of SKEYS) for (const it of this.d.states[k].seq) s.add(it.f); return s; },
   usedIn(id) { return SKEYS.filter(k => this.d.states[k].seq.some(it => it.f === id)); },
-  newFrame(r) { const id = 'f' + this.d.nextId++; return { id, x: r.x, y: r.y, w: r.w, h: r.h, o: { x: r.x, y: r.y, w: r.w, h: r.h } }; },
-  clampRect(r) {
-    const W = ED.w, H = ED.h; r.w = clamp(Math.round(r.w), 1, W); r.h = clamp(Math.round(r.h), 1, H);
+  newFrame(r, img = this.img) { const id = 'f' + this.d.nextId++; return { id, img, x: r.x, y: r.y, w: r.w, h: r.h, o: { x: r.x, y: r.y, w: r.w, h: r.h } }; },
+  clampRect(r, sh = this.sh()) {
+    const W = sh ? sh.w : Math.max(1, r.x + r.w), H = sh ? sh.h : Math.max(1, r.y + r.h); r.w = clamp(Math.round(r.w), 1, W); r.h = clamp(Math.round(r.h), 1, H);
     r.x = clamp(Math.round(r.x), 0, W - r.w); r.y = clamp(Math.round(r.y), 0, H - r.h); return r;
   },
-  // Troca os recortes que não estão em nenhuma sequência pelos novos; os usados ficam.
-  replaceLibrary(rects) {
-    const used = this.usedIds(), keep = this.d.frames.filter(f => used.has(f.id)), add = [];
-    for (const r of rects) { if (keep.some(f => iou(f, r) > 0.85)) continue; add.push(this.newFrame(r)); }
-    this.d.frames = keep.concat(add); return { added: add.length, kept: keep.length };
+  // Troca os recortes desta imagem que não estão em nenhuma sequência pelos novos. Os usados e os das outras imagens ficam.
+  replaceLibrary(rects, img = this.img) {
+    const used = this.usedIds(), keep = this.d.frames.filter(f => f.img !== img || used.has(f.id)), add = [];
+    for (const r of rects) { if (keep.some(f => f.img === img && iou(f, r) > 0.85)) continue; add.push(this.newFrame(r, img)); }
+    let at = -1; keep.forEach((f, i) => { if (f.img === img) at = i; });
+    if (at < 0) { const order = this.d.images.map(im => im.id), mine = order.indexOf(img); keep.forEach((f, i) => { if (order.indexOf(f.img) < mine) at = i; }); }
+    keep.splice(at + 1, 0, ...add);
+    this.d.frames = keep; return { added: add.length, kept: keep.filter(f => f.img === img).length - add.length };
   },
   remap(map) {
     for (const k of SKEYS) { const st = this.d.states[k]; st.seq = st.seq.filter(it => map[it.f] !== null).map(it => map[it.f] ? { f: map[it.f], dx: it.dx, dy: it.dy } : it); }
   },
   async contentBox(f) {
     // Caixa do personagem que encosta no recorte, olhando um pouco além das bordas pra não cortar partes.
-    const pad = Math.max(8, Math.round(Math.max(f.w, f.h) * 0.25)), x0 = Math.max(0, f.x - pad), y0 = Math.max(0, f.y - pad), x1 = Math.min(ED.w, f.x + f.w + pad), y1 = Math.min(ED.h, f.y + f.h + pad);
-    const comps = mergeBoxes(await ccl(ED.mask, ED.w, x0, y0, x1 - x0, y1 - y0), this.det.gap);
+    const sh = this.ensureSh(f.img); if (!sh) return null;
+    const pad = Math.max(8, Math.round(Math.max(f.w, f.h) * 0.25)), x0 = Math.max(0, f.x - pad), y0 = Math.max(0, f.y - pad), x1 = Math.min(sh.w, f.x + f.w + pad), y1 = Math.min(sh.h, f.y + f.h + pad);
+    const comps = mergeBoxes(await ccl(sh.mask, sh.w, x0, y0, x1 - x0, y1 - y0), this.det.gap);
     const hit = comps.filter(b => b.x < f.x + f.w && b.x + b.w > f.x && b.y < f.y + f.h && b.y + b.h > f.y);
     if (!hit.length) return null;
     const x = Math.min(...hit.map(b => b.x)), y = Math.min(...hit.map(b => b.y)), x2 = Math.max(...hit.map(b => b.x + b.w)), y2 = Math.max(...hit.map(b => b.y + b.h));
     return { x, y, w: x2 - x, h: y2 - y };
   },
 
-  /* ---------- etapa 1: imagem e fundo ---------- */
-  async loadFile(file) {
-    if (!file) return;
-    if (!(file.type === 'image/png' || /\.png$/i.test(file.name))) { toast('Escolha um arquivo PNG.'); return; }
-    if (this.d.frames.length && !confirm('Usar a nova imagem? Os recortes e as sequências do rascunho serão trocados. O companheiro salvo só muda quando você salvar.')) return;
-    this.loading(file.size > 1.5e6 ? 'Carregando imagem grande… pode levar alguns segundos.' : 'Carregando imagem…');
-    await new Promise(r => setTimeout(r, 30));
-    const sh = new SheetImage();
-    try { await sh.load(new Blob([file], { type: 'image/png' })); }
-    catch (e) { this.loading(null); toast('Não consegui abrir essa imagem. Confira se é um PNG válido.'); return; }
-    if (sh.w * sh.h > 16e6) { this.loading(null); toast('Imagem grande demais (máximo de 16 megapixels).'); return; }
-    ED.adopt(sh);
-    this.d.image = { name: file.name, size: file.size, w: sh.w, h: sh.h };
-    // Imagem nova: começa do zero, com alinhamento pelos pés (o “pelo recorte” só existia pra manter companheiros antigos iguais).
-    this.d.frames = []; for (const s of SKEYS) { this.d.states[s].seq = []; this.d.states[s].align = 'pes'; }
-    this.d.key = { on: !!(sh.info.bgSet && this.quick), mode: 'borda', colors: sh.info.bgSet ? clone(sh.info.bgSet) : [], tol: 24, trim: sh.info.pattern ? 1 : 0 };
-    this.hist = []; this.sel = []; this.seqSel = []; this.pick = []; this.report = null; this.suggest = null; this.imgDirty = true; this.view = 'proc';
-    ED.ensure(this.d.key, this.d.alpha); this.loading(null); this.touch();
-    if (this.quick) { if (sh.info.bgSet) toast(sh.info.pattern ? 'Fundo quadriculado pintado na imagem removido. Compare em Original e Processada.' : 'Fundo sólido removido. Compare em Original e Processada.'); await this.detect(); }
-  },
-  loading(msg) { const el = $('#ceLoading'); el.hidden = !msg; el.textContent = msg || ''; },
-  removeImage() {
-    if (!ED.img || !confirm('Tirar a imagem do companheiro? Os recortes e sequências também saem (só depois de salvar).')) return;
-    ED.clear(); this.d.image = null; this.d.frames = []; for (const s of SKEYS) this.d.states[s].seq = []; this.d.key.on = false;
-    this.imgDirty = true; this.hist = []; this.sel = []; this.report = null; this.suggest = null; this.touch();
-  },
-  setKey(patch, snap = true) { if (snap) this.snap(); Object.assign(this.d.key, patch); ED.ensure(this.d.key, this.d.alpha); this.touch(); },
-  pickAt(x, y) {
-    if (!ED.img || x < 0 || y < 0 || x >= ED.w || y >= ED.h) return;
-    const c = ED.pixel(Math.floor(x), Math.floor(y)).slice(0, 3), cs = keyColors(this.d.key).slice();
-    if (!cs.some(k => Math.abs(k[0] - c[0]) <= 6 && Math.abs(k[1] - c[1]) <= 6 && Math.abs(k[2] - c[2]) <= 6)) cs.push(c);
-    this.picking = false; this.setKey({ colors: cs.slice(-6), on: true });
-  },
-
-  /* ---------- etapa 2: detecção, grade e recortes ---------- */
+  /* ---------- etapa 2: detecção, grade e recortes (sempre na imagem escolhida) ---------- */
   progress(p, txt) {
     const box = $('#ceProg'); box.hidden = p === null;
     if (p !== null) { $('#ceProgTxt').textContent = txt; $('#ceProgBar').style.width = Math.round(p * 100) + '%'; }
   },
-  async detect() {
-    if (!ED.img) { toast('Carregue uma imagem primeiro.'); return; }
+  // snap = false quando faz parte de “adicionar imagem” (um Desfazer só tira a imagem e os recortes dela juntos).
+  async detect(snap = true) {
+    const im = this.im(), sh = this.ensureSh();
+    if (!sh) { this.quick = false; toast(im ? 'O arquivo desta imagem não está neste navegador. Escolha o arquivo de novo na etapa 1.' : 'Carregue uma imagem primeiro.'); return; }
     if (this.job) return;
-    ED.ensure(this.d.key, this.d.alpha);
-    const job = this.job = { cancel: false };
+    const job = this.job = { cancel: false }, id = im.id;
     this.step = 2; this.render(); this.progress(0, 'Procurando sprites…');
     let res = null;
-    try { res = await detectSprites(ED, this.det, job, p => this.progress(p, 'Procurando sprites… ' + Math.round(p * 100) + '%')); }
+    try { res = await detectSprites(sh, this.det, job, p => this.progress(p, 'Procurando sprites… ' + Math.round(p * 100) + '%')); }
     catch (e) { console.warn(e); }
     this.job = null; this.progress(null); this.quick = false;
     if (job.cancel) { toast('Detecção cancelada. Nada foi mudado.'); return; }
     if (!res) { toast('A detecção falhou nesta imagem. Você pode recortar manualmente.'); return; }
-    this.snap();
-    const r = this.replaceLibrary(res.boxes);
-    this.report = { res, added: r.added, kept: r.kept }; this.suggest = res.grid; this.sel = []; this.pick = [];
+    if (!this.imOf(id)) return;
+    if (snap) this.snap();
+    const r = this.replaceLibrary(res.boxes, id);
+    this.report = { img: id, res, added: r.added, kept: r.kept }; this.suggest = res.grid; this.sel = []; this.pick = [];
     this.touch();
   },
   cancelJob() { if (this.job) this.job.cancel = true; },
-  gridRects(g, ignoreEmpty) {
-    const { cols, rows } = gridDims(g, ED.w, ED.h), out = [];
-    for (let i = 0; i < cols * rows; i++) { const r = gridRect(g, i, ED.w, ED.h); if (!ignoreEmpty || ED.bbox(r)) out.push(r); }
+  gridRects(g, ignoreEmpty, sh) {
+    const { cols, rows } = gridDims(g, sh.w, sh.h), out = [];
+    for (let i = 0; i < cols * rows; i++) { const r = gridRect(g, i, sh.w, sh.h); if (!ignoreEmpty || sh.bbox(r)) out.push(r); }
     return out;
   },
   applyGrid(g) {
-    if (!ED.img) return;
-    ED.ensure(this.d.key, this.d.alpha);
-    this.snap(); if (g) this.d.grid = Object.assign({}, this.d.grid, { fw: g.fw, fh: g.fh, mx: g.mx, my: g.my, sx: g.sx, sy: g.sy });
-    const rects = this.gridRects(this.d.grid, $('#gEmpty').checked), r = this.replaceLibrary(rects);
-    this.report = { grid: true, n: rects.length, added: r.added, kept: r.kept }; this.sel = []; this.pick = []; this.touch();
+    const im = this.im(), sh = this.ensureSh(); if (!sh) return;
+    this.snap(); if (g) im.grid = { fw: g.fw, fh: g.fh, mx: g.mx, my: g.my, sx: g.sx, sy: g.sy };
+    const rects = this.gridRects(im.grid, $('#gEmpty').checked, sh), r = this.replaceLibrary(rects, im.id);
+    this.report = { img: im.id, grid: true, n: rects.length, added: r.added, kept: r.kept }; this.sel = []; this.pick = []; this.touch();
   },
   addFrame() {
-    if (!ED.img) return;
-    const base = this.frame(this.sel[0]) || { w: Math.min(this.d.grid.fw, ED.w), h: Math.min(this.d.grid.fh, ED.h) };
-    const wrap = $('#ceSheetWrap'), cx = (wrap.scrollLeft + wrap.clientWidth / 2) / this.z, cy = (wrap.scrollTop + Math.min(wrap.clientHeight, ED.h * this.z) / 2) / this.z;
+    const sh = this.sh(), im = this.im(); if (!sh) return;
+    const s0 = this.frame(this.sel[0]), base = s0 && s0.img === im.id ? s0 : { w: Math.min(im.grid.fw, sh.w), h: Math.min(im.grid.fh, sh.h) };
+    const wrap = $('#ceSheetWrap'), cx = (wrap.scrollLeft + wrap.clientWidth / 2) / this.z, cy = (wrap.scrollTop + Math.min(wrap.clientHeight, sh.h * this.z) / 2) / this.z;
     this.snap(); const f = this.newFrame(this.clampRect({ x: cx - base.w / 2, y: cy - base.h / 2, w: base.w, h: base.h }));
     this.d.frames.push(f); this.sel = [f.id]; this.touch();
   },
   dupFrames() {
     if (!this.sel.length) return; this.snap(); const out = [];
-    for (const id of this.sel) { const f = this.frame(id), k = this.d.frames.indexOf(f), c = this.newFrame(f); c.o = Object.assign({}, f.o); this.d.frames.splice(k + 1, 0, c); out.push(c.id); }
+    for (const id of this.sel) { const f = this.frame(id), k = this.d.frames.indexOf(f), c = this.newFrame(f, f.img); c.o = Object.assign({}, f.o); this.d.frames.splice(k + 1, 0, c); out.push(c.id); }
     this.sel = out; this.touch(); toast(out.length === 1 ? 'Recorte duplicado.' : out.length + ' recortes duplicados.');
   },
   delFrames() {
@@ -2147,26 +2376,27 @@ const Ed = {
   },
   mergeFrames() {
     if (this.sel.length < 2) { toast('Selecione 2 ou mais recortes pra unir (Ctrl + clique).'); return; }
-    const fs = this.sel.map(id => this.frame(id)), x = Math.min(...fs.map(f => f.x)), y = Math.min(...fs.map(f => f.y)), x2 = Math.max(...fs.map(f => f.x + f.w)), y2 = Math.max(...fs.map(f => f.y + f.h));
-    this.snap(); const n = this.newFrame({ x, y, w: x2 - x, h: y2 - y }), k = Math.min(...fs.map(f => this.d.frames.indexOf(f))), map = {};
+    const fs = this.sel.map(id => this.frame(id));
+    if (new Set(fs.map(f => f.img)).size > 1) { toast('Só dá pra unir recortes da mesma imagem.'); return; }
+    const x = Math.min(...fs.map(f => f.x)), y = Math.min(...fs.map(f => f.y)), x2 = Math.max(...fs.map(f => f.x + f.w)), y2 = Math.max(...fs.map(f => f.y + f.h));
+    this.snap(); const n = this.newFrame({ x, y, w: x2 - x, h: y2 - y }, fs[0].img), k = Math.min(...fs.map(f => this.d.frames.indexOf(f))), map = {};
     fs.forEach(f => { map[f.id] = n.id; }); this.d.frames = this.d.frames.filter(f => !map[f.id]); this.d.frames.splice(k, 0, n); this.remap(map);
     for (const s of SKEYS) { const q = this.d.states[s].seq; this.d.states[s].seq = q.filter((it, i) => !(i > 0 && it.f === n.id && q[i - 1].f === n.id)); }
     this.sel = [n.id]; this.touch();
   },
   async splitFrames() {
     if (!this.sel.length) { toast('Selecione um recorte pra dividir.'); return; }
-    ED.ensure(this.d.key, this.d.alpha);
     const plan = [];
     for (const id of this.sel) {
-      const f = this.frame(id);
-      let parts = readingOrder(mergeBoxes(await ccl(ED.mask, ED.w, f.x, f.y, f.w, f.h), 0).filter(b => b.n >= this.det.min));
+      const f = this.frame(id), sh = this.ensureSh(f.img); if (!sh) continue;
+      let parts = readingOrder(mergeBoxes(await ccl(sh.mask, sh.w, f.x, f.y, f.w, f.h), 0).filter(b => b.n >= this.det.min));
       if (parts.length < 2) {
         // Personagens encostados: corta na coluna ou linha com menos pixels, perto do meio (a que for mais "fina").
         const cut = vert => {
           const len = vert ? f.w : f.h, across = vert ? f.h : f.w; if (len < 4) return null;
           let best = -1, bestN = Infinity;
           for (let t = Math.floor(len * 0.25); t <= Math.ceil(len * 0.75); t++) {
-            let c = 0; for (let u = 0; u < across; u++) { const x = vert ? f.x + t : f.x + u, y = vert ? f.y + u : f.y + t; c += ED.mask[y * ED.w + x]; }
+            let c = 0; for (let u = 0; u < across; u++) { const x = vert ? f.x + t : f.x + u, y = vert ? f.y + u : f.y + t; c += sh.mask[y * sh.w + x]; }
             if (c < bestN || (c === bestN && Math.abs(t - len / 2) < Math.abs(best - len / 2))) { bestN = c; best = t; }
           }
           return { vert, t: best, score: bestN / across };
@@ -2180,20 +2410,21 @@ const Ed = {
     if (!plan.length) { toast('Esse recorte é pequeno demais pra dividir.'); return; }
     this.snap(); const sel = [], map = {};
     for (const { f, parts } of plan) {
-      const nf = parts.map(p => this.newFrame(p)), k = this.d.frames.indexOf(f);
+      const nf = parts.map(p => this.newFrame(p, f.img)), k = this.d.frames.indexOf(f);
       this.d.frames.splice(k, 1, ...nf); map[f.id] = nf[0].id; sel.push(...nf.map(x => x.id));
     }
     this.remap(map); this.sel = sel; this.touch(); toast(sel.length + ' recortes depois de dividir.');
   },
   async fitFrames(center) {
     if (!this.sel.length) return;
-    ED.ensure(this.d.key, this.d.alpha); const res = [];
+    const res = [];
     for (const id of this.sel) { const f = this.frame(id), b = await this.contentBox(f); if (b) res.push([f, b]); }
     if (!res.length) { toast('Não achei pixels do personagem nesse recorte.'); return; }
     this.snap();
     for (const [f, b] of res) {
-      if (center) Object.assign(f, this.clampRect({ x: b.x + b.w / 2 - f.w / 2, y: b.y + b.h / 2 - f.h / 2, w: f.w, h: f.h }));
-      else Object.assign(f, this.clampRect({ x: b.x, y: b.y, w: b.w, h: b.h }));
+      const sh = this.sh(f.img);
+      if (center) Object.assign(f, this.clampRect({ x: b.x + b.w / 2 - f.w / 2, y: b.y + b.h / 2 - f.h / 2, w: f.w, h: f.h }, sh));
+      else Object.assign(f, this.clampRect({ x: b.x, y: b.y, w: b.w, h: b.h }, sh));
     }
     this.touch();
   },
@@ -2201,36 +2432,36 @@ const Ed = {
   setFrameField(k, v) {
     const f = this.frame(this.sel[0]); if (!f || this.sel.length !== 1) return;
     const n = parseInt(v, 10); if (isNaN(n)) { this.touch(); return; }
-    this.snap(); f[k] = n; Object.assign(f, this.clampRect(f)); this.touch();
+    this.snap(); f[k] = n; Object.assign(f, this.clampRect(f, this.sh(f.img))); this.touch();
   },
   moveLib(fromId, toId, after) {
     const a = this.d.frames, i = a.findIndex(f => f.id === fromId); if (i < 0) return;
     this.snap(); const [x] = a.splice(i, 1); let j = a.findIndex(f => f.id === toId); if (after) j++; a.splice(j, 0, x); this.touch();
   },
 
-  /* ---------- etapa 2: folha interativa ---------- */
+  /* ---------- etapa 2: folha interativa (mostra a imagem escolhida e só os recortes dela) ---------- */
   sheetZoom() {
-    if (!ED.img) return 1;
+    const sh = this.sh(); if (!sh) return 1;
     const v = $('#ceZoom').value, avail = Math.max(120, $('#ceSheetWrap').clientWidth - 2);
-    let z = v === 'auto' ? (avail / ED.w >= 2 ? Math.min(6, Math.floor(avail / ED.w)) : avail / ED.w) : +v;
-    const lim = Math.min(8192 / ED.w, 16384 / ED.h, Math.sqrt(40e6 / (ED.w * ED.h)));
+    let z = v === 'auto' ? (avail / sh.w >= 2 ? Math.min(6, Math.floor(avail / sh.w)) : avail / sh.w) : +v;
+    const lim = Math.min(8192 / sh.w, 16384 / sh.h, Math.sqrt(40e6 / (sh.w * sh.h)));
     return Math.max(0.05, Math.min(z, lim));
   },
-  imgPt(e) { const cv = $('#ceSheet'), r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) * (cv.width / r.width) / this.z, y: (e.clientY - r.top) * (cv.height / r.height) / this.z, s: r.width / ED.w }; },
+  imgPt(e) { const cv = $('#ceSheet'), r = cv.getBoundingClientRect(), sh = this.sh(); return { x: (e.clientX - r.left) * (cv.width / r.width) / this.z, y: (e.clientY - r.top) * (cv.height / r.height) / this.z, s: r.width / (sh ? sh.w : 1) }; },
   handles(f) { return { nw: [f.x, f.y], n: [f.x + f.w / 2, f.y], ne: [f.x + f.w, f.y], e: [f.x + f.w, f.y + f.h / 2], se: [f.x + f.w, f.y + f.h], s: [f.x + f.w / 2, f.y + f.h], sw: [f.x, f.y + f.h], w: [f.x, f.y + f.h / 2] }; },
   hitHandle(p) {
-    if (this.sel.length !== 1) return null; const f = this.frame(this.sel[0]); if (!f) return null;
+    if (this.sel.length !== 1) return null; const f = this.frame(this.sel[0]); if (!f || f.img !== this.img) return null;
     const tol = 7 / p.s; for (const [k, [x, y]] of Object.entries(this.handles(f))) if (Math.abs(p.x - x) <= tol && Math.abs(p.y - y) <= tol) return k;
     return null;
   },
   hitFrame(p) {
-    const inside = f => p.x >= f.x && p.x < f.x + f.w && p.y >= f.y && p.y < f.y + f.h;
+    const inside = f => f.img === this.img && p.x >= f.x && p.x < f.x + f.w && p.y >= f.y && p.y < f.y + f.h;
     for (const id of this.sel.slice().reverse()) { const f = this.frame(id); if (f && inside(f)) return f; }
     for (let k = this.d.frames.length - 1; k >= 0; k--) if (inside(this.d.frames[k])) return this.d.frames[k];
     return null;
   },
   sheetDown(e) {
-    if (!ED.img || e.button > 0) return;
+    if (!this.sh() || e.button > 0) return;
     const cv = $('#ceSheet'), p = this.imgPt(e); cv.focus({ preventScroll: true });
     if (this.picking) { this.pickAt(p.x, p.y); return; }
     try { cv.setPointerCapture(e.pointerId); } catch (x) {}
@@ -2240,25 +2471,25 @@ const Ed = {
     if (f) {
       if (multi) { this.sel = this.sel.includes(f.id) ? this.sel.filter(x => x !== f.id) : this.sel.concat(f.id); this.drag = null; this.paintSel(); return; }
       if (!this.sel.includes(f.id)) this.sel = [f.id];
-      this.drag = { t: 'move', p0: p, o: this.sel.map(id => { const g = this.frame(id); return { id, x: g.x, y: g.y }; }) };
+      this.drag = { t: 'move', p0: p, o: this.sel.map(id => this.frame(id)).filter(g => g && g.img === this.img).map(g => ({ id: g.id, x: g.x, y: g.y })) };
       this.paintSel(); return;
     }
     if (!multi) this.sel = [];
     this.drag = { t: 'new', p0: p, p1: p }; this.paintSel();
   },
   sheetMove(e) {
-    if (!ED.img) return;
+    const sh = this.sh(); if (!sh) return;
     const p = this.imgPt(e), cv = $('#ceSheet'), d = this.drag;
     if (!d) { const h = this.picking ? null : this.hitHandle(p); cv.style.cursor = this.picking ? 'copy' : h ? ({ n: 'ns', s: 'ns', e: 'ew', w: 'ew', nw: 'nwse', se: 'nwse', ne: 'nesw', sw: 'nesw' }[h] + '-resize') : this.hitFrame(p) ? 'move' : 'crosshair'; return; }
     if (d.t === 'new') { d.p1 = p; this.drawSheet(); return; }
     const dx = Math.round(p.x - d.p0.x), dy = Math.round(p.y - d.p0.y);
     if (!d.moved && !dx && !dy) return;
     if (!d.moved) { this.snap(); d.moved = true; }
-    if (d.t === 'move') for (const o of d.o) { const f = this.frame(o.id); f.x = clamp(o.x + dx, 0, ED.w - f.w); f.y = clamp(o.y + dy, 0, ED.h - f.h); }
+    if (d.t === 'move') for (const o of d.o) { const f = this.frame(o.id); f.x = clamp(o.x + dx, 0, sh.w - f.w); f.y = clamp(o.y + dy, 0, sh.h - f.h); }
     else {
       const f = this.frame(d.id), o = d.o; let x1 = o.x, y1 = o.y, x2 = o.x + o.w, y2 = o.y + o.h;
-      if (d.h.includes('w')) x1 = clamp(Math.round(p.x), 0, x2 - 1); if (d.h.includes('e')) x2 = clamp(Math.round(p.x), x1 + 1, ED.w);
-      if (d.h.includes('n')) y1 = clamp(Math.round(p.y), 0, y2 - 1); if (d.h.includes('s')) y2 = clamp(Math.round(p.y), y1 + 1, ED.h);
+      if (d.h.includes('w')) x1 = clamp(Math.round(p.x), 0, x2 - 1); if (d.h.includes('e')) x2 = clamp(Math.round(p.x), x1 + 1, sh.w);
+      if (d.h.includes('n')) y1 = clamp(Math.round(p.y), 0, y2 - 1); if (d.h.includes('s')) y2 = clamp(Math.round(p.y), y1 + 1, sh.h);
       f.x = x1; f.y = y1; f.w = x2 - x1; f.h = y2 - y1;
     }
     this.drawSheet(); this.paintInspector();
@@ -2266,7 +2497,8 @@ const Ed = {
   sheetUp() {
     const d = this.drag; this.drag = null; if (!d) return;
     if (d.t === 'new') {
-      const x = Math.max(0, Math.floor(Math.min(d.p0.x, d.p1.x))), y = Math.max(0, Math.floor(Math.min(d.p0.y, d.p1.y))), x2 = Math.min(ED.w, Math.ceil(Math.max(d.p0.x, d.p1.x))), y2 = Math.min(ED.h, Math.ceil(Math.max(d.p0.y, d.p1.y)));
+      const sh = this.sh(); if (!sh) return;
+      const x = Math.max(0, Math.floor(Math.min(d.p0.x, d.p1.x))), y = Math.max(0, Math.floor(Math.min(d.p0.y, d.p1.y))), x2 = Math.min(sh.w, Math.ceil(Math.max(d.p0.x, d.p1.x))), y2 = Math.min(sh.h, Math.ceil(Math.max(d.p0.y, d.p1.y)));
       if (x2 - x >= 2 && y2 - y >= 2) { this.snap(); const f = this.newFrame({ x, y, w: x2 - x, h: y2 - y }); this.d.frames.push(f); this.sel = [f.id]; }
       this.touch(); return;
     }
@@ -2276,20 +2508,21 @@ const Ed = {
     if ((e.key === 'Delete' || e.key === 'Backspace') && this.sel.length) { e.preventDefault(); this.delFrames(); return; }
     const m = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key];
     if (!m || !this.sel.length) return; e.preventDefault(); this.snap();
-    for (const id of this.sel) { const f = this.frame(id); if (e.shiftKey) { f.w += m[0]; f.h += m[1]; } else { f.x += m[0]; f.y += m[1]; } Object.assign(f, this.clampRect(f)); }
+    for (const id of this.sel) { const f = this.frame(id); if (e.shiftKey) { f.w += m[0]; f.h += m[1]; } else { f.x += m[0]; f.y += m[1]; } Object.assign(f, this.clampRect(f, this.sh(f.img))); }
     this.touch();
   },
   drawSheet() {
-    const cv = $('#ceSheet'), ctx = cv.getContext('2d');
-    $('#ceSheetEmpty').hidden = !!ED.img;
-    if (!ED.img) { cv.width = 0; cv.height = 0; return; }
-    ED.ensure(this.d.key, this.d.alpha);
-    const z = this.z = this.sheetZoom(), W = Math.ceil(ED.w * z), H = Math.ceil(ED.h * z);
+    const cv = $('#ceSheet'), ctx = cv.getContext('2d'), sh = this.ensureSh();
+    $('#ceSheetEmpty').hidden = !!sh;
+    $('#ceSheetEmpty').textContent = this.im() ? 'O arquivo desta imagem não está neste navegador. Escolha o arquivo de novo na etapa 1.' : 'Carregue uma imagem na etapa 1.';
+    if (!sh) { cv.width = 0; cv.height = 0; return; }
+    const z = this.z = this.sheetZoom(), W = Math.ceil(sh.w * z), H = Math.ceil(sh.h * z);
     if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; cv.style.width = W + 'px'; cv.style.height = H + 'px'; }
-    ctx.imageSmoothingEnabled = false; ctx.clearRect(0, 0, W, H); ctx.drawImage(this.view === 'orig' ? ED.img : ED.src, 0, 0, ED.w * z, ED.h * z);
+    ctx.imageSmoothingEnabled = false; ctx.clearRect(0, 0, W, H); ctx.drawImage(this.view === 'orig' ? sh.img : sh.src, 0, 0, sh.w * z, sh.h * z);
     const cur = new Set(this.d.states[this.state].seq.map(it => it.f)), used = this.usedIds(), sel = new Set(this.sel);
     ctx.font = 'bold 11px ui-monospace,monospace'; ctx.lineWidth = 1;
     this.d.frames.forEach((f, k) => {
+      if (f.img !== this.img) return;
       const x = f.x * z, y = f.y * z, w = f.w * z, h = f.h * z, isSel = sel.has(f.id);
       ctx.setLineDash(used.has(f.id) || isSel ? [] : [4, 3]); ctx.lineWidth = isSel ? 2 : 1;
       ctx.strokeStyle = isSel ? '#F5B83D' : cur.has(f.id) ? '#3DDC97' : used.has(f.id) ? '#B49CFF' : 'rgba(90,169,255,.95)';
@@ -2297,15 +2530,24 @@ const Ed = {
       if (w >= 14 && h >= 12) { const t = String(k + 1), tw = ctx.measureText(t).width + 6; ctx.setLineDash([]); ctx.fillStyle = isSel ? '#F5B83D' : 'rgba(15,17,21,.78)'; ctx.fillRect(Math.round(x), Math.round(y), tw, 14); ctx.fillStyle = isSel ? '#0F1115' : '#E8EAED'; ctx.fillText(t, Math.round(x) + 3, Math.round(y) + 11); }
     });
     ctx.setLineDash([]);
-    if (this.sel.length === 1) { const f = this.frame(this.sel[0]); if (f) for (const [hx, hy] of Object.values(this.handles(f))) { ctx.fillStyle = '#FFFFFF'; ctx.strokeStyle = '#0F1115'; ctx.lineWidth = 1; ctx.fillRect(Math.round(hx * z) - 4, Math.round(hy * z) - 4, 8, 8); ctx.strokeRect(Math.round(hx * z) - 3.5, Math.round(hy * z) - 3.5, 7, 7); } }
+    if (this.sel.length === 1) { const f = this.frame(this.sel[0]); if (f && f.img === this.img) for (const [hx, hy] of Object.values(this.handles(f))) { ctx.fillStyle = '#FFFFFF'; ctx.strokeStyle = '#0F1115'; ctx.lineWidth = 1; ctx.fillRect(Math.round(hx * z) - 4, Math.round(hy * z) - 4, 8, 8); ctx.strokeRect(Math.round(hx * z) - 3.5, Math.round(hy * z) - 3.5, 7, 7); } }
     const d = this.drag;
     if (d && d.t === 'new') { const x = Math.min(d.p0.x, d.p1.x) * z, y = Math.min(d.p0.y, d.p1.y) * z; ctx.setLineDash([5, 3]); ctx.strokeStyle = '#F5B83D'; ctx.lineWidth = 2; ctx.strokeRect(x, y, Math.abs(d.p1.x - d.p0.x) * z, Math.abs(d.p1.y - d.p0.y) * z); ctx.setLineDash([]); }
   },
-  thumb(cv, r, size, sheet = ED) {
-    const g = cv.getContext('2d'); g.clearRect(0, 0, cv.width, cv.height); if (!r || !sheet.src) return;
-    let s = Math.min(size / r.w, size / r.h); if (s >= 1) s = Math.floor(s);
-    g.imageSmoothingEnabled = false; g.drawImage(sheet.src, r.x, r.y, r.w, r.h, Math.round((size - r.w * s) / 2), Math.round((size - r.h * s) / 2), Math.round(r.w * s), Math.round(r.h * s));
+  // Miniatura de um recorte (cada recorte sabe de qual imagem é).
+  thumb(cv, f, size, set = ED) {
+    const g = cv.getContext('2d'); g.clearRect(0, 0, cv.width, cv.height); if (!f) return;
+    const sh = set.get(f.img); if (!sh || !sh.src) return;
+    let s = Math.min(size / f.w, size / f.h); if (s >= 1) s = Math.floor(s);
+    g.imageSmoothingEnabled = false; g.drawImage(sh.src, f.x, f.y, f.w, f.h, Math.round((size - f.w * s) / 2), Math.round((size - f.h * s) / 2), Math.round(f.w * s), Math.round(f.h * s));
   },
+  // Miniatura da imagem inteira (lista de imagens).
+  thumbImg(cv, id, size) {
+    const g = cv.getContext('2d'); g.clearRect(0, 0, cv.width, cv.height); const sh = this.ensureSh(id); if (!sh) return;
+    const s = Math.min(size / sh.w, size / sh.h); g.imageSmoothingEnabled = s >= 1 ? false : true;
+    g.drawImage(sh.src, Math.round((size - sh.w * s) / 2), Math.round((size - sh.h * s) / 2), Math.round(sh.w * s), Math.round(sh.h * s));
+  },
+  badge(f) { return this.multi() ? `<span class="ib">${this.imNum(f.img)}</span>` : ''; },
   paintSel() {
     $$('#frGallery .fthumb').forEach(el => el.classList.toggle('sel', this.sel.includes(el.dataset.id)));
     this.drawSheet(); this.paintInspector();
@@ -2313,19 +2555,20 @@ const Ed = {
   paintInspector() {
     const one = this.sel.length === 1 ? this.frame(this.sel[0]) : null;
     for (const [id, k] of [['#frX', 'x'], ['#frY', 'y'], ['#frW', 'w'], ['#frH', 'h']]) { const el = $(id); el.disabled = !one; if (document.activeElement !== el) el.value = one ? one[k] : ''; }
-    const info = $('#frInfo'), n = this.d.frames.length;
-    if (one) { const u = this.usedIn(one.id).map(s => SNAME[s]); info.textContent = `Recorte ${this.num(one.id)} de ${n} · ${one.w}×${one.h} px em x ${one.x}, y ${one.y}` + (u.length ? ' · usado em ' + u.join(', ') : ''); }
+    const info = $('#frInfo'), n = this.d.frames.length, here = this.framesOf(this.img).length;
+    if (one) { const u = this.usedIn(one.id).map(s => SNAME[s]); info.textContent = `Recorte ${this.num(one.id)} de ${n}` + (this.multi() ? ` · imagem ${this.imNum(one.img)}` : '') + ` · ${one.w}×${one.h} px em x ${one.x}, y ${one.y}` + (u.length ? ' · usado em ' + u.join(', ') : ''); }
     else info.textContent = this.sel.length ? this.sel.length + ' recortes selecionados.' : n ? 'Clique num recorte pra selecionar. Ctrl + clique seleciona vários.' : '';
-    $('#frCount').textContent = n ? `${n} recorte${n === 1 ? '' : 's'} · ${this.sel.length} selecionado${this.sel.length === 1 ? '' : 's'}` : 'Nenhum recorte ainda';
+    $('#frCount').textContent = n ? (this.multi() ? `${here} recorte${here === 1 ? '' : 's'} nesta imagem · ${n} no total` : `${n} recorte${n === 1 ? '' : 's'}`) + ` · ${this.sel.length} selecionado${this.sel.length === 1 ? '' : 's'}` : 'Nenhum recorte ainda';
     const zc = $('#frZoom'); zc.width = zc.height = 160; this.thumb(zc, one || this.frame(this.sel[0]), 160);
     for (const id of ['#frDup', '#frDel', '#frFit', '#frCenter', '#frRestore', '#frSplit']) $(id).disabled = !this.sel.length;
     $('#frMerge').disabled = this.sel.length < 2;
   },
 
-  /* ---------- etapa 3: sequência do estado ---------- */
+  /* ---------- etapa 3: sequência do estado (pode misturar recortes de imagens diferentes) ---------- */
   seq() { return this.d.states[this.state].seq; },
+  libFrames() { return this.seqFilter === 'all' ? this.d.frames : this.framesOf(this.seqFilter); },
   addPicked(all) {
-    const ids = all ? this.d.frames.map(f => f.id) : this.pick.slice();
+    const ids = all ? this.libFrames().map(f => f.id) : this.pick.slice();
     if (!ids.length) { toast(all ? 'Não há recortes. Volte na etapa 2.' : 'Clique nos recortes que vão entrar na animação.'); return; }
     this.snap(); this.seq().push(...ids.map(f => ({ f, dx: 0, dy: 0 }))); this.pick = []; this.seqSel = []; this.touch();
   },
@@ -2386,62 +2629,79 @@ const Ed = {
   paintAlign() {
     const it = this.pv && this.pv.current(), st = this.stateCfg();
     const s = it ? this.seq()[it.k] : null;
-    $('#alInfo').textContent = s ? `Quadro ${it.k + 1} (recorte ${this.num(s.f)}): ajuste x ${s.dx > 0 ? '+' : ''}${s.dx}, y ${s.dy > 0 ? '+' : ''}${s.dy}` : 'Sem quadros nesta sequência.';
+    $('#alInfo').textContent = s ? `Quadro ${it.k + 1} (recorte ${this.num(s.f)}${this.multi() ? ', imagem ' + this.imNum(it.r.img) : ''}): ajuste x ${s.dx > 0 ? '+' : ''}${s.dx}, y ${s.dy > 0 ? '+' : ''}${s.dy}` : 'Sem quadros nesta sequência.';
     $$('#alMode [data-v]').forEach(b => b.setAttribute('aria-checked', String(b.dataset.v === st.align)));
     $('#alHint').textContent = { pes: 'Os pés de todos os quadros ficam na mesma linha. Bom pra andar, comemorar e pular.', centro: 'O centro do personagem fica fixo. Bom pra efeitos e poses flutuando.', recorte: 'Usa a base de cada recorte, como as folhas em grade. Bom pra grades regulares.' }[st.align];
   },
 
   /* ---------- exportar e importar ---------- */
   async exportComp() {
-    const out = { type: 'habitos-companheiro', v: 2, exportedAt: new Date().toISOString(), config: CC, image: null };
-    if (SAVED.blob) out.image = { name: CC.image ? CC.image.name : 'sprites.png', dataURL: await blobToDataURL(SAVED.blob) };
-    const txt = JSON.stringify(out); download('companheiro-habitos.json', txt);
-    $('#compIoInfo').textContent = 'Arquivo gerado: ' + fmtBytes(txt.length) + (out.image ? ' (inclui a imagem)' : ' (sem imagem)') + '.' + (this.isDirty() ? ' Exportei a versão salva: salve antes pra incluir as mudanças do rascunho.' : '');
+    const images = await compImagesOut(CC, SAVED), out = { type: 'habitos-companheiro', v: 3, exportedAt: new Date().toISOString(), config: CC, images };
+    const txt = JSON.stringify(out), miss = CC.images.length - images.length; download('companheiro-habitos.json', txt);
+    $('#compIoInfo').innerHTML = esc('Arquivo gerado: ' + fmtBytes(txt.length) + ', com ' + (images.length === 1 ? '1 imagem' : images.length + ' imagens') + ', os recortes e as sequências.')
+      + (miss ? ` <span class="warn">${miss === 1 ? '1 imagem não está' : miss + ' imagens não estão'} neste navegador e ficou de fora.</span>` : '')
+      + (txt.length > BIG_FILE ? ' <span class="warn">Arquivo grande: pode demorar pra enviar ou abrir no celular.</span>' : '')
+      + (this.isDirty() ? esc(' Exportei a versão salva: salve antes pra incluir as mudanças do rascunho.') : '');
   },
   async importComp(file) {
     if (!file) return;
     let obj; try { obj = JSON.parse(await readText(file)); } catch (e) { toast('Arquivo inválido.'); return; }
     if (!obj || obj.type !== 'habitos-companheiro') { toast('Esse arquivo não é uma exportação de companheiro.'); return; }
-    if (this.isDirty() && !confirm('Importar substitui o rascunho atual, que tem alterações não salvas. Continuar?')) return;
-    await applyCompanion(obj.config, obj.image); toast('Companheiro importado.');
+    const has = CC.images.length || CC.frames.length;
+    if ((has || this.isDirty()) && !confirm('Importar troca o companheiro atual pelo do arquivo (imagens, recortes e sequências)' + (this.isDirty() ? ', e descarta as alterações não salvas' : '') + '. Pra guardar o atual, exporte antes. Continuar?')) return;
+    const r = await applyCompanion(obj.config, obj.images || obj.image);
+    toast(r.missing ? `Companheiro importado, mas ${r.missing === 1 ? '1 imagem não veio' : r.missing + ' imagens não vieram'} no arquivo. Escolha o arquivo de novo na etapa Imagem.` : r.fail ? 'Importado, mas o navegador não deixou guardar as imagens: elas somem ao recarregar.' : `Companheiro importado com ${r.images === 1 ? '1 imagem' : r.images + ' imagens'}.`);
   },
 
   /* ---------- montagem da interface ---------- */
   init() {
     const on = (sel, ev, fn) => $(sel).addEventListener(ev, fn);
-    $('#ceSteps').innerHTML = ['Imagem', 'Recortes', 'Sequência', 'Prévia', 'Salvar'].map((t, i) => `<button type="button" data-step="${i + 1}"><b>${i + 1}</b><span>${t}</span></button>`).join('');
+    $('#ceSteps').innerHTML = ['Imagens', 'Recortes', 'Sequência', 'Prévia', 'Salvar'].map((t, i) => `<button type="button" data-step="${i + 1}"><b>${i + 1}</b><span>${t}</span></button>`).join('');
     $('#ceZoom').innerHTML = '<option value="auto">Ajustar</option>' + [0.5, 1, 2, 3, 4, 6, 8].map(z => `<option value="${z}">${String(z).replace('.', ',')}×</option>`).join('');
     $('#pvScale').innerHTML = '<option value="auto">Automático</option>' + [1, 2, 3, 4, 5, 6, 8].map(z => `<option value="${z}">${z}×</option>`).join('');
     $('#ceScale').innerHTML = [1, 2, 3, 4, 5, 6, 8].map(z => `<option value="${z}">até ${z}×</option>`).join('');
     on('#ceSteps', 'click', e => { const b = e.target.closest('[data-step]'); if (b) this.go(+b.dataset.step); });
     on('#ceBack', 'click', () => this.go(this.step - 1));
     on('#ceNext', 'click', () => this.go(this.step + 1));
-    on('#ceQuick', 'click', () => { this.quick = true; this.go(1); $('#ceFile').click(); });
+    on('#ceQuick', 'click', () => this.quickStart());
+    on('#ceChoice', 'click', e => { const b = e.target.closest('[data-ch]'); if (b) this.choose(b.dataset.ch); else if (e.target.id === 'ceChoice') this.choose('cancel'); });
+    on('#ceChoice', 'keydown', e => { if (e.key === 'Escape') { e.preventDefault(); this.choose('cancel'); } });
     on('#ceSave', 'click', () => this.save()); on('#ceSave2', 'click', () => this.save());
     on('#ceDiscard', 'click', () => this.discard()); on('#ceUndo', 'click', () => this.undo());
-    on('#compEditor', 'click', e => { const b = e.target.closest('[data-state]'); if (b && b.closest('.statebar')) { this.state = b.dataset.state; this.seqSel = []; this.touch(); } });
+    on('#compEditor', 'click', e => {
+      const b = e.target.closest('[data-state]'); if (b && b.closest('.statebar')) { this.state = b.dataset.state; this.seqSel = []; this.touch(); return; }
+      const im = e.target.closest('[data-img]'); if (im && (im.closest('#ceImgList') || im.closest('#ceImgSel'))) this.setImg(im.dataset.img);
+    });
     on('#compEditor', 'keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) { e.preventDefault(); this.undo(); } });
     // etapa 1
-    on('#ceFile', 'change', e => { const f = e.target.files[0]; e.target.value = ''; this.loadFile(f); });
+    on('#ceFile', 'change', e => { const f = e.target.files[0]; e.target.value = ''; this.addImageFile(f); });
+    on('#ceFile', 'cancel', () => { this.quick = false; this.fresh = false; });
     const drop = $('#ceDrop');
+    // Clique direto na área de arrastar: sempre adiciona (nunca usa o “começar do zero” da importação rápida).
+    drop.addEventListener('click', e => { if (e.target.id !== 'ceFile') { this.quick = false; this.fresh = false; } });
     ['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => { if (e.dataTransfer && [...e.dataTransfer.types].includes('Files')) { e.preventDefault(); drop.classList.add('over'); } }));
     ['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, () => drop.classList.remove('over')));
-    drop.addEventListener('drop', e => { if (!e.dataTransfer || !e.dataTransfer.files.length) return; e.preventDefault(); this.loadFile(e.dataTransfer.files[0]); });
+    drop.addEventListener('drop', e => { if (!e.dataTransfer || !e.dataTransfer.files.length) return; e.preventDefault(); this.quick = false; this.fresh = false; this.addImageFile(e.dataTransfer.files[0]); });
+    on('#ceRelink', 'click', () => $('#ceRelinkFile').click());
+    on('#ceRelinkFile', 'change', e => { const f = e.target.files[0]; e.target.value = ''; this.relinkImage(f); });
+    on('#ceImgK', 'change', e => this.setK(+e.target.value));
+    on('#ceImgMatch', 'click', () => this.matchSize());
     on('#ceView', 'click', e => { const b = e.target.closest('[data-v]'); if (b) { this.view = b.dataset.v; this.touch(); } });
     on('#ceKeyMode', 'click', e => { const b = e.target.closest('[data-v]'); if (b) this.setKey({ mode: b.dataset.v }); });
     on('#ceKeyPick', 'click', () => { this.picking = !this.picking; this.touch(); });
-    on('#ceKeyCorner', 'click', () => { if (!ED.img) return; const set = ED.info.bgSet ? clone(ED.info.bgSet) : [ED.pixel(0, 0).slice(0, 3)]; this.setKey({ colors: set, on: true }); this.view = 'proc'; });
-    on('#ceKeyApply', 'click', () => { if (!keyColors(this.d.key).length) { toast('Escolha a cor do fundo primeiro: clique em “Adicionar cor da imagem” e depois no fundo.'); return; } this.setKey({ on: true }); this.view = 'proc'; });
-    on('#ceKeyColors', 'click', e => { const b = e.target.closest('[data-rmc]'); if (!b) return; const cs = keyColors(this.d.key).slice(); cs.splice(+b.dataset.rmc, 1); this.setKey({ colors: cs, on: this.d.key.on && cs.length > 0 }); });
+    on('#ceKeyCorner', 'click', () => { const sh = this.sh(); if (!sh) return; const set = sh.info.bgSet ? clone(sh.info.bgSet) : [sh.pixel(0, 0).slice(0, 3)]; this.setKey({ colors: set, on: true }); this.view = 'proc'; });
+    on('#ceKeyApply', 'click', () => { const im = this.im(); if (!im) return; if (!keyColors(im.key).length) { toast('Escolha a cor do fundo primeiro: clique em “Adicionar cor da imagem” e depois no fundo.'); return; } this.setKey({ on: true }); this.view = 'proc'; });
+    on('#ceKeyColors', 'click', e => { const b = e.target.closest('[data-rmc]'), im = this.im(); if (!b || !im) return; const cs = keyColors(im.key).slice(); cs.splice(+b.dataset.rmc, 1); this.setKey({ colors: cs, on: im.key.on && cs.length > 0 }); });
     on('#ceKeyUndo', 'click', () => this.setKey({ on: false }));
     on('#ceKeyTol', 'input', e => {
+      const im = this.im(); if (!im) return;
       if (!this._tolSnap) { this.snap(); this._tolSnap = true; }
-      this.d.key.tol = +e.target.value; $('#ceKeyTolV').textContent = e.target.value;
-      clearTimeout(this._tolT); this._tolT = setTimeout(() => { ED.ensure(this.d.key, this.d.alpha); this.touch(); }, 90);
+      im.key.tol = +e.target.value; $('#ceKeyTolV').textContent = e.target.value;
+      clearTimeout(this._tolT); this._tolT = setTimeout(() => { this.ensureSh(); this.touch(); }, 90);
     });
     on('#ceKeyTol', 'change', () => { this._tolSnap = false; });
     on('#ceKeyTrim', 'change', e => this.setKey({ trim: +e.target.value }));
-    on('#ceImgPrev', 'click', e => { if (!this.picking || !ED.img) return; const cv = e.currentTarget, r = cv.getBoundingClientRect(); this.pickAt((e.clientX - r.left) / r.width * ED.w, (e.clientY - r.top) / r.height * ED.h); });
+    on('#ceImgPrev', 'click', e => { const sh = this.sh(); if (!this.picking || !sh) return; const cv = e.currentTarget, r = cv.getBoundingClientRect(); this.pickAt((e.clientX - r.left) / r.width * sh.w, (e.clientY - r.top) / r.height * sh.h); });
     on('#ceImgRemove', 'click', () => this.removeImage());
     on('#ceDetect1', 'click', () => this.detect());
     on('#ceManual', 'click', () => this.go(2));
@@ -2449,29 +2709,34 @@ const Ed = {
     on('#ceDetect', 'click', () => this.detect());
     on('#ceCancel', 'click', () => this.cancelJob());
     on('#ceGridBtn', 'click', () => { const g = $('#ceGrid'); g.hidden = !g.hidden; $('#ceGridBtn').setAttribute('aria-expanded', String(!g.hidden)); this.touch(); });
-    for (const [id, k] of [['#gFw', 'fw'], ['#gFh', 'fh'], ['#gMx', 'mx'], ['#gMy', 'my'], ['#gSx', 'sx'], ['#gSy', 'sy']]) on(id, 'input', e => { const v = parseInt(e.target.value, 10); if (isNaN(v)) return; this.d.grid[k] = clamp(v, +e.target.min, +e.target.max); this.paintGridInfo(); });
+    for (const [id, k] of [['#gFw', 'fw'], ['#gFh', 'fh'], ['#gMx', 'mx'], ['#gMy', 'my'], ['#gSx', 'sx'], ['#gSy', 'sy']]) on(id, 'input', e => { const v = parseInt(e.target.value, 10), im = this.im(); if (isNaN(v) || !im) return; im.grid[k] = clamp(v, +e.target.min, +e.target.max); this.paintGridInfo(); });
     on('#gApply', 'click', () => this.applyGrid(null));
     on('#ceReport', 'click', e => { if (e.target.closest('#ceUseGrid') && this.suggest) this.applyGrid(this.suggest); });
+    on('#frFilter', 'click', e => { const b = e.target.closest('[data-v]'); if (b) { this.frFilter = b.dataset.v; this.touch(); } });
     on('#frAdd', 'click', () => this.addFrame()); on('#frDup', 'click', () => this.dupFrames()); on('#frDel', 'click', () => this.delFrames());
     on('#frMerge', 'click', () => this.mergeFrames()); on('#frSplit', 'click', () => this.splitFrames());
     on('#frFit', 'click', () => this.fitFrames(false)); on('#frCenter', 'click', () => this.fitFrames(true)); on('#frRestore', 'click', () => this.restoreFrames());
     for (const [id, k] of [['#frX', 'x'], ['#frY', 'y'], ['#frW', 'w'], ['#frH', 'h']]) on(id, 'change', e => this.setFrameField(k, e.target.value));
     on('#detGap', 'change', e => { this.det.gap = toInt(e.target.value, 2, 0, 50); });
     on('#detMin', 'change', e => { this.det.min = toInt(e.target.value, 6, 1, 100000); });
-    on('#detAlpha', 'change', e => { this.snap(); this.d.alpha = toInt(e.target.value, 8, 0, 254); ED.ensure(this.d.key, this.d.alpha); this.touch(); });
+    on('#detAlpha', 'change', e => { this.snap(); this.d.alpha = toInt(e.target.value, 8, 0, 254); this.ensureSh(); this.touch(); });
     on('#ceZoom', 'change', () => this.drawSheet());
     const sh = $('#ceSheet');
     sh.addEventListener('pointerdown', e => this.sheetDown(e)); sh.addEventListener('pointermove', e => this.sheetMove(e));
     sh.addEventListener('pointerup', () => this.sheetUp()); sh.addEventListener('pointercancel', () => this.sheetUp()); sh.addEventListener('keydown', e => this.sheetKey(e));
     on('#frGallery', 'click', e => {
-      const b = e.target.closest('.fthumb'); if (!b) return; const id = b.dataset.id;
-      if (e.shiftKey && this.sel.length) { const ids = this.d.frames.map(f => f.id), a = ids.indexOf(this.sel[this.sel.length - 1]), z = ids.indexOf(id); this.sel = [...new Set(this.sel.concat(ids.slice(Math.min(a, z), Math.max(a, z) + 1)))]; }
+      const b = e.target.closest('.fthumb'); if (!b) return; const id = b.dataset.id, f = this.frame(id); if (!f) return;
+      // Recorte de outra imagem (filtro “Todas”): passa a mostrar a imagem dele.
+      if (f.img !== this.img) { this.img = f.img; this.sel = [id]; this.touch(); return; }
+      const vis = $$('#frGallery .fthumb').map(x => x.dataset.id);
+      if (e.shiftKey && this.sel.length) { const a = vis.indexOf(this.sel[this.sel.length - 1]), z = vis.indexOf(id); this.sel = [...new Set(this.sel.concat(vis.slice(Math.min(a, z), Math.max(a, z) + 1)))]; }
       else if (e.ctrlKey || e.metaKey) this.sel = this.sel.includes(id) ? this.sel.filter(x => x !== id) : this.sel.concat(id);
       else this.sel = [id];
       this.paintSel();
     });
     bindDnD($('#frGallery'), '.fthumb', 'id', (a, b, after) => this.moveLib(a, b, after));
     // etapa 3
+    on('#seqFilter', 'click', e => { const b = e.target.closest('[data-v]'); if (b) { this.seqFilter = b.dataset.v; this.touch(); } });
     on('#seqLib', 'click', e => { const b = e.target.closest('.fthumb'); if (!b) return; const id = b.dataset.id; this.pick = this.pick.includes(id) ? this.pick.filter(x => x !== id) : this.pick.concat(id); this.render3(); });
     on('#seqLib', 'dblclick', e => { const b = e.target.closest('.fthumb'); if (!b) return; this.pick = [b.dataset.id]; this.addPicked(false); });
     on('#seqAddSel', 'click', () => this.addPicked(false)); on('#seqAddAll', 'click', () => this.addPicked(true));
@@ -2521,7 +2786,7 @@ const Ed = {
   },
   go(step) {
     step = clamp(step, 1, 5);
-    if (step > 1 && !ED.img) { toast('Comece escolhendo uma imagem.'); step = 1; }
+    if (step > 1 && !this.d.images.length) { toast('Comece escolhendo uma imagem.'); step = 1; }
     this.step = step; this.picking = false; this.touch();
     const top = $('#compEditor').getBoundingClientRect().top; if (top < 0) $('#compEditor').scrollIntoView({ block: 'start' });
   },
@@ -2529,33 +2794,62 @@ const Ed = {
 
   /* ---------- desenho das etapas ---------- */
   paintHeader() {
-    const n = this.norm(), dirty = this.imgDirty || JSON.stringify(n) !== JSON.stringify(CC);
+    const n = this.norm(), dirty = this.d.images.some(im => this.newBlobs.has(im.id)) || JSON.stringify(n) !== JSON.stringify(CC);
     $('#ceDirty').hidden = !dirty; for (const id of ['#ceSave', '#ceSave2', '#ceDiscard']) $(id).disabled = !dirty; $('#ceUndo').disabled = !this.hist.length;
     const status = s => { const c = n.states[s].seq.length, sd = JSON.stringify(n.states[s]) !== JSON.stringify(CC.states[s]); return { c, sd }; };
-    $('#ceStatus').innerHTML = SKEYS.map(s => { const { c, sd } = status(s); return `<span class="stchip ${c ? 'ok' : ''} ${sd ? 'dirty' : ''}" data-s="${s}">${SNAME[s]}: ${c ? c + (c === 1 ? ' quadro' : ' quadros') : 'não configurado'}${sd ? ' · não salvo' : ''}</span>`; }).join('');
+    const ni = this.d.images.length;
+    $('#ceStatus').innerHTML = SKEYS.map(s => { const { c, sd } = status(s); return `<span class="stchip ${c ? 'ok' : ''} ${sd ? 'dirty' : ''}" data-s="${s}">${SNAME[s]}: ${c ? c + (c === 1 ? ' quadro' : ' quadros') : 'não configurado'}${sd ? ' · não salvo' : ''}</span>`; }).join('')
+      + (ni > 1 ? `<span class="stchip">${ni} imagens</span>` : '');
     $$('.statebar').forEach(el => { el.innerHTML = SKEYS.map(s => { const { c, sd } = status(s); return `<button type="button" role="radio" aria-checked="${s === this.state}" data-state="${s}"><span class="led" style="background:${c ? 'var(--ok)' : 'transparent'};border:1px solid ${c ? 'var(--ok)' : 'var(--mu)'}"></span>${SNAME[s]}${sd ? '<span class="n">• não salvo</span>' : ''}</button>`; }).join(''); });
     $$('.stname').forEach(el => { el.textContent = SNAME[this.state]; });
-    const done = [!!ED.img, this.d.frames.length > 0, this.seq().length > 0, this.seq().length > 0, !dirty && CC.states.idle.seq.length > 0];
+    const done = [ni > 0, this.d.frames.length > 0, this.seq().length > 0, this.seq().length > 0, !dirty && CC.states.idle.seq.length > 0];
     $$('#ceSteps [data-step]').forEach(b => { const k = +b.dataset.step; if (k === this.step) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current'); b.classList.toggle('done', done[k - 1]); });
     $('#ceBack').hidden = this.step === 1; $('#ceNext').hidden = this.step === 5;
     $('#ceNext').textContent = ['', 'Próximo: recortes →', 'Próximo: sequência →', 'Próximo: prévia →', 'Próximo: salvar →'][this.step] || '';
   },
   render() {
     if (!this.d) return;
+    ED.ensure(this.d);
     this.paintHeader();
     $$('.cestep').forEach(el => { el.hidden = el.id !== 'ceStep' + this.step; });
     this['render' + this.step]();
     this.pvSync();
   },
+  imgButtons(sel, extra) {
+    return (extra || '') + this.d.images.map((x, i) => `<button type="button" role="radio" aria-checked="${x.id === sel}" data-${extra === undefined ? 'img' : 'v'}="${x.id}" title="${esc(x.name)}">Imagem ${i + 1}${this.sh(x.id) ? '' : ' <span class="n">sem arquivo</span>'}</button>`).join('');
+  },
   render1() {
-    const has = !!ED.img, k = this.d.key;
-    $('#ceImgBox').hidden = !has;
-    $('#ceDrop').classList.toggle('compact', has);
-    if (!has) return;
-    ED.ensure(k, this.d.alpha);
-    $('#ceImgName').textContent = (this.d.image && this.d.image.name) || 'imagem';
-    $('#ceImgInfo').textContent = `${ED.w} × ${ED.h} px · ${fmtBytes(ED.blob ? ED.blob.size : 0)}`;
-    $('#ceBgInfo').textContent = bgLine(ED.info, k);
+    const ims = this.d.images, im = this.im(), sh = this.sh();
+    const list = $('#ceImgList'); list.hidden = !ims.length;
+    list.innerHTML = ims.map((x, i) => {
+      const ok = !!this.sh(x.id), nf = this.framesOf(x.id).length, used = this.usedIds(), nu = this.framesOf(x.id).filter(f => used.has(f.id)).length;
+      return `<button type="button" class="imgcard" data-img="${x.id}" aria-pressed="${x.id === this.img}"><canvas width="56" height="56" class="sprite checker"></canvas><span class="stack" style="gap:2px;min-width:0"><b>Imagem ${i + 1}</b><span class="xs mu ell">${esc(x.name)}</span><span class="xs ${ok ? 'mu' : 'warn'}">${ok ? `${pctOf(x.k)} · ${nf} recorte${nf === 1 ? '' : 's'}${nu ? ` · ${nu} em uso` : ''}` : 'arquivo não encontrado'}</span></span></button>`;
+    }).join('');
+    $$('#ceImgList .imgcard').forEach(b => this.thumbImg($('canvas', b), b.dataset.img, 56));
+    $('#ceDropT').textContent = ims.length ? 'Adicionar outra folha de sprites (PNG)' : 'Arraste uma folha de sprites (PNG) aqui';
+    $('#ceDropS').textContent = ims.length ? 'Arraste aqui ou clique. Os recortes e as sequências que já existem continuam iguais.' : 'ou clique pra escolher. A imagem fica só neste navegador e o arquivo original nunca é alterado.';
+    $('#ceDrop').classList.toggle('compact', ims.length > 0);
+    $('#ceImgBox').hidden = !im;
+    if (!im) return;
+    const n = this.imNum(im.id);
+    $('#ceImgName').textContent = (this.multi() ? `Imagem ${n} · ` : '') + im.name;
+    $('#ceMissing').hidden = !!sh; $('#ceImgMain').hidden = !sh;
+    $('#ceImgRemove').textContent = this.multi() ? `Remover a imagem ${n}` : 'Remover imagem';
+    if (!sh) { $('#ceMissingTxt').textContent = `O arquivo da imagem ${n} (${im.name}, ${im.w}×${im.h} px) não está neste navegador, por exemplo depois de importar um backup sem as imagens. Os recortes e as sequências dela continuam guardados: escolha o mesmo PNG pra recuperar.`; return; }
+    const k = im.key;
+    $('#ceImgInfo').textContent = `${sh.w} × ${sh.h} px · ${fmtBytes(sh.blob ? sh.blob.size : 0)}`;
+    $('#ceBgInfo').textContent = bgLine(sh.info, k);
+    // tamanho
+    const opts = [0.5, 1, 2, 3]; if (!opts.includes(im.k)) opts.push(im.k); opts.sort((a, b) => a - b);
+    $('#ceImgK').innerHTML = opts.map(v => `<option value="${v}" ${v === im.k ? 'selected' : ''}>${pctOf(v)}${[0.5, 1, 2, 3].includes(v) ? '' : ' (igualado)'}</option>`).join('');
+    const isBase = n === 1, mb = $('#ceImgMatch'); mb.disabled = isBase || !this.multi(); mb.hidden = !this.multi();
+    let hint = 'Muda o tamanho do personagem desta imagem no companheiro. A ampliação não suaviza: os pixels continuam nítidos.';
+    if (this.multi()) {
+      if (isBase) hint = 'A imagem 1 é a referência de tamanho. Nas outras imagens, use “Igualar à imagem 1” pra o personagem ficar do mesmo tamanho.';
+      else { const h1 = this.charHeight(this.d.images[0].id), h2 = this.charHeight(im.id); hint = h1 && h2 ? `Altura do personagem: ${Math.round(h2 * im.k)} px aqui e ${Math.round(h1 * this.d.images[0].k)} px na imagem 1.` + (Math.abs(h2 * im.k - h1 * this.d.images[0].k) > Math.max(2, h1 * this.d.images[0].k * 0.08) ? ' Use “Igualar à imagem 1” pra deixar parecidos.' : ' Já estão parecidos.') : 'Depois de recortar os sprites das duas imagens, use “Igualar à imagem 1” pra o personagem ficar do mesmo tamanho.'; }
+    }
+    $('#ceImgKHint').textContent = hint;
+    // fundo
     $$('#ceView [data-v]').forEach(b => b.setAttribute('aria-checked', String(b.dataset.v === this.view)));
     $$('#ceKeyMode [data-v]').forEach(b => b.setAttribute('aria-checked', String(b.dataset.v === k.mode)));
     const kc = keyColors(k);
@@ -2564,43 +2858,47 @@ const Ed = {
     $('#ceKeyPick').textContent = this.picking ? 'Cancelar' : 'Adicionar cor da imagem';
     $('#ceKeyApply').disabled = k.on || !kc.length; $('#ceKeyUndo').disabled = !k.on;
     $('#ceKeyHint').textContent = this.picking ? 'Clique num pixel do fundo na imagem ao lado.' : k.on ? (k.mode === 'borda' ? 'Fundo removido só onde encosta nas bordas: partes do personagem com a mesma cor ficam. Se sobrar fundo preso entre braço e corpo, use “Essa cor na imagem toda”.' : 'Essa cor sumiu da imagem toda. Se o personagem perdeu partes, volte pra “Só o fundo ligado às bordas”.') : 'A remoção só vale pra exibição: o arquivo original não muda.';
+    $('#ceDetect1').textContent = this.multi() ? `Detectar sprites da imagem ${n}` : 'Detectar sprites automaticamente';
     const cv = $('#ceImgPrev'), avail = Math.max(120, cv.parentElement.clientWidth - 22);
-    let z = avail / ED.w >= 1 ? Math.min(4, Math.floor(avail / ED.w)) : avail / ED.w;
-    if (ED.h * z > 640 && z > 1) z = Math.max(1, Math.floor(640 / ED.h));
-    const W = Math.max(1, Math.round(ED.w * z)), H = Math.max(1, Math.round(ED.h * z));
+    let z = avail / sh.w >= 1 ? Math.min(4, Math.floor(avail / sh.w)) : avail / sh.w;
+    if (sh.h * z > 640 && z > 1) z = Math.max(1, Math.floor(640 / sh.h));
+    const W = Math.max(1, Math.round(sh.w * z)), H = Math.max(1, Math.round(sh.h * z));
     cv.width = W; cv.height = H; cv.style.width = W + 'px'; cv.style.height = H + 'px'; cv.style.cursor = this.picking ? 'copy' : 'default';
-    const g = cv.getContext('2d'); g.imageSmoothingEnabled = false; g.clearRect(0, 0, W, H); g.drawImage(this.view === 'orig' ? ED.img : ED.src, 0, 0, W, H);
+    const g = cv.getContext('2d'); g.imageSmoothingEnabled = false; g.clearRect(0, 0, W, H); g.drawImage(this.view === 'orig' ? sh.img : sh.src, 0, 0, W, H);
   },
   paintGridInfo() {
-    for (const [id, k] of [['#gFw', 'fw'], ['#gFh', 'fh'], ['#gMx', 'mx'], ['#gMy', 'my'], ['#gSx', 'sx'], ['#gSy', 'sy']]) { const el = $(id); if (document.activeElement !== el) el.value = this.d.grid[k]; }
-    if (!ED.img) { $('#gInfo').textContent = ''; return; }
-    const g = this.d.grid, { cols, rows } = gridDims(g, ED.w, ED.h), lx = ED.w - g.mx - (cols ? cols * g.fw + (cols - 1) * g.sx : 0), ly = ED.h - g.my - (rows ? rows * g.fh + (rows - 1) * g.sy : 0);
-    let h = `Grade: <b>${cols} × ${rows} = ${cols * rows} quadros</b> de ${g.fw}×${g.fh} px.`;
+    const im = this.im(), sh = this.sh(), g = im ? im.grid : defaultGrid();
+    for (const [id, k] of [['#gFw', 'fw'], ['#gFh', 'fh'], ['#gMx', 'mx'], ['#gMy', 'my'], ['#gSx', 'sx'], ['#gSy', 'sy']]) { const el = $(id); if (document.activeElement !== el) el.value = g[k]; }
+    if (!sh) { $('#gInfo').textContent = ''; return; }
+    const { cols, rows } = gridDims(g, sh.w, sh.h), lx = sh.w - g.mx - (cols ? cols * g.fw + (cols - 1) * g.sx : 0), ly = sh.h - g.my - (rows ? rows * g.fh + (rows - 1) * g.sy : 0);
+    let h = `Grade${this.multi() ? ' da imagem ' + this.imNum(im.id) : ''}: <b>${cols} × ${rows} = ${cols * rows} quadros</b> de ${g.fw}×${g.fh} px.`;
     if (!cols || !rows) h += ' <span class="warn">O quadro é maior que a imagem.</span>';
     else if (lx > g.mx || ly > g.my) h += ` <span class="warn">Sobram ${lx - g.mx} px à direita e ${ly - g.my} px embaixo além da margem: confira tamanho, margem e espaçamento.</span>`;
     else h += (g.mx || g.my) ? ' A grade cobre a imagem inteira, com a mesma margem em todas as bordas.' : ' A grade cobre a imagem inteira.';
     $('#gInfo').innerHTML = h;
   },
   render2() {
-    const has = !!ED.img;
-    for (const id of ['#ceDetect', '#ceGridBtn', '#frAdd']) $(id).disabled = !has || !!this.job;
+    const sh = this.sh(), multi = this.multi();
+    for (const id of ['#ceDetect', '#ceGridBtn', '#frAdd']) $(id).disabled = !sh || !!this.job;
+    $('#ceImgSelBox').hidden = !multi; if (multi) $('#ceImgSel').innerHTML = this.imgButtons(this.img);
+    $('#ceDetect').textContent = multi ? `Detectar sprites da imagem ${this.imNum(this.img)}` : 'Detectar sprites automaticamente';
     $('#ceSheetHint').textContent = this.picking ? 'Clique num pixel do fundo pra torná-lo transparente.' : 'Arraste numa área vazia pra criar um recorte. Clique pra selecionar e arraste as alças pra redimensionar. Ctrl + clique seleciona vários. Setas movem 1 px (Shift + setas redimensiona).';
     this.paintGridInfo();
-    // relatório
-    const rep = $('#ceReport'), R = this.report;
+    // relatório (só o da imagem escolhida)
+    const rep = $('#ceReport'), R = this.report && this.report.img === this.img ? this.report : null, other = multi ? ' Os recortes das outras imagens não mudaram.' : '';
     if (!R) rep.hidden = true;
-    else if (R.grid) { rep.hidden = false; rep.innerHTML = `<span><b>${R.n}</b> recortes gerados pela grade${R.kept ? `. ${R.kept} recortes usados em sequências foram mantidos` : ''}.</span><span class="mu">Revise abaixo. Nada é salvo até você clicar em Salvar.</span>`; }
+    else if (R.grid) { rep.hidden = false; rep.innerHTML = `<span><b>${R.n}</b> recortes gerados pela grade${R.kept ? `. ${R.kept} recortes usados em sequências foram mantidos` : ''}.${other}</span><span class="mu">Revise abaixo. Nada é salvo até você clicar em Salvar.</span>`; }
     else {
-      const res = R.res, bs = res.boxes, warn = [], lines = [];
+      const res = R.res, bs = res.boxes, warn = [], lines = [], info = sh ? sh.info : null;
       if (res.tooMany) warn.push('A imagem tem pontos demais separados (ruído ou fundo com textura). Remova o fundo na etapa 1 ou recorte manualmente.');
       else if (!bs.length) warn.push('Não encontrei sprites. Se o fundo não for transparente, remova o fundo na etapa 1. Você também pode recortar manualmente ou gerar por grade.');
       else {
-        lines.push(`Encontrei <b>${bs.length}</b> sprite${bs.length === 1 ? '' : 's'}` + (R.kept ? `; ${R.kept} recorte${R.kept === 1 ? '' : 's'} já usado${R.kept === 1 ? '' : 's'} em sequências ficaram como estavam.` : '.'));
-        lines.push(bgLine(ED.info, this.d.key));
+        lines.push((multi ? `Imagem ${this.imNum(this.img)}: encontrei` : 'Encontrei') + ` <b>${bs.length}</b> sprite${bs.length === 1 ? '' : 's'}` + (R.kept ? `; ${R.kept} recorte${R.kept === 1 ? '' : 's'} já usado${R.kept === 1 ? '' : 's'} em sequências ficaram como estavam.` : '.') + other);
+        lines.push(bgLine(info, this.im().key));
         const ws = bs.map(b => b.w), hs = bs.map(b => b.h);
         if (res.grid) lines.push(`Parece uma grade regular de ${res.grid.cols} × ${res.grid.rows} quadros de ${res.grid.fw}×${res.grid.fh} px. <button type="button" class="btn sm" id="ceUseGrid">Usar grade sugerida</button>`);
         else lines.push(`Organização irregular, em ${readingRows(bs).length} linha${readingRows(bs).length === 1 ? '' : 's'}. Tamanhos de ${Math.min(...ws)}×${Math.min(...hs)} a ${Math.max(...ws)}×${Math.max(...hs)} px.`);
-        const area = ED.w * ED.h, big = bs.map((b, i) => [b, i]).filter(([b]) => b.w * b.h > area * 0.25).map(([, i]) => i + 1);
+        const area = sh ? sh.w * sh.h : Infinity, big = bs.map((b, i) => [b, i]).filter(([b]) => b.w * b.h > area * 0.25).map(([, i]) => i + 1);
         if (big.length) warn.push(`O recorte ${big.join(', ')} ocupa boa parte da imagem: o fundo não foi separado dos personagens. Se a imagem tem um quadriculado ou outro fundo pintado, volte na etapa 1, use “Adicionar cor da imagem” em cada cor do fundo e detecte de novo.`);
         // Compara a largura com sprites de altura parecida: um recorte bem mais largo pode ser dois personagens encostados.
         const wide = bs.map((b, i) => { const peers = bs.filter(o => Math.abs(o.h - b.h) <= b.h * 0.25); return peers.length >= 3 && b.w > median(peers.map(o => o.w)) * 1.7 && b.w > 8 ? i + 1 : 0; }).filter(Boolean);
@@ -2608,6 +2906,7 @@ const Ed = {
         if (Math.max(...hs) > Math.min(...hs) * 1.5) warn.push('Os sprites têm alturas bem diferentes: na prévia, o alinhamento pelos pés evita que o personagem pule.');
         if (bs.length > 150) warn.push('Muitos recortes: a imagem pode ter textos ou efeitos. Exclua o que não for personagem.');
         if (res.small) warn.push(`Ignorei ${res.small} ponto${res.small === 1 ? '' : 's'} solto${res.small === 1 ? '' : 's'} com menos de ${this.det.min} pixels.`);
+        if (multi && this.imNum(this.img) > 1) { const h1 = this.charHeight(this.d.images[0].id), h2 = this.charHeight(this.img), im = this.im(); if (h1 && h2 && Math.abs(h2 * im.k - h1 * this.d.images[0].k) > Math.max(2, h1 * this.d.images[0].k * 0.08)) lines.push(`O personagem aqui tem ${Math.round(h2 * im.k)} px de altura e ${Math.round(h1 * this.d.images[0].k)} px na imagem 1. Pra ficarem do mesmo tamanho, use “Igualar à imagem 1” na etapa 1.`); }
       }
       rep.hidden = false;
       rep.innerHTML = lines.map(l => `<span>${l}</span>`).join('') + warn.map(w => `<span class="warn">Atenção: ${w}</span>`).join('') + '<span class="mu">Revise os recortes abaixo. Nada é salvo até você clicar em Salvar.</span>';
@@ -2615,20 +2914,26 @@ const Ed = {
     $('#detGap').value = this.det.gap; $('#detMin').value = this.det.min; $('#detAlpha').value = this.d.alpha;
     this.drawSheet();
     // galeria
+    $('#frFilter').hidden = !multi;
+    if (multi) $$('#frFilter [data-v]').forEach(b => b.setAttribute('aria-checked', String(b.dataset.v === this.frFilter)));
     const used = {}; for (const s of SKEYS) for (const it of this.d.states[s].seq) (used[it.f] = used[it.f] || new Set()).add(s);
     const col = { idle: 'var(--ok)', celebrate: 'var(--xp)', tired: 'var(--mu)', levelup: 'var(--nt)' };
-    $('#frGallery').innerHTML = this.d.frames.length ? this.d.frames.map((f, k) => `<button type="button" class="fthumb ${this.sel.includes(f.id) ? 'sel' : ''}" data-id="${f.id}" draggable="true" title="Recorte ${k + 1} · ${f.w}×${f.h} px"><canvas width="64" height="64" class="sprite checker"></canvas><span class="b">${k + 1}</span><span class="mu">${f.w}×${f.h}</span>${used[f.id] ? `<span class="used">${[...used[f.id]].map(s => `<i style="background:${col[s]}" title="${SNAME[s]}"></i>`).join('')}</span>` : ''}</button>`).join('')
-      : '<div class="empty-card">Nenhum recorte. Use “Detectar sprites automaticamente”, “Gerar por grade” ou arraste sobre a imagem.</div>';
+    const vis = this.d.frames.map((f, k) => [f, k]).filter(([f]) => !multi || this.frFilter === 'all' || f.img === this.img);
+    $('#frGallery').innerHTML = vis.length ? vis.map(([f, k]) => `<button type="button" class="fthumb ${this.sel.includes(f.id) ? 'sel' : ''} ${f.img !== this.img ? 'other' : ''}" data-id="${f.id}" draggable="true" title="Recorte ${k + 1}${multi ? ' · imagem ' + this.imNum(f.img) : ''} · ${f.w}×${f.h} px"><canvas width="64" height="64" class="sprite checker"></canvas><span class="b">${k + 1}</span><span class="mu">${f.w}×${f.h}</span>${this.badge(f)}${used[f.id] ? `<span class="used">${[...used[f.id]].map(s => `<i style="background:${col[s]}" title="${SNAME[s]}"></i>`).join('')}</span>` : ''}</button>`).join('')
+      : `<div class="empty-card">Nenhum recorte${multi ? ' nesta imagem' : ''}. Use “Detectar sprites automaticamente”, “Gerar por grade” ou arraste sobre a imagem.</div>`;
     $$('#frGallery .fthumb').forEach(b => this.thumb($('canvas', b), this.frame(b.dataset.id), 64));
     this.paintInspector();
   },
   render3() {
-    const q = this.seq();
-    $('#seqLib').innerHTML = this.d.frames.length ? this.d.frames.map((f, k) => { const o = this.pick.indexOf(f.id); return `<button type="button" class="fthumb ${o >= 0 ? 'picked' : ''}" data-id="${f.id}" aria-pressed="${o >= 0}" title="Recorte ${k + 1}"><canvas width="64" height="64" class="sprite checker"></canvas><span class="b">${k + 1}</span>${o >= 0 ? `<span class="ord">${o + 1}</span>` : ''}</button>`; }).join('')
-      : '<div class="empty-card">Sem recortes. Volte na etapa 2.</div>';
+    const q = this.seq(), multi = this.multi(), lib = this.libFrames();
+    $('#seqFilter').hidden = !multi;
+    if (multi) $('#seqFilter').innerHTML = `<button type="button" role="radio" aria-checked="${this.seqFilter === 'all'}" data-v="all">Todas as imagens</button>` + this.d.images.map((x, i) => `<button type="button" role="radio" aria-checked="${x.id === this.seqFilter}" data-v="${x.id}" title="${esc(x.name)}">Imagem ${i + 1}</button>`).join('');
+    $('#seqLib').innerHTML = lib.length ? lib.map(f => { const k = this.num(f.id) - 1, o = this.pick.indexOf(f.id); return `<button type="button" class="fthumb ${o >= 0 ? 'picked' : ''}" data-id="${f.id}" aria-pressed="${o >= 0}" title="Recorte ${k + 1}${multi ? ' · imagem ' + this.imNum(f.img) : ''}"><canvas width="64" height="64" class="sprite checker"></canvas><span class="b">${k + 1}</span>${this.badge(f)}${o >= 0 ? `<span class="ord">${o + 1}</span>` : ''}</button>`; }).join('')
+      : `<div class="empty-card">Sem recortes${multi && this.seqFilter !== 'all' ? ' nesta imagem' : ''}. Volte na etapa 2.</div>`;
     $$('#seqLib .fthumb').forEach(b => this.thumb($('canvas', b), this.frame(b.dataset.id), 64));
     $('#seqAddSel').textContent = this.pick.length ? `Adicionar ${this.pick.length} selecionado${this.pick.length === 1 ? '' : 's'}` : 'Adicionar selecionados';
-    $('#seqList').innerHTML = q.length ? q.map((it, i) => `<button type="button" class="fthumb ${this.seqSel.includes(i) ? 'sel' : ''}" data-i="${i}" draggable="true" title="Quadro ${i + 1} · recorte ${this.num(it.f)}"><canvas width="64" height="64" class="sprite checker"></canvas><span class="b">${i + 1}</span><span class="mu">#${this.num(it.f)}</span></button>`).join('')
+    $('#seqAddAll').textContent = multi && this.seqFilter !== 'all' ? `Adicionar todos da imagem ${this.imNum(this.seqFilter)}` : 'Adicionar todos';
+    $('#seqList').innerHTML = q.length ? q.map((it, i) => { const f = this.frame(it.f); return `<button type="button" class="fthumb ${this.seqSel.includes(i) ? 'sel' : ''}" data-i="${i}" draggable="true" title="Quadro ${i + 1} · recorte ${this.num(it.f)}${multi && f ? ' · imagem ' + this.imNum(f.img) : ''}"><canvas width="64" height="64" class="sprite checker"></canvas><span class="b">${i + 1}</span><span class="mu">#${this.num(it.f)}</span>${f ? this.badge(f) : ''}</button>`; }).join('')
       : `<div class="empty-card">A sequência de ${SNAME[this.state]} está vazia. Clique nos recortes acima, na ordem da animação, e depois em “Adicionar”.</div>`;
     $$('#seqList .fthumb').forEach(b => this.thumb($('canvas', b), this.frame(q[+b.dataset.i].f), 64));
     $('#seqCount').textContent = q.length + (q.length === 1 ? ' quadro' : ' quadros') + (this.seqSel.length ? ' · ' + this.seqSel.length + ' selecionado' + (this.seqSel.length === 1 ? '' : 's') : '');
@@ -2648,14 +2953,15 @@ const Ed = {
     w.style.background = bg === 'color' ? $('#pvColor').value : '';
     $('#pvGuides').checked = this.pv.guides; $('#pvOnion').checked = this.pv.onion;
     const lay = this.pv.layout();
-    $('#pvStage').textContent = lay ? `Área comum a todos os estados: ${lay.W}×${lay.H} px. ${this.seq().length ? '' : 'Este estado está vazio: no Hoje ele usa o Repouso com um efeito.'}` : 'Sem quadros ainda.';
+    $('#pvStage').textContent = lay ? `Área comum a todos os estados: ${Math.ceil(lay.W)}×${Math.ceil(lay.H)} px.` + (lay.ks.some(k => k !== 1) ? ' Inclui o tamanho escolhido pra cada imagem.' : '') + ` ${this.seq().length ? '' : 'Este estado está vazio: no Hoje ele usa o Repouso com um efeito.'}` : 'Sem quadros ainda.';
     $('#pvNote').textContent = reduced() ? 'Movimento reduzido ativo no sistema: a prévia começa pausada e o companheiro fica parado no Hoje.' : '';
     this.paintAlign();
   },
   render5() {
     const st = this.stateCfg(), n = this.norm();
     $('#ceSummary').innerHTML = SKEYS.map(s => { const q = this.d.states[s], c = q.seq.length, sd = JSON.stringify(n.states[s]) !== JSON.stringify(CC.states[s]);
-      return `<button type="button" class="sumrow ${s === this.state ? 'cur' : ''}" data-s="${s}"><canvas width="56" height="56" class="sprite checker"></canvas><span class="stack" style="gap:2px"><b>${SNAME[s]}${q.name ? ' · ' + esc(q.name) : ''}</b><span class="xs mu">${c ? `${c} quadro${c === 1 ? '' : 's'} · ${q.fps} quadros/s · ${q.loop ? 'repete' : 'toca uma vez'}` : 'não configurado: usa o Repouso com efeito'}</span>${sd ? '<span class="xs dirty">alterações não salvas</span>' : ''}</span></button>`; }).join('');
+      const imgs = this.multi() ? [...new Set(q.seq.map(it => { const f = this.frame(it.f); return f ? this.imNum(f.img) : 0; }).filter(Boolean))].sort() : [];
+      return `<button type="button" class="sumrow ${s === this.state ? 'cur' : ''}" data-s="${s}"><canvas width="56" height="56" class="sprite checker"></canvas><span class="stack" style="gap:2px"><b>${SNAME[s]}${q.name ? ' · ' + esc(q.name) : ''}</b><span class="xs mu">${c ? `${c} quadro${c === 1 ? '' : 's'} · ${q.fps} quadros/s · ${q.loop ? 'repete' : 'toca uma vez'}` + (imgs.length ? ` · imagem ${imgs.join(' e ')}` : '') : 'não configurado: usa o Repouso com efeito'}</span>${sd ? '<span class="xs dirty">alterações não salvas</span>' : ''}</span></button>`; }).join('');
     $$('#ceSummary [data-s]').forEach(b => { const q = this.d.states[b.dataset.s].seq; this.thumb($('canvas', b), q.length ? this.frame(q[0].f) : null, 56); });
     const nm = $('#seqName'); if (document.activeElement !== nm) nm.value = st.name;
     $('#ceScale').value = String(this.d.scale);
@@ -2663,6 +2969,7 @@ const Ed = {
     $('#cpCopy').disabled = $('#cpMove').disabled = !st.seq.length;
   }
 };
+
 function bindDnD(box, sel, key, onDrop) {
   let from = null;
   box.addEventListener('dragstart', e => { const el = e.target.closest(sel); if (!el) return; from = el.dataset[key]; e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', from); } catch (x) {} el.classList.add('dragging'); });
@@ -2673,28 +2980,24 @@ function bindDnD(box, sel, key, onDrop) {
     if (!el || el.dataset[key] === f) return; const r = el.getBoundingClientRect(); onDrop(f, el.dataset[key], e.clientX > r.left + r.width / 2);
   });
 }
-async function applyCompanion(config, image) {
-  const c = sanitizeComp(config);
-  if (image && image.dataURL) {
-    const blob = dataURLToBlob(image.dataURL);
-    try { await SAVED.load(blob); try { await IDB.set('companion.image', blob); } catch (e) { toast('Importado, mas o navegador não deixou salvar a imagem.'); } }
-    catch (e) { toast('A imagem do arquivo está corrompida.'); }
-  }
-  CC = c; saveComp(); Ed.reset(); Comp.player.restart(); Comp.paint(); paintBackupSize();
-}
-
 /* ===================== Backup geral ===================== */
-function paintBackupSize() {
-  const base = JSON.stringify({ data: DATA, companion: { config: CC } }).length;
-  const img = SAVED.blob ? Math.ceil(SAVED.blob.size * 4 / 3) : 0;
-  $('#bkImg').disabled = !SAVED.blob;
-  $('#bkSize').textContent = SAVED.blob
-    ? `Sem a imagem: ~${fmtBytes(base)}. Com a imagem: ~${fmtBytes(base + img)} (a imagem vira texto e fica cerca de 33% maior que o PNG).`
-    : `Tamanho aproximado: ${fmtBytes(base)}. Nenhuma imagem de companheiro carregada.`;
+// Imagens do companheiro em texto (data URL), na ordem da configuração. Imagens sem arquivo neste navegador ficam de fora.
+async function compImagesOut(cfg, set) {
+  const out = [];
+  for (const im of cfg.images) { const sh = set.get(im.id); if (sh && sh.blob) out.push({ id: im.id, name: im.name, dataURL: await blobToDataURL(sh.blob) }); }
+  return out;
 }
-async function backupText(withImage) {
-  const out = { type: 'habitos-backup', v: 2, exportedAt: new Date().toISOString(), data: DATA, companion: { config: CC, image: null } };
-  if (withImage && SAVED.blob) out.companion.image = { name: CC.image ? CC.image.name : 'sprites.png', dataURL: await blobToDataURL(SAVED.blob) };
+function savedImageStats() { let bytes = 0, n = 0; for (const im of CC.images) { const sh = SAVED.get(im.id); if (sh && sh.blob) { bytes += sh.blob.size; n++; } } return { bytes, n }; }
+function paintBackupSize() {
+  const base = JSON.stringify({ data: DATA, companion: { config: CC } }).length, { bytes, n } = savedImageStats(), total = base + Math.ceil(bytes * 4 / 3);
+  $('#bkImg').disabled = !n;
+  $('#bkImgL').textContent = n > 1 ? `Incluir as ${n} imagens do companheiro no backup` : 'Incluir a imagem do companheiro no backup';
+  if (!n) { $('#bkSize').textContent = `Tamanho aproximado: ${fmtBytes(base)}. Nenhuma imagem de companheiro salva.`; return; }
+  $('#bkSize').innerHTML = esc(`Com ${n > 1 ? 'as imagens' : 'a imagem'}: ~${fmtBytes(total)}. Sem: ~${fmtBytes(base)} (aí o companheiro chega sem ${n > 1 ? 'as imagens' : 'a imagem'} no outro aparelho). As imagens viram texto e ficam cerca de 33% maiores que os PNGs.`)
+    + ($('#bkImg').checked && total > BIG_FILE ? ' <span class="warn">Arquivo grande: pode demorar pra compartilhar ou abrir no celular.</span>' : '');
+}
+async function backupText(withImages) {
+  const out = { type: 'habitos-backup', v: 3, exportedAt: new Date().toISOString(), data: DATA, companion: { config: CC, images: withImages ? await compImagesOut(CC, SAVED) : [] } };
   return JSON.stringify(out);
 }
 async function exportBackup() { download('backup-habitos-' + logicalDate() + '.json', await backupText($('#bkImg').checked)); }
@@ -2711,10 +3014,34 @@ async function importBackup(file) {
   let obj; try { obj = JSON.parse(await readText(file)); } catch (e) { toast('Arquivo inválido.'); return; }
   const data = obj && obj.type === 'habitos-backup' ? migrate(obj.data) : null;
   if (!data) { toast('Esse arquivo não é um backup do app.'); return; }
-  if (!confirm('Importar este backup substitui os registros atuais deste navegador. Continuar?')) return;
-  DATA = data; saveData();
-  if (obj.companion && obj.companion.config) await applyCompanion(obj.companion.config, obj.companion.image);
-  applyTheme(); renderAll(); toast('Backup importado.');
+  if (!confirm('Importar este backup substitui os registros e o companheiro deste navegador. Continuar?')) return;
+  DATA = data; if (DATA.days[logicalDate()]) touchToday(); saveData();
+  let r = null;
+  if (obj.companion && obj.companion.config) r = await applyCompanion(obj.companion.config, obj.companion.images || obj.companion.image);
+  applyTheme(); renderAll();
+  toast(r && r.missing ? `Backup importado, mas ${r.missing === 1 ? '1 imagem do companheiro não veio' : r.missing + ' imagens do companheiro não vieram'} no arquivo. Escolha o arquivo de novo em Configurações › Companheiro.` : 'Backup importado.');
+}
+// Troca o companheiro salvo pelo de um arquivo (exportação ou backup). Aceita o formato antigo (uma imagem) e o novo (várias).
+async function applyCompanion(config, images) {
+  const c = sanitizeComp(config);
+  const list = Array.isArray(images) ? images : images && images.dataURL ? [Object.assign({}, images, { id: images.id || (c.images[0] && c.images[0].id) })] : [];
+  const set = new SheetSet(); let bad = 0, fail = false;
+  for (const it of list) {
+    if (!it || typeof it.dataURL !== 'string' || !c.images.some(im => im.id === it.id) || set.has(it.id)) continue;
+    try { await set.load(it.id, dataURLToBlob(it.dataURL)); } catch (e) { bad++; }
+  }
+  // Imagens que não vieram no arquivo: aproveita as que este navegador já tem, se forem as mesmas.
+  for (const im of c.images) {
+    if (set.has(im.id)) continue;
+    const s = SAVED.get(im.id), old = CC.images.find(x => x.id === im.id);
+    if (s && s.img && old && old.name === im.name && s.w === im.w && s.h === im.h) { set.put(im.id, s); continue; }
+    if (im.id === 'i1') { try { const b = await IDB.get('companion.image'); if (b) { const sh = new SheetImage(); await sh.load(b); if (sh.w === im.w && sh.h === im.h) set.put(im.id, sh); } } catch (e) {} }
+  }
+  for (const im of c.images) { const s = set.get(im.id); if (s && s.blob) { try { await IDB.set(imgDbKey(im.id), s.blob); } catch (e) { fail = true; } } }
+  for (const im of CC.images) if (!set.has(im.id)) { try { await IDB.del(imgDbKey(im.id)); } catch (e) {} }
+  CC = c; saveComp(); SAVED.adopt(set); Ed.reset(); Comp.player.restart(); Comp.paint(); paintBackupSize();
+  const missing = c.images.filter(im => !set.has(im.id)).length;
+  return { images: c.images.length, missing, bad, fail };
 }
 
 /* ===================== Tela: largura, tamanho, altura e animação ===================== */
@@ -2798,7 +3125,7 @@ let VIEW = 'hoje';
 function renderAll() {
   if (VIEW === 'hoje') renderHoje();
   if (VIEW === 'historico') Hist.render();
-  if (VIEW === 'config') { Tasks.render(); Settings.paint(); Layout.paint(); Ed.render(); }
+  if (VIEW === 'config') { Tasks.render(); Settings.paint(); Layout.paint(); Ed.render(); paintBackupSize(); }
   if (VIEW !== 'hoje') { const S = Game.summary(); $('#streakTop').textContent = S.streak + (S.streak === 1 ? ' dia' : ' dias'); $('#dateLabel').textContent = dateLabel(logicalDate()); $('#clockLabel').textContent = hhmm(now()); }
 }
 function route() {
@@ -2842,7 +3169,7 @@ async function init() {
   window.matchMedia('(max-width: 720px)').addEventListener('change', () => renderAll());
   window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => { if (DATA.theme === 'auto') applyTheme(); });
   window.addEventListener('storage', e => { if (e.key === KEY) { DATA = loadData(); DATA_VER++; renderAll(); } });
-  try { const blob = await IDB.get('companion.image'); if (blob) await SAVED.load(blob); } catch (e) { console.warn('Imagem do companheiro indisponível:', e); }
+  await loadSavedImages();
   Ed.reset();
   route();
   const tickAll = () => { Remind.tick(); if (VIEW === 'hoje') renderHoje(); };
@@ -2854,7 +3181,7 @@ async function init() {
     if (!ok && navigator.storage && navigator.storage.persist) ok = await navigator.storage.persist();
     $('#persistInfo').textContent = ok ? 'Armazenamento persistente concedido: o navegador não apaga esses dados sozinho.' : 'O navegador pode apagar esses dados se faltar espaço ou se você limpar os dados do site. Exporte o companheiro pra ter uma cópia.';
   } catch (e) { $('#persistInfo').textContent = 'Não deu pra verificar a persistência deste navegador. Exporte o companheiro pra ter uma cópia.'; }
-  window.__app = { Game, CC: () => CC, DATA: () => DATA, SAVED, ED, Ed, Comp, Layout, stageLayout, sanitizeComp, Sync, Hist, Tasks, buildICS, occurrencesFor, Remind, logicalDate, saveData, touchToday };
+  window.__app = { Game, CC: () => CC, DATA: () => DATA, SAVED, ED, Ed, Comp, Layout, stageLayout, sanitizeComp, SheetSet, IDB, imgDbKey, applyCompanion, aguaOf, taskCups, Sync, Hist, Tasks, buildICS, occurrencesFor, Remind, logicalDate, saveData, touchToday };
 }
 init();
 </script>

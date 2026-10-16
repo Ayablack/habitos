@@ -36,7 +36,7 @@ No Chrome, clique no ícone de instalar na barra de endereço, ou em **⋮ › T
 
 ## Atualizar o app no GitHub Pages
 
-No repositório, clique em **Add file › Upload files**, arraste o `index.html` e o `sw.js` novos e clique em **Commit changes**. Em 1 ou 2 minutos o site atualiza. Seus registros e o companheiro salvo continuam no navegador: a nova versão converte o companheiro antigo sozinha, sem mudar a aparência, e guarda uma cópia do formato antigo.
+No repositório, clique em **Add file › Upload files**, arraste o `index.html` e o `sw.js` novos e clique em **Commit changes**. Em 1 ou 2 minutos o site atualiza. Seus registros e o companheiro salvo continuam no navegador: a nova versão converte o companheiro antigo sozinha, sem mudar a aparência, e guarda uma cópia do formato antigo. A imagem que você já tinha vira a **imagem 1**, em 100%.
 
 ## Tela
 
@@ -67,12 +67,23 @@ Esses ajustes valem só pro aparelho onde foram feitos.
    - **Alinhamento:** use **Pelos pés** pra o personagem não pular entre poses de tamanhos diferentes. Com a prévia pausada, arraste o personagem pra ajustar um quadro.
 6. Em **Salvar**, dê um nome opcional e clique em **Salvar companheiro**.
 
+## Companheiro: várias imagens
+
+Cada animação pode vir de uma folha diferente (por exemplo, uma pro Repouso e outra pra Comemoração).
+
+- **Adicionar uma imagem:** em **Imagens**, arraste outro PNG ou clique na área de arrastar. A imagem nova entra junto e **nenhum recorte nem sequência é apagado**. Na **Importação rápida**, o app pergunta: **Adicionar ao companheiro atual** (padrão) ou **Começar do zero**. Começar do zero só mexe no rascunho; Desfazer volta tudo.
+- **Cada imagem tem o seu fundo e a sua grade.** Clique na imagem na lista pra ajustar. Detectar sprites e gerar por grade agem só na imagem escolhida.
+- **Tamanho:** cada imagem pode aparecer em 50%, 100%, 200% ou 300%, sem borrar os pixels. Se uma folha foi desenhada menor, use **Igualar à imagem 1**: o app mede a altura do personagem nas duas e acerta o tamanho.
+- **Sequências misturam imagens:** em **Sequência**, use **Todas as imagens / Imagem 1 / Imagem 2** pra filtrar os recortes. As miniaturas mostram o número da imagem.
+- **Remover uma imagem** tira só os recortes dela (e esses quadros das sequências). Desfazer traz de volta.
+- **Exportar companheiro** e o **backup** levam todas as imagens. Se um backup foi feito sem as imagens, o app mostra a imagem como “arquivo não encontrado”: clique em **Escolher o arquivo** e escolha o mesmo PNG pra recuperar, sem perder os recortes.
+
 Nada vai pro companheiro da tela Hoje até você salvar. **Desfazer** (ou Ctrl+Z) volta as últimas mudanças, e **Descartar** volta pro que estava salvo. Cada estado tem sua própria sequência, velocidade, repetição e alinhamento. Estado sem quadros usa o Repouso com um efeito (partículas, brilho ou tons de cinza).
 
 ## Seus dados
 
 - Ficam **só no navegador** onde você usa o app. Cada endereço tem seus próprios dados: o app aberto pelo arquivo no PC e o app no GitHub Pages **não enxergam os dados um do outro**.
-- **Pra mudar de endereço ou de aparelho**, use **Configurações › Sincronização e backup › Exportar backup** e depois **Importar backup** no outro lugar.
+- **Pra mudar de endereço ou de aparelho**, use **Configurações › Sincronização e backup › Exportar backup** e depois **Importar backup** no outro lugar. Deixe marcado **Incluir as imagens do companheiro**: sem elas, o companheiro chega sem as imagens. O app avisa quando o arquivo passa de 5 MB.
 - **Pra passar os dias recentes pro celular**, use **Mostrar QR** no PC e aponte a câmera do celular. Com o app no GitHub Pages, a própria câmera do celular abre o link e junta os dados. Os dados se juntam sem apagar nada. Desmarcar uma tarefa num aparelho não desmarca no outro.
 - Limpar os dados do site no navegador apaga tudo. Faça backups de vez em quando.
 
@@ -88,10 +99,13 @@ Nada vai pro companheiro da tela Hoje até você salvar. **Desfazer** (ou Ctrl+Z
 | Tarefa simples | 10 |
 | Tarefa com horário (cada dose conta separado) | 20 |
 | Meta de água do dia | +20 |
+| Tarefa que conta como copo (ex.: “Copo d’água ao acordar”) | 10 da tarefa + 1 copo no contador |
 | Todas as tarefas do dia + meta de água | +30 |
 | Passar o seu recorde de sequência | +25 (uma vez por sequência) |
 
-Desmarcar tira o XP e marcar de novo devolve o mesmo valor, então não tem como ganhar duas vezes. Cada dia guarda um retrato das tarefas e da meta daquele dia: mudar tarefas ou metas depois não altera o XP do passado.
+Desmarcar tira o XP e marcar de novo devolve o mesmo valor, então não tem como ganhar duas vezes.
+
+**Água e tarefas:** marcar “Copo d’água ao acordar” soma 1 copo no contador de água; desmarcar tira. Marcar de novo ou recarregar a página não soma duas vezes. O botão − não tira esse copo: pra isso, desmarque a tarefa. Qualquer tarefa pode contar como copo: ao criar ou editar, marque **Conta como 1 copo de água**. Isso vale de hoje em diante; dias anteriores não mudam. Se hoje você já tinha somado esse copo à mão antes de atualizar, tire um com o −. Cada dia guarda um retrato das tarefas e da meta daquele dia: mudar tarefas ou metas depois não altera o XP do passado.
 
 Um dia sem registro por semana é coberto pelo **coringa** e não quebra a sequência. Dois dias completos sem registro deixam o companheiro desanimado, e ele volta ao normal na próxima tarefa.
 
