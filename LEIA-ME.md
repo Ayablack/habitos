@@ -34,6 +34,37 @@ Abra o endereço no Chrome, toque no menu **⋮ › Adicionar à tela inicial** 
 
 No Chrome, clique no ícone de instalar na barra de endereço, ou em **⋮ › Transmitir, salvar e compartilhar › Instalar página como app**.
 
+## Atualizar o app no GitHub Pages
+
+No repositório, clique em **Add file › Upload files**, arraste o `index.html` e o `sw.js` novos e clique em **Commit changes**. Em 1 ou 2 minutos o site atualiza. Seus registros e o companheiro salvo continuam no navegador: a nova versão converte o companheiro antigo sozinha, sem mudar a aparência, e guarda uma cópia do formato antigo.
+
+## Tela
+
+Em **Configurações › Lembretes e aparência › Tela**:
+
+- **Largura:** "Tela inteira" ocupa o monitor todo; "Centralizada" limita a 1360 px.
+- **Tamanho da interface:** "Automático" aumenta em telas largas (2560 px → 130%), ou escolha de 80% a 200%.
+- **Encaixar o Hoje na janela:** ajusta o tamanho pra tela Hoje caber inteira, sem rolar.
+
+Esses ajustes valem só pro aparelho onde foram feitos.
+
+## Companheiro: importação rápida
+
+1. Em **Configurações › Companheiro**, clique em **Importação rápida** e escolha a folha de sprites (PNG). Também dá pra arrastar o arquivo.
+2. Se o fundo for de uma cor sólida, ele é removido sozinho. Na etapa **Imagem** dá pra comparar **Original** e **Processada** e trocar o modo:
+   - **Só o fundo ligado às bordas:** protege partes do personagem com a mesma cor do fundo.
+   - **Essa cor na imagem toda:** remove também o fundo preso entre braço e corpo.
+3. O app detecta os sprites e mostra o relatório na etapa **Recortes**. Pra corrigir:
+   - **Recortes:** arraste numa área vazia pra criar, arraste as alças pra redimensionar e ajuste os números X, Y, largura e altura.
+   - **Ferramentas:** **Dividir** separa personagens encostados; **Unir**, **Ajustar ao sprite**, **Centralizar** e **Restaurar** fazem o que o nome diz.
+4. Em **Sequência**, escolha o estado (Repouso, Comemoração, Desânimo ou Subida de nível), clique nos recortes na ordem da animação e em **Adicionar**. Arraste os quadros pra reordenar.
+5. Em **Prévia**, confira a animação:
+   - **Controles:** pausar, avançar quadro e mudar a velocidade e a repetição.
+   - **Alinhamento:** use **Pelos pés** pra o personagem não pular entre poses de tamanhos diferentes. Com a prévia pausada, arraste o personagem pra ajustar um quadro.
+6. Em **Salvar**, dê um nome opcional e clique em **Salvar companheiro**.
+
+Nada vai pro companheiro da tela Hoje até você salvar. **Desfazer** (ou Ctrl+Z) volta as últimas mudanças, e **Descartar** volta pro que estava salvo. Cada estado tem sua própria sequência, velocidade, repetição e alinhamento. Estado sem quadros usa o Repouso com um efeito (partículas, brilho ou tons de cinza).
+
 ## Seus dados
 
 - Ficam **só no navegador** onde você usa o app. Cada endereço tem seus próprios dados: o app aberto pelo arquivo no PC e o app no GitHub Pages **não enxergam os dados um do outro**.
