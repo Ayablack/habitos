@@ -46,7 +46,19 @@ No PC, clique no **lápis** no topo do Hoje pra entrar no modo de edição:
 - **Tamanho:** **P** (1/4 da linha), **M** (1/3), **G** (metade) ou **Inteira**. Os quadros de uma linha esticam pra ocupar o espaço que sobra.
 - **Esconder:** × no quadro. Pra trazer de volta, **+ Adicionar quadro**.
 - **Desfazer** e **Restaurar padrão** ficam na barra de cima. Clique em **Concluir** pra sair.
-- O quadro **Horários** aparece sozinho quando o dia tem tarefa com horário (remédio, alarme) e some quando não tem.
+- O quadro **Horários** aparece sozinho quando o dia tem tarefa com horário (remédio, alarme) e some quando não tem. Quando todos os horários do dia foram feitos, ele recolhe numa linha; toque pra abrir.
+
+Em **+ Adicionar quadro** também dá pra criar:
+
+- **Lista nova** (ex.: Trabalho, Estudos): vira um quadro com as tarefas dela. Manhã, Durante o dia e Noite também são listas: dá pra renomear, trocar a cor, mudar a ordem ou apagar em **Configurações › Tarefas › Suas listas**. Ao apagar, o app pergunta pra qual lista vão as tarefas. Lista com todas as tarefas feitas recolhe numa linha.
+- **Contador** (ex.: Páginas lidas, meta 30, cada toque soma 10): vira um quadro com + e −. XP ao bater a meta e **Conta pro dia completo** ficam em **Configurações › Rotina e lembretes › Contadores**, junto com a Água.
+
+E trazer dois quadros que começam fora do painel:
+
+- **Agora:** o que precisa de atenção no momento: horário atrasado ou esquecido (com botão **Feito**), água atrasada (com **+1 copo**) e o próximo alarme. Some quando não tem nada.
+- **Nota do dia:** uma linha sobre o dia. Salva sozinha e aparece no **Histórico**, em **Notas do dia** e ao passar o mouse no mapa do ano.
+
+O anel do **Seu dia** tem um anel por lista (até 4) e um da água; a legenda mostra todas as listas e os contadores.
 
 O arranjo fica salvo na hora e vai junto no **QR** e no **backup**. O celular não edita: ele mostra os mesmos quadros, na mesma ordem, em uma coluna. Depois de mudar no PC, leia o QR no celular pra atualizar.
 
@@ -63,7 +75,7 @@ Ainda no modo de edição, **Tela deste aparelho** ajusta só o aparelho onde vo
 
 Ficam em 5 abas: **Tarefas**, **Rotina e lembretes**, **Companheiro**, **Aparência** e **Dados**. O que se usa pouco fica recolhido em **Mais opções**.
 
-- **Tarefa nova:** nome, **Quando** (Manhã, Dia, Noite, Com horário ou Manhã e noite) e dias. Tolerância do horário, "conta como copo" e temporária ficam em Mais opções.
+- **Tarefa nova:** nome, **Tipo** (Uma vez, Com horário ou Manhã e noite), **Lista** e dias. Tarefa com horário pode ficar **Pela hora**: cada horário vai pra lista do período dele (Manhã, Durante o dia ou Noite). Manhã e noite escolhe uma lista pra cada vez. Tolerância do horário, **Ao marcar, soma no contador** e temporária ficam em Mais opções.
 - **Aparência:** tema, som, confete e **Animar mesmo com "reduzir movimento"** (se o Windows estiver com os efeitos de animação desligados, o companheiro fica parado; ligue essa opção pra animar só no app).
 - **Dados:** QR pro outro aparelho e backup.
 
@@ -102,12 +114,19 @@ Nada vai pro companheiro da tela Hoje até você salvar. **Desfazer** (ou Ctrl+Z
 
 - Ficam **só no navegador** onde você usa o app. Cada endereço tem seus próprios dados: o app aberto pelo arquivo no PC e o app no GitHub Pages **não enxergam os dados um do outro**.
 - **Pra mudar de endereço ou de aparelho**, use **Configurações › Dados › Exportar backup** e depois **Importar backup** no outro lugar. Deixe marcado **Incluir as imagens do companheiro**: sem elas, o companheiro chega sem as imagens. O app avisa quando o arquivo passa de 5 MB.
-- **Pra passar os dias recentes pro celular**, use **Configurações › Dados › Mostrar QR** no PC e aponte a câmera do celular. O QR leva também as tarefas e o arranjo do painel. Com o app no GitHub Pages, a própria câmera do celular abre o link e junta os dados. Os dados se juntam sem apagar nada. Desmarcar uma tarefa num aparelho não desmarca no outro.
+- **Pra passar os dias recentes pro celular**, use **Configurações › Dados › Mostrar QR** no PC e aponte a câmera do celular. O QR leva também as tarefas, as listas, os contadores, as notas do dia e o arranjo do painel. Com o app no GitHub Pages, a própria câmera do celular abre o link e junta os dados. Os dados se juntam sem apagar nada. Desmarcar uma tarefa num aparelho não desmarca no outro.
 - Limpar os dados do site no navegador apaga tudo. Faça backups de vez em quando.
 
 ## Lembretes
 
 - As notificações do navegador só aparecem **com o app aberto** (numa aba ou instalado). Sem um servidor, nenhum navegador consegue avisar com o app fechado.
+- Com a página na tela, o aviso aparece também numa faixa no topo do app.
+- **Clicou em Testar aviso e não apareceu nada fora da página?** Quem mostra a notificação é o sistema. Confira:
+  - **Windows:** Configurações › Sistema › Notificações: ative o Chrome (ou Edge) e desligue o “Não perturbe” / Assistente de foco.
+  - **Mac:** Ajustes do Sistema › Notificações › Google Chrome: permitir.
+  - **Navegador:** ícone à esquerda do endereço › Notificações › Permitir.
+  - **Android:** Configurações › Apps › Chrome › Notificações ligadas.
+  - **iPhone:** só com o app na tela de início (Compartilhar › Adicionar à Tela de Início), iOS 16.4 ou mais novo.
 - Pra lembrete garantido no celular, use **Horários pro calendário (.ics)** em **Configurações › Rotina e lembretes › Mais opções** e importe o arquivo no Google Agenda. Se mudar os horários, gere e importe de novo.
 
 ## Regras de XP
@@ -118,12 +137,13 @@ Nada vai pro companheiro da tela Hoje até você salvar. **Desfazer** (ou Ctrl+Z
 | Tarefa com horário (cada dose conta separado) | 20 |
 | Meta de água do dia | +20 |
 | Tarefa que conta como copo (ex.: “Copo d’água ao acordar”) | 10 da tarefa + 1 copo no contador |
-| Todas as tarefas do dia + meta de água | +30 |
+| Meta de um contador seu | o XP que você escolher (0 a 100; começa em 10) |
+| Todas as tarefas do dia + metas que contam pro dia completo | +30 |
 | Passar o seu recorde de sequência | +25 (uma vez por sequência) |
 
 Desmarcar tira o XP e marcar de novo devolve o mesmo valor, então não tem como ganhar duas vezes.
 
-**Água e tarefas:** marcar “Copo d’água ao acordar” soma 1 copo no contador de água; desmarcar tira. Marcar de novo ou recarregar a página não soma duas vezes. O botão − não tira esse copo: pra isso, desmarque a tarefa. Qualquer tarefa pode contar como copo: ao criar ou editar, marque **Conta como 1 copo de água**. Isso vale de hoje em diante; dias anteriores não mudam. Se hoje você já tinha somado esse copo à mão antes de atualizar, tire um com o −. Cada dia guarda um retrato das tarefas e da meta daquele dia: mudar tarefas ou metas depois não altera o XP do passado.
+**Água e tarefas:** marcar “Copo d’água ao acordar” soma 1 copo no contador de água; desmarcar tira. Marcar de novo ou recarregar a página não soma duas vezes. O botão − não tira esse copo: pra isso, desmarque a tarefa. Qualquer tarefa pode somar num contador: ao criar ou editar, em Mais opções, escolha **Ao marcar, soma no contador**: Água soma 1 copo; um contador seu soma o passo dele (ex.: “Ler 10 páginas” soma 10 em Páginas lidas). Isso vale de hoje em diante; dias anteriores não mudam. Se hoje você já tinha somado esse copo à mão antes de atualizar, tire um com o −. **Dia completo:** todas as tarefas feitas e as metas marcadas com **Conta pro dia completo** batidas. A Água vem marcada; os contadores seus, não. O mapa e o anel geral seguem a mesma regra. Cada dia guarda um retrato das tarefas, das metas e dos contadores daquele dia: mudar tarefas ou metas depois não altera o XP do passado.
 
 Um dia sem registro por semana é coberto pelo **coringa** e não quebra a sequência. Dois dias completos sem registro deixam o companheiro desanimado, e ele volta ao normal na próxima tarefa.
 

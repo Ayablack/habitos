@@ -317,6 +317,36 @@ details>summary{list-style-position:inside}
   .cfgtabs{align-self:stretch;flex-wrap:nowrap;overflow-x:auto}
   .cfgtabs button{flex:none}
 }
+/* entrega 2: listas, contadores, Agora, nota */
+.legend #legend{max-height:170px;overflow-y:auto}
+.agrow{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:12px;background:var(--sf2)}
+.agrow .led{width:10px;height:10px;border-radius:50%;border:2px solid;flex:none}
+.agrow b{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cntcard .big{font-size:30px}
+#notaIn{width:100%}
+.noterow{display:flex;gap:10px;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--ln)}
+.noterow:last-child{border-bottom:none}
+.notes{max-height:320px;overflow-y:auto}
+.catnew{gap:8px;padding:12px;border-radius:12px;border:1px dashed var(--ln)}
+.nums3,.nums4{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.nums4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.nums3 label,.nums4 label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--mu)}
+.nums3 input,.nums4 input{width:100%;min-width:0}
+.swatch{width:26px;height:26px;border-radius:50%;border:2px solid var(--ln);cursor:pointer;flex:none}
+.ldel{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;background:var(--sf2);font-size:13px}
+.cntbox{gap:8px;padding:12px;border-radius:12px;border:1px solid var(--ln)}
+.tflists{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.tflists [hidden]{display:none}
+.ntnote{margin-top:12px;padding:10px 12px;border-radius:12px;background:var(--sf2);line-height:1.5}
+.ntnote ul{margin:6px 0;padding-left:18px}
+#medDone[hidden],#medCard[hidden]{display:none}
+@media (max-width:720px){ .nums4{grid-template-columns:repeat(2,minmax(0,1fr))} }
+/* lista ou Horários recolhidos ficam estreitos no PC e o resto da linha ocupa o espaço */
+@media (min-width:721px){ html:not(.editing) #dash .blk.shrunk{flex:0 1 230px;min-width:200px} }
+.lline{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:12px;background:var(--sf2)}
+.lline input[type=text]{flex:1 1 120px;min-width:90px;width:auto}
+.lrow .lline{flex-wrap:wrap}
+.lrow .lline input[type=text]{flex:1 1 150px;min-width:150px}
 @media (max-width:720px){
   .app{padding:16px 14px 104px}
   .tabs{display:none}
@@ -382,14 +412,7 @@ details>summary{list-style-position:inside}
     <div class="blk" data-b="dia">
       <section class="card ringcard" aria-label="Progresso do dia">
         <div class="ringwrap">
-          <svg width="150" height="150" viewBox="0 0 150 150" role="img" aria-label="Anéis de progresso por período">
-            <g transform="rotate(-90 75 75)" fill="none" stroke-width="10" stroke-linecap="round">
-              <circle cx="75" cy="75" r="66" stroke="var(--track)"/><circle id="rM" cx="75" cy="75" r="66" stroke="var(--xp)"/>
-              <circle cx="75" cy="75" r="53" stroke="var(--track)"/><circle id="rD" cx="75" cy="75" r="53" stroke="var(--ok)"/>
-              <circle cx="75" cy="75" r="40" stroke="var(--track)"/><circle id="rN" cx="75" cy="75" r="40" stroke="var(--nt)"/>
-              <circle cx="75" cy="75" r="27" stroke="var(--track)"/><circle id="rA" cx="75" cy="75" r="27" stroke="var(--wa)"/>
-            </g>
-          </svg>
+          <svg id="ringSvg" width="150" height="150" viewBox="0 0 150 150" role="img" aria-label="Anéis de progresso: um por lista e um da água"></svg>
           <div class="pct mono" id="overall">0%</div>
         </div>
         <div class="legend">
@@ -417,7 +440,13 @@ details>summary{list-style-position:inside}
         </div>
       </section>
     </div>
-    <div class="blk" data-b="horarios"><section class="card med" id="medCard" aria-label="Horários"></section></div>
+    <div class="blk" data-b="horarios"><button type="button" class="collapsed" id="medDone" data-expand="horarios" aria-expanded="false" hidden></button><section class="card med" id="medCard" aria-label="Horários"></section></div>
+    <div class="blk" data-b="agora">
+      <section class="card stack" aria-label="Agora" style="gap:10px">
+        <h2 class="h">Agora</h2>
+        <div id="agoraList" class="stack" style="gap:8px"></div>
+      </section>
+    </div>
     <div class="blk" data-b="comp">
       <section class="card comp" aria-label="Companheiro">
         <div class="between"><h2 class="h">Companheiro</h2><span id="compChip" class="chipsm"></span></div>
@@ -437,9 +466,6 @@ details>summary{list-style-position:inside}
         <span class="mu xs" id="compNote"></span>
       </section>
     </div>
-    <div class="blk" data-b="p-m"></div>
-    <div class="blk" data-b="p-d"></div>
-    <div class="blk" data-b="p-n"></div>
     <div class="blk" data-b="seq">
       <section class="card stack" aria-label="Sequência" style="gap:10px">
         <h2 class="h">Sequência</h2>
@@ -458,12 +484,25 @@ details>summary{list-style-position:inside}
         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap" class="xs mu"><span>menos</span><span class="cell"></span><span class="cell lv1"></span><span class="cell lv2"></span><span class="cell lv3"></span><span class="cell lv4"></span><span>mais</span><span class="cell jk" style="margin-left:8px"></span><span>coringa</span><span style="margin-left:auto">Atalhos: <b class="mono">A</b> +1 copo · <b class="mono">F</b> tela cheia</span></div>
       </section>
     </div>
+    <div class="blk" data-b="nota">
+      <section class="card stack" aria-label="Nota do dia" style="gap:8px">
+        <div class="between"><h2 class="h">Nota do dia</h2><span class="xs mu" id="notaInfo"></span></div>
+        <input type="text" id="notaIn" maxlength="140" placeholder="Uma linha sobre hoje" autocomplete="off" aria-label="Nota do dia">
+        <span class="xs mu">Salva sozinha e aparece no Histórico.</span>
+      </section>
+    </div>
   </div>
   <div id="dashCat" class="modal" hidden>
     <div class="card" role="dialog" aria-modal="true" aria-labelledby="dashCatT" style="max-width:520px">
       <div class="between"><h3 class="h" id="dashCatT">Adicionar quadro</h3><button type="button" class="mini" id="dashCatClose" aria-label="Fechar">×</button></div>
       <div id="dashCatList" class="stack" style="gap:8px"></div>
-      <span class="xs mu">Listas suas, contadores, “Agora” e nota do dia chegam na próxima entrega.</span>
+      <div class="catnew stack" data-form="list"><b class="sm">Nova lista</b>
+        <div class="btnrow"><input type="text" id="catListName" maxlength="30" placeholder="Ex.: Trabalho, Estudos" aria-label="Nome da lista" style="flex:1 1 180px"><button type="button" class="btn sm pri" data-new="list">Criar lista</button></div></div>
+      <div class="catnew stack" data-form="cnt"><b class="sm">Novo contador</b>
+        <input type="text" id="catCntName" maxlength="30" placeholder="Ex.: Páginas lidas, Flexões" aria-label="Nome do contador">
+        <div class="nums3"><label>Meta por dia<input type="number" id="catCntMeta" min="1" max="100000" value="10"></label><label>Cada toque soma<input type="number" id="catCntStep" min="1" max="1000" value="1"></label><label>Unidade<input type="text" id="catCntUnit" maxlength="16" placeholder="páginas"></label></div>
+        <div class="btnrow"><button type="button" class="btn sm pri" data-new="cnt">Criar contador</button></div></div>
+      <span class="err" id="catErr" role="alert"></span>
     </div>
   </div>
 </main>
@@ -494,6 +533,10 @@ details>summary{list-style-position:inside}
       <div id="hWeek" class="stack"></div>
     </section>
   </div>
+  <section class="card stack" aria-label="Notas do dia" style="gap:8px">
+    <div class="between"><h2 class="h">Notas do dia</h2><span class="sm mu" id="hNotesInfo"></span></div>
+    <div id="hNotes" class="stack notes" style="gap:6px"></div>
+  </section>
   <div class="grid2">
     <section class="card stack" aria-label="Trilha de níveis">
       <div class="between"><h2 class="h">Trilha de níveis</h2><span class="mono sm mu" id="hLvLine"></span></div>
@@ -527,19 +570,20 @@ details>summary{list-style-position:inside}
     <section class="card stack" id="taskForm" aria-label="Editar tarefa" style="flex:1 1 340px" hidden>
       <h3 class="h" id="tfTitle">Nova tarefa</h3>
       <label class="field">Nome<input type="text" id="tfName" maxlength="60" autocomplete="off"></label>
-      <div class="field"><span>Quando</span>
-        <div class="seg" id="tfWhen" role="radiogroup" aria-label="Quando">
-          <button type="button" role="radio" data-v="m">Manhã</button><button type="button" role="radio" data-v="d">Dia</button><button type="button" role="radio" data-v="n">Noite</button><button type="button" role="radio" data-v="horario">Com horário</button><button type="button" role="radio" data-v="duplo">Manhã e noite</button>
+      <div class="field"><span>Tipo</span>
+        <div class="seg" id="tfWhen" role="radiogroup" aria-label="Tipo">
+          <button type="button" role="radio" data-v="simples">Uma vez</button><button type="button" role="radio" data-v="horario">Com horário</button><button type="button" role="radio" data-v="duplo">Manhã e noite</button>
         </div>
         <span class="xs mu" id="tfXP"></span>
       </div>
       <label class="field" id="tfTimeBox">Horários (separe por vírgula)<input type="text" id="tfTimes" placeholder="08:00, 20:00" autocomplete="off"></label>
+      <div class="nums tflists"><label class="field"><span id="tfListL">Lista</span><select id="tfList"></select></label><label class="field" id="tfList2Box">Lista da noite<select id="tfList2"></select></label></div>
       <div class="field"><span>Dias da semana</span><div class="days" id="tfDays"></div></div>
       <details id="tfMore">
         <summary class="sm" style="cursor:pointer;padding:4px 0">Mais opções</summary>
         <div class="stack" style="gap:12px;margin-top:10px">
           <label class="field" id="tfTolBox">Tolerância do horário (min)<input type="number" id="tfTol" min="0" max="120"></label>
-          <label class="check"><input type="checkbox" id="tfAgua"> Conta como 1 copo de água (soma no contador ao marcar)</label>
+          <label class="field">Ao marcar, soma no contador<select id="tfCnt"></select></label>
           <label class="check"><input type="checkbox" id="tfTemp"> Temporária (some sozinha no fim)</label>
           <div class="nums" id="tfTempBox">
             <label>Início<input type="date" id="tfStart"></label>
@@ -551,6 +595,11 @@ details>summary{list-style-position:inside}
       <span class="xs mu">Mudanças valem a partir de hoje. Os dias anteriores e o XP já ganho não mudam.</span>
       <div class="btnrow"><button type="button" class="btn pri" id="tfSave">Salvar tarefa</button><button type="button" class="btn" id="tfCancel">Cancelar</button><button type="button" class="btn danger" id="tfArchive" style="margin-left:auto">Arquivar</button></div>
     </section>
+    <section class="card stack" id="listCard" aria-label="Suas listas" style="flex:1 1 340px;gap:8px">
+      <div class="between"><h3 class="h">Suas listas</h3><button type="button" class="btn sm pri" id="listNew">+ Nova lista</button></div>
+      <span class="xs mu">Cada lista é um quadro no Hoje. Renomeie, troque a cor, mude a ordem ou apague. Cada tarefa escolhe a lista dela; o XP não muda.</span>
+      <div id="listRows" class="stack" style="gap:8px"></div>
+    </section>
   </div>
   </div>
 
@@ -560,8 +609,6 @@ details>summary{list-style-position:inside}
       <h3 class="h" style="margin-bottom:6px">Rotina</h3>
       <div class="setrow"><div class="txt"><span>Acordo por volta de</span><span class="xs mu">início da linha do tempo</span></div><input type="time" id="stWake"></div>
       <div class="setrow"><div class="txt"><span>Durmo por volta de</span><span class="xs mu">fim da linha do tempo</span></div><input type="time" id="stSleep"></div>
-      <div class="setrow"><div class="txt"><span>Meta de água</span><span class="xs mu">copos por dia</span></div><input type="number" id="stMeta" min="1" max="30"></div>
-      <div class="setrow"><div class="txt"><span>Tamanho do copo</span><span class="xs mu">ml</span></div><input type="number" id="stCopo" min="50" max="1000" step="10"></div>
       <details><summary class="sm mu" style="cursor:pointer;padding:10px 0 4px">Mais opções</summary>
         <div class="setrow"><div class="txt"><span>Virada do dia</span><span class="xs mu">o que você fizer antes disso conta pro dia anterior</span></div><select id="stCutoff"></select></div>
       </details>
@@ -572,12 +619,34 @@ details>summary{list-style-position:inside}
       <div class="setrow"><div class="txt"><span>Avisar antes dos horários</span><span class="xs mu">minutos antes da janela abrir</span></div><div style="display:flex;gap:8px;align-items:center"><input type="number" id="stLead" min="0" max="60" style="width:72px"><button type="button" class="tg" id="tgDose" aria-label="Avisar antes dos horários"></button></div></div>
       <div class="setrow"><div class="txt"><span>Lembrete de água</span><span class="xs mu">se ficar esse tempo sem marcar (min)</span></div><div style="display:flex;gap:8px;align-items:center"><input type="number" id="stGap" min="30" max="480" step="15" style="width:72px"><button type="button" class="tg" id="tgAgua" aria-label="Lembrete de água"></button></div></div>
       <div class="btnrow" style="padding-top:12px"><button type="button" class="btn sm" id="ntTest">Testar aviso</button></div>
+      <div class="ntnote xs mu" id="ntNote">
+        <b>Testou e não apareceu nada fora da página?</b> O app entrega o aviso e quem mostra é o sistema. Quase sempre algo está segurando:
+        <ul>
+          <li><b>Windows:</b> Configurações › Sistema › Notificações: ative o Chrome (ou Edge) e desligue o “Não perturbe” / Assistente de foco.</li>
+          <li><b>Mac:</b> Ajustes do Sistema › Notificações › Google Chrome: permitir.</li>
+          <li><b>No navegador:</b> clique no ícone à esquerda do endereço › Notificações › Permitir. No Chrome, veja também chrome://settings/content/notifications.</li>
+          <li><b>Android:</b> Configurações › Apps › Chrome › Notificações ligadas.</li>
+          <li><b>iPhone:</b> só funciona com o app na tela de início (Compartilhar › Adicionar à Tela de Início), iOS 16.4 ou mais novo.</li>
+        </ul>
+        Os lembretes saem com a página aberta (pode ser em outra aba). Com a página na tela, o aviso também aparece aqui dentro, numa faixa no topo.
+      </div>
       <details><summary class="sm mu" style="cursor:pointer;padding:10px 0 4px">Mais opções: lembrete com o app fechado</summary>
         <div class="stack" style="gap:8px;margin-top:6px"><div class="btnrow"><button type="button" class="btn sm" id="icsExport">Horários pro calendário (.ics)</button></div>
         <span class="xs mu">O arquivo .ics cria lembretes repetidos no Google Agenda ou no calendário do celular, que avisam mesmo com o app fechado.</span></div>
       </details>
     </section>
   </div>
+  <section class="card stack" id="cntCard" aria-label="Contadores" style="gap:10px;margin-top:18px">
+    <div class="between"><h3 class="h">Contadores</h3><button type="button" class="btn sm pri" id="cntNew">+ Novo contador</button></div>
+    <span class="xs mu">Cada contador é um quadro no Hoje com + e −. Uma tarefa pode somar num contador ao ser marcada (Mais opções da tarefa). Mudanças valem a partir de hoje.</span>
+    <div class="cntbox stack" data-cid="agua">
+      <div class="between"><b>Água</b><span class="xs mu">fixo · +20 XP ao bater a meta</span></div>
+      <div class="setrow"><div class="txt"><span>Meta de água</span><span class="xs mu">copos por dia</span></div><input type="number" id="stMeta" min="1" max="30"></div>
+      <div class="setrow"><div class="txt"><span>Tamanho do copo</span><span class="xs mu">ml</span></div><input type="number" id="stCopo" min="50" max="1000" step="10"></div>
+      <div class="setrow"><div class="txt"><span>Conta pro dia completo</span><span class="xs mu">dia perfeito e mapa só fecham com a meta batida</span></div><button type="button" class="tg" id="tgAguaFull" aria-label="Água conta pro dia completo"></button></div>
+    </div>
+    <div id="cntRows" class="stack" style="gap:10px"></div>
+  </section>
   </div>
 
   <div class="cfgtab" id="tab-comp" role="tabpanel" hidden>
@@ -849,7 +918,7 @@ const CFG = {
   syncDays: [14, 10, 7, 5, 3, 2, 1], qrMaxChars: 700
 };
 const ALLDAYS = [0, 1, 2, 3, 4, 5, 6];
-const DEFAULT_SETTINGS = { wake: '08:00', sleep: '22:00', cutoffHour: 4, aguaMeta: 10, copoMl: 200, notif: false, notifDose: true, doseLead: 5, notifAgua: false, aguaGap: 120, som: true, confete: true, updatedAt: 0 };
+const DEFAULT_SETTINGS = { wake: '08:00', sleep: '22:00', cutoffHour: 4, aguaMeta: 10, copoMl: 200, notif: false, notifDose: true, doseLead: 5, notifAgua: false, aguaGap: 120, som: true, confete: true, aguaFull: true, updatedAt: 0 };
 const DEFAULT_TASKS = [
   { id: 'd1', label: 'Escovar os dentes', type: 'simples', p: 'm' },
   { id: 'a1', label: 'Copo d’água ao acordar', type: 'simples', p: 'm', agua: 1 },
@@ -867,7 +936,20 @@ const DEFAULT_TASKS = [
   { id: 'tl', label: 'Largar a tela 30 min antes', type: 'simples', p: 'n' }
 ].map((t, i) => Object.assign({ p: null, times: [], tol: 10, days: ALLDAYS.slice(), start: null, end: null, order: i, updatedAt: 0, agua: 0 }, t));
 const PERIODS = [['m', 'Manhã', 'var(--xp)'], ['d', 'Durante o dia', 'var(--ok)'], ['n', 'Noite', 'var(--nt)']];
-const PNAME = { m: 'Manhã', d: 'Dia', n: 'Noite' };
+// Listas suas: substituem os períodos fixos. m, d e n são as listas que já vêm (Manhã, Durante o dia, Noite).
+const LCOLORS = [['xp', 'var(--xp)', 'amarelo'], ['ok', 'var(--ok)', 'verde'], ['nt', 'var(--nt)', 'lilás'], ['wa', 'var(--wa)', 'azul'], ['rs', '#F07FB0', 'rosa'], ['ci', '#5FD4E6', 'ciano'], ['bad', 'var(--bad)', 'vermelho']];
+const lcolor = k => (LCOLORS.find(c => c[0] === k) || LCOLORS[0])[1];
+const DEFAULT_LISTS = [['m', 'Manhã', 'xp'], ['d', 'Durante o dia', 'ok'], ['n', 'Noite', 'nt']].map(([id, name, c], i) => ({ id, name, c, order: i, updatedAt: 0 }));
+const byOrder = (a, b) => (a.order ?? 0) - (b.order ?? 0);
+function lists() { const L = (DATA && Array.isArray(DATA.lists) ? DATA.lists : DEFAULT_LISTS).filter(l => !l.del).sort(byOrder); return L.length ? L : DEFAULT_LISTS; }
+const listById = id => lists().find(l => l.id === id);
+// Lista de uma tarefa: a escolhida; sem escolha (tarefa com horário no automático), a do período da hora; se ela não existir mais, a primeira.
+function listOf(p, tm) { const L = lists(); if (p && L.some(l => l.id === p)) return p; if (tm) { const q = periodOf(tm); if (L.some(l => l.id === q)) return q; } return L[0].id; }
+function listName(id) { const l = listById(id) || (DATA && (DATA.lists || []).find(x => x.id === id)); return l ? l.name : ({ m: 'Manhã', d: 'Dia', n: 'Noite' }[id] || 'Lista'); }
+// Contadores seus. A Água é o contador fixo: continua em day.agua e na meta das configurações.
+function counters() { return (DATA && Array.isArray(DATA.counters) ? DATA.counters : []).filter(c => !c.del).sort(byOrder); }
+const counterById = id => counters().find(c => c.id === id);
+function cntDefs() { const o = {}; for (const c of counters()) o[c.id] = [c.meta, c.xp || 0, c.full ? 1 : 0, c.step || 1]; return o; }
 const STATES = [['idle', 'Repouso'], ['celebrate', 'Comemoração'], ['tired', 'Desânimo'], ['levelup', 'Subida de nível']];
 const STATE_COLORS = { idle: '#3DDC97', celebrate: '#F5B83D', tired: '#9AA0AA', levelup: '#B49CFF' };
 
@@ -930,20 +1012,22 @@ function isScheduled(t, k) {
   return d.includes(weekday(k));
 }
 function periodOf(tm) { const m = toMinL(tm); return m < 720 ? 'm' : m < 1080 ? 'd' : 'n'; }
+// Ao marcar, a tarefa soma no contador: 1 = Água (um copo), texto = id de um contador seu (soma um passo dele).
+const wOf = t => t.agua ? 1 : t.cnt || 0;
 function taskOccs(t) {
   if (t.type === 'horario') {
     const times = (t.times || []).slice().sort((a, b) => toMinL(a) - toMinL(b)), multi = times.length > 1;
-    return times.map(tm => ({ oid: multi ? t.id + '@' + tm : t.id, tid: t.id, label: t.label, p: periodOf(tm), time: tm, tol: t.tol ?? 10, xp: CFG.xp.horario, w: t.agua ? 1 : 0 }));
+    return times.map(tm => ({ oid: multi ? t.id + '@' + tm : t.id, tid: t.id, label: t.label, p: listOf(t.p, tm), time: tm, tol: t.tol ?? 10, xp: CFG.xp.horario, w: wOf(t) }));
   }
   if (t.type === 'duplo') return [
-    { oid: t.id + '@m', tid: t.id, label: t.label, p: 'm', part: 'manhã', xp: CFG.xp.simples, w: t.agua ? 1 : 0 },
-    { oid: t.id + '@n', tid: t.id, label: t.label, p: 'n', part: 'noite', xp: CFG.xp.simples, w: t.agua ? 1 : 0 }];
-  return [{ oid: t.id, tid: t.id, label: t.label, p: t.p || 'm', xp: CFG.xp.simples, w: t.agua ? 1 : 0 }];
+    { oid: t.id + '@m', tid: t.id, label: t.label, p: listOf(t.p || 'm'), part: 'manhã', xp: CFG.xp.simples, w: wOf(t) },
+    { oid: t.id + '@n', tid: t.id, label: t.label, p: listOf(t.p2 || 'n'), part: 'noite', xp: CFG.xp.simples, w: wOf(t) }];
+  return [{ oid: t.id, tid: t.id, label: t.label, p: listOf(t.p || 'm'), xp: CFG.xp.simples, w: wOf(t) }];
 }
 const sortTasks = tasks => tasks.slice().sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 function occurrencesFor(k, tasks = DATA.tasks) { return sortTasks(tasks).filter(t => isScheduled(t, k)).flatMap(taskOccs); }
 // Retrato das tarefas do dia. A marca “conta como copo” (w) só vale a partir do dia em que a ligação com o contador de água existe (aguaSince).
-function snapshot(k, tasks = DATA.tasks, since = DATA.aguaSince) { return occurrencesFor(k, tasks).map(o => { const s = o.time ? { oid: o.oid, xp: o.xp, time: o.time, tol: o.tol } : { oid: o.oid, xp: o.xp }; if (o.w && (!since || k >= since)) s.w = 1; return s; }); }
+function snapshot(k, tasks = DATA.tasks, since = DATA.aguaSince) { return occurrencesFor(k, tasks).map(o => { const s = o.time ? { oid: o.oid, xp: o.xp, time: o.time, tol: o.tol } : { oid: o.oid, xp: o.xp }; if (o.w === 1 && (!since || k >= since)) s.w = 1; else if (typeof o.w === 'string') s.w = o.w; return s; }); }
 function occLabel(o) { return o.label + (o.part ? ' (' + o.part + ')' : '') + (o.time ? ' · ' + o.time : ''); }
 function migrate(d) {
   if (!d || typeof d !== 'object' || !d.days || typeof d.days !== 'object') return null;
@@ -954,6 +1038,8 @@ function migrate(d) {
   }
   if (d.version !== 2) return null;
   d.settings = Object.assign({}, DEFAULT_SETTINGS, d.settings || {});
+  if (!Array.isArray(d.lists) || !d.lists.length) d.lists = clone(DEFAULT_LISTS);
+  if (!Array.isArray(d.counters)) d.counters = [];
   if (!Array.isArray(d.tasks)) d.tasks = clone(DEFAULT_TASKS);
   for (const t of d.tasks) if (t && t.id === 'a1' && t.agua === undefined && /[áa]gua/i.test(t.label || '')) t.agua = 1;
   if (!d.createdAt) d.createdAt = logicalDate();
@@ -962,7 +1048,7 @@ function migrate(d) {
   for (const k of Object.keys(d.days)) { const day = d.days[k]; if (!day || typeof day !== 'object') { delete d.days[k]; continue; } day.done = day.done || {}; if (!day.sched) day.sched = snapshot(k, d.tasks, d.aguaSince); if (!day.meta) day.meta = d.settings.aguaMeta; }
   return d;
 }
-function freshData() { return { version: 2, createdAt: null, aguaSince: null, theme: 'dark', settings: Object.assign({}, DEFAULT_SETTINGS), tasks: clone(DEFAULT_TASKS), days: {} }; }
+function freshData() { return { version: 2, createdAt: null, aguaSince: null, theme: 'dark', settings: Object.assign({}, DEFAULT_SETTINGS), tasks: clone(DEFAULT_TASKS), lists: clone(DEFAULT_LISTS), counters: [], days: {} }; }
 function loadData() {
   let d = null;
   try { d = migrate(JSON.parse(localStorage.getItem(KEY))); } catch (e) { d = null; }
@@ -973,7 +1059,9 @@ DATA = loadData();
 const ST = () => DATA.settings;
 function saveData() { DATA_VER++; try { localStorage.setItem(KEY, JSON.stringify(DATA)); } catch (e) { toast('Não consegui salvar no navegador.'); } }
 function todayDay() { const k = logicalDate(); if (!DATA.days[k]) DATA.days[k] = { done: {}, agua: 0 }; return DATA.days[k]; }
-function touchToday() { const day = todayDay(); day.sched = snapshot(logicalDate()); day.meta = ST().aguaMeta; return day; }
+// Retrato do dia: tarefas, meta de água e contadores valendo hoje. Mudanças depois não alteram dias que já passaram.
+function freezeDay(day, k) { day.sched = snapshot(k); day.meta = ST().aguaMeta; day.cm = cntDefs(); day.af = ST().aguaFull !== false ? 1 : 0; return day; }
+function touchToday() { return freezeDay(todayDay(), logicalDate()); }
 if (DATA.days[logicalDate()]) touchToday();
 saveData();
 const isDone = v => !!v && v !== 'skip';
@@ -981,7 +1069,15 @@ const schedOf = (day, k) => day && day.sched ? day.sched : snapshot(k);
 const metaOf = day => day && day.meta ? day.meta : ST().aguaMeta;
 // Copos do dia: os do contador (day.agua) mais as tarefas marcadas que contam como copo, como “Copo d’água ao acordar”.
 // O copo da tarefa vem do estado dela: marcar de novo ou recarregar não soma duas vezes, e desmarcar tira o copo.
-const taskCups = (day, k) => day ? schedOf(day, k).filter(o => o.w && isDone((day.done || {})[o.oid])).length : 0;
+const taskCups = (day, k) => day ? schedOf(day, k).filter(o => o.w === 1 && isDone((day.done || {})[o.oid])).length : 0;
+// Contadores valendo num dia: o retrato dele; dia sem registro ainda usa os de agora. Dias de antes dos contadores não têm nenhum.
+const cmOf = day => day && day.cm ? day.cm : day && day.sched ? {} : cntDefs();
+const afOf = day => day && day.af !== undefined ? !!day.af : day && day.sched ? true : ST().aguaFull !== false;
+function cntOf(day, k, id) {
+  if (!day) return 0; const d = cmOf(day)[id], step = d ? d[3] : ((counterById(id) || {}).step || 1);
+  return ((day.c || {})[id] || 0) + schedOf(day, k).filter(o => o.w === id && isDone((day.done || {})[o.oid])).length * step;
+}
+const cntTask = (day, k, id) => day ? cntOf(day, k, id) - ((day.c || {})[id] || 0) : 0;
 const aguaOf = (day, k) => day ? (day.agua || 0) + taskCups(day, k) : 0;
 function aguaLastOf(day, k) {
   let last = day && day.aguaLast ? day.aguaLast : null;
@@ -998,14 +1094,25 @@ const Game = {
     if (!day) return 0;
     const s = schedOf(day, k); let xp = 0, all = s.length > 0;
     for (const o of s) { if (isDone(day.done[o.oid])) xp += o.xp; else all = false; }
-    const ok = aguaOf(day, k) >= metaOf(day);
-    if (ok) xp += CFG.xp.aguaMeta;
-    if (ok && all) xp += CFG.xp.diaCompleto;
+    if (aguaOf(day, k) >= metaOf(day)) xp += CFG.xp.aguaMeta;
+    for (const [id, c] of Object.entries(cmOf(day))) if (cntOf(day, k, id) >= c[0]) xp += c[1];
+    if (all && this.goalsOk(day, k)) xp += CFG.xp.diaCompleto;
     return xp;
   },
-  complete(day, k) { if (!day) return false; const s = schedOf(day, k); return s.length > 0 && s.every(o => isDone(day.done[o.oid])) && aguaOf(day, k) >= metaOf(day); },
-  ratio(day, k) { if (!day) return 0; const s = schedOf(day, k), m = metaOf(day); return (s.filter(o => isDone(day.done[o.oid])).length + Math.min(aguaOf(day, k), m) / m) / (s.length + 1); },
-  active(day) { return !!day && ((day.agua || 0) > 0 || Object.values(day.done || {}).some(isDone)); },
+  // Metas que contam pro dia completo: a água (se estiver marcada) e os contadores com “conta pro dia completo”.
+  goalsOk(day, k) {
+    if (afOf(day) && aguaOf(day, k) < metaOf(day)) return false;
+    for (const [id, c] of Object.entries(cmOf(day))) if (c[2] && cntOf(day, k, id) < c[0]) return false;
+    return true;
+  },
+  complete(day, k) { if (!day) return false; const s = schedOf(day, k); return s.length > 0 && s.every(o => isDone(day.done[o.oid])) && this.goalsOk(day, k); },
+  ratio(day, k) {
+    if (!day) return 0; const s = schedOf(day, k); let n = s.filter(o => isDone((day.done || {})[o.oid])).length, d = s.length;
+    if (afOf(day)) { const m = metaOf(day); n += Math.min(aguaOf(day, k), m) / m; d++; }
+    for (const [id, c] of Object.entries(cmOf(day))) if (c[2]) { n += Math.min(cntOf(day, k, id) / c[0], 1); d++; }
+    return d ? n / d : 0;
+  },
+  active(day) { return !!day && ((day.agua || 0) > 0 || Object.values(day.done || {}).some(isDone) || Object.values(day.c || {}).some(v => v > 0)); },
   summary() {
     const t = logicalDate(), key = DATA_VER + '|' + t;
     if (this._c && this._c.key === key) return this._c.val;
@@ -1522,16 +1629,25 @@ function confetti() {
 }
 let SWREG = null;
 const Banner = { show(title, body) { $('#bannerText').textContent = title + (body ? ' — ' + body : ''); $('#banner').hidden = false; } };
-async function notify(title, body) {
+async function notify(title, body, tag = title) {
   Sound.alert();
   window.__notes = (window.__notes || []); window.__notes.push(title);
+  let sys = false;
   if ('Notification' in window && Notification.permission === 'granted') {
     try {
-      if (SWREG && SWREG.showNotification) { await SWREG.showNotification(title, { body, tag: title, icon: 'icon-192.png' }); return; }
-      new Notification(title, { body, tag: title }); return;
+      if (SWREG && SWREG.showNotification) await SWREG.showNotification(title, { body, tag, renotify: true, icon: 'icon-192.png' });
+      else new Notification(title, { body, tag });
+      sys = true;
     } catch (e) {}
   }
-  Banner.show(title, body);
+  // Com a página na tela, o aviso aparece aqui dentro também: se o sistema segurar a notificação, ele não se perde.
+  if (!sys || document.visibilityState === 'visible') Banner.show(title, body);
+  return sys;
+}
+async function testNotify() {
+  if ('Notification' in window && Notification.permission === 'default') { try { await Notification.requestPermission(); } catch (e) {} Settings.paint(); }
+  const sys = await notify('Teste de aviso', 'É assim que os lembretes vão aparecer.', 'teste-' + Date.now());
+  toast(sys ? 'Enviado pro sistema também. Se não apareceu nada fora da página, veja a nota logo abaixo do botão.' : 'O navegador não liberou notificações: o aviso aparece só aqui dentro. Veja a nota abaixo do botão.');
 }
 const Remind = {
   sent: (() => { try { return new Set(JSON.parse(sessionStorage.getItem('habitos.avisos') || '[]')); } catch (e) { return new Set(); } })(),
@@ -1607,11 +1723,18 @@ function changeAgua(n) {
     toast('Esse copo veio da tarefa “' + (t ? t.label : 'de água') + '”. Pra tirar, desmarque a tarefa.'); return;
   }
   commit(d => { const before = d.agua || 0; d.agua = clamp(before + n, 0, 30); if (d.agua > before) d.aguaLast = hhmm(now()); }); }
+function changeCnt(id, dir) {
+  const c = counterById(id); if (!c) return;
+  const tk = logicalDate(), day = DATA.days[tk], mine = day && day.c ? day.c[id] || 0 : 0;
+  if (dir < 0 && !mine) { if (cntTask(day, tk, id)) toast('Isso veio de uma tarefa. Pra tirar, desmarque a tarefa.'); return; }
+  commit(d => { d.c = d.c || {}; d.c[id] = clamp(mine + dir * (c.step || 1), 0, 100000); if (!d.c[id]) delete d.c[id]; });
+}
 
 /* ===================== Tela Hoje ===================== */
 function markMore(el) { el.classList.toggle('more', el.scrollHeight - el.scrollTop - el.clientHeight > 4); }
 document.addEventListener('scroll', e => { if (e.target.classList && e.target.classList.contains('plist')) markMore(e.target); }, true);
 const expanded = {};
+let HOJE_SIG = '';
 function renderHoje() {
   Dash.apply();
   const n = now(), tk = logicalDate(n), day = DATA.days[tk] || { done: {}, agua: 0 }, nm = nowMin(n), st = ST();
@@ -1642,15 +1765,22 @@ function renderHoje() {
   for (let m = Math.ceil(ws / 120) * 120; m <= we; m += 120) { const p = pos(m); tl += `<span class="tick mono" style="left:${p}%;transform:translateX(${p < 3 ? '0' : p > 97 ? '-100%' : '-50%'})">${Math.floor((m % 1440) / 60)}h</span>`; }
   $('#tl').innerHTML = tl;
 
-  // Anéis
-  const cnt = p => { const l = occ.filter(o => o.p === p); return [l.filter(o => isDone(day.done[o.oid])).length, l.length]; };
-  const [cm, tm] = cnt('m'), [cd, td] = cnt('d'), [cn, tn] = cnt('n'), agua = aguaOf(day, tk), tc = taskCups(day, tk), meta = st.aguaMeta;
-  const dash = (id, r, p) => { const c = 2 * Math.PI * r; $(id).setAttribute('stroke-dasharray', (c * clamp(p, 0, 1)).toFixed(1) + ' ' + c.toFixed(1)); };
-  dash('#rM', 66, tm ? cm / tm : 0); dash('#rD', 53, td ? cd / td : 0); dash('#rN', 40, tn ? cn / tn : 0); dash('#rA', 27, agua / meta);
-  $('#overall').textContent = Math.round((cm + cd + cn + Math.min(agua, meta) / meta) / (occ.length + 1) * 100) + '%';
+  // Anéis: um por lista (até 4) e um da água. A legenda mostra todas as listas e os contadores.
+  const LS = lists(), cnt = p => { const l = occ.filter(o => o.p === p); return [l.filter(o => isDone(day.done[o.oid])).length, l.length]; };
+  const agua = aguaOf(day, tk), tc = taskCups(day, tk), meta = st.aguaMeta;
+  const rl = LS.slice(0, 4), gapR = rl.length < 4 ? 13 : 11, svg = $('#ringSvg'), rsig = rl.map(l => l.id + ':' + l.c).join();
+  if (svg.dataset.sig !== rsig) {
+    svg.dataset.sig = rsig;
+    svg.innerHTML = `<g transform="rotate(-90 75 75)" fill="none" stroke-width="${rl.length < 4 ? 10 : 9}" stroke-linecap="round">` + [...rl.map((l, i) => [l.id, lcolor(l.c), 66 - i * gapR]), ['agua', 'var(--wa)', 66 - rl.length * gapR]]
+      .map(([id, c, r]) => `<circle cx="75" cy="75" r="${r}" stroke="var(--track)"/><circle data-ring="${esc(id)}" cx="75" cy="75" r="${r}" stroke="${c}"/>`).join('') + '</g>';
+  }
+  // Anel vazio fica escondido (com a ponta arredondada, 0% virava um pontinho).
+  const ring = (id, p) => { const el = svg.querySelector(`[data-ring="${id}"]`); if (!el) return; const c = 2 * Math.PI * +el.getAttribute('r'); el.setAttribute('stroke-dasharray', (c * clamp(p, 0, 1)).toFixed(1) + ' ' + c.toFixed(1)); el.style.visibility = p > 0 ? '' : 'hidden'; };
+  rl.forEach(l => { const [a, b] = cnt(l.id); ring(l.id, b ? a / b : 0); }); ring('agua', agua / meta);
+  $('#overall').textContent = Math.round(Game.ratio(day, tk) * 100) + '%';
   $('#xpHoje').textContent = '+' + xpHoje + ' XP';
-  $('#legend').innerHTML = [['Manhã', 'var(--xp)', cm + '/' + tm], ['Dia', 'var(--ok)', cd + '/' + td], ['Noite', 'var(--nt)', cn + '/' + tn], ['Água', 'var(--wa)', agua + '/' + meta]]
-    .map(([a, c, v]) => `<div class="it"><span class="sw" style="background:${c}"></span><span style="flex:1">${a}</span><span class="mono mu">${v}</span></div>`).join('');
+  $('#legend').innerHTML = [...LS.map(l => { const [a, b] = cnt(l.id); return [l.name, lcolor(l.c), a + '/' + b]; }), ['Água', 'var(--wa)', agua + '/' + meta], ...counters().map(c => [c.name, 'var(--mu)', cntOf(day, tk, c.id) + '/' + c.meta])]
+    .map(([a, c, v]) => `<div class="it"><span class="sw" style="background:${c}"></span><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(a)}</span><span class="mono mu">${v}</span></div>`).join('');
 
   // Água
   const L = x => (x * st.copoMl / 1000).toFixed(1).replace('.', ',') + ' L';
@@ -1665,6 +1795,9 @@ function renderHoje() {
   const card = $('#medCard');
   // Sem alarme hoje, o quadro some e o espaço fica pros outros (no modo de edição ele aparece pra poder ser arrumado).
   Dash.blk('horarios').classList.toggle('auto-off', !doses.length);
+  const resolved = d => ['tomado', 'tomadoAtraso', 'pulado'].includes(d.st.k), allDone = doses.length > 0 && doses.every(resolved), medDone = $('#medDone');
+  medDone.hidden = !(allDone && !expanded.horarios); card.hidden = !medDone.hidden; Dash.blk('horarios').classList.toggle('shrunk', !medDone.hidden);
+  if (allDone) medDone.innerHTML = `<span class="box" style="background:var(--ok);border-color:var(--ok);color:var(--okt)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L19 7"/></svg></span><span style="flex:1;font-weight:600">Horários</span><span class="mono xs mu">${doses.filter(d => isDone(day.done[d.o.oid])).length}/${doses.length} feitos</span>`;
   if (!doses.length) {
     card.style.borderColor = 'var(--ln)';
     card.innerHTML = `<h2 class="h">Horários</h2><div class="empty-card">Este quadro aparece sozinho quando o dia tem tarefa com horário, como um remédio. Crie uma em Configurações › Tarefas › Com horário.</div>`;
@@ -1684,7 +1817,7 @@ function renderHoje() {
     const rowTxt = d => ({ aguardando: ['aguardando', 'var(--nt)'], janela: ['janela aberta', 'var(--xp)'], atrasado: ['atrasado', 'var(--bad)'], esquecido: ['esquecido', 'var(--bad)'], tomado: ['feito às ' + d.st.at, 'var(--ok)'], tomadoAtraso: ['às ' + d.st.at + ' · fora', 'var(--xp)'], pulado: ['pulado', 'var(--mu)'] })[d.st.k];
     const pq = punctuality(), showBtns = ['janela', 'atrasado', 'esquecido'].includes(s.k);
     card.style.borderColor = look[0];
-    card.innerHTML = `<div class="between"><h2 class="h">${esc(fo.label)}</h2><span class="chipsm" style="background:${look[2]};color:${look[3]};border-color:${look[4]}">${look[1]}</span></div>
+    card.innerHTML = `<div class="between"><h2 class="h">${esc(fo.label)}</h2>${allDone ? '<button type="button" class="mini" data-expand="horarios" aria-label="Recolher horários" title="Recolher">−</button>' : ''}<span class="chipsm" style="background:${look[2]};color:${look[3]};border-color:${look[4]}">${look[1]}</span></div>
       <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap"><span class="big mono">${fo.time}</span><span class="mu sm">${look[5]}</span></div>
       <div class="stack" style="gap:8px;max-height:132px;overflow:auto">${doses.map(d => { const [tx, c] = rowTxt(d); return `<div class="rowline"><span class="led" style="border:2px solid ${c};${isDone(day.done[d.o.oid]) ? 'background:' + c : ''}"></span><span style="flex:1">${doses.some(x => x.o.label !== d.o.label) ? esc(d.o.label) + ' ' : ''}${d.o.time} · ±${d.o.tol} min</span><span style="color:${c};font-weight:600">${tx}</span></div>`; }).join('')}</div>
       ${showBtns ? `<div class="btnrow" style="margin-top:auto"><button type="button" class="btn pri" data-take="${fo.oid}" style="flex:1;justify-content:center;min-height:46px">${s.k === 'janela' ? 'Feito agora' : 'Feito mesmo assim'} · +${fo.xp} XP</button><button type="button" class="btn" data-skip="${fo.oid}" style="min-height:46px">Pulei</button></div>`
@@ -1694,22 +1827,54 @@ function renderHoje() {
   // Tarefas
   const nextId = nextDose ? nextDose.o.oid : null, hl = nextDose ? (nextDose.st.k === 'aguardando' ? 'var(--nt)' : nextDose.st.k === 'janela' ? 'var(--xp)' : 'var(--bad)') : '';
   const keepScroll = {}; $$('#dash .plist').forEach(el => { keepScroll[el.dataset.p] = el.scrollTop; });
-  PERIODS.forEach(([p, name, color]) => { Dash.blk('p-' + p).innerHTML = (() => {
+  let doneLists = '';
+  LS.forEach(L => { const el = Dash.blk('p-' + L.id); if (!el) return; const p = L.id, name = esc(L.name), color = lcolor(L.c);
+    const lst = occ.filter(o => o.p === p); el.classList.toggle('shrunk', lst.length > 0 && lst.every(o => isDone(day.done[o.oid])) && !expanded[p]);
+    el.innerHTML = (() => {
     const list = occ.filter(o => o.p === p), done = list.filter(o => isDone(day.done[o.oid])).length, complete = list.length > 0 && done === list.length;
-    if (isNarrow() && complete && !expanded[p]) {
+    // Lista concluída recolhe numa linha (toque pra abrir de novo).
+    if (complete && !expanded[p]) { doneLists += p + ',';
       return `<button type="button" class="collapsed" data-expand="${p}" aria-expanded="false"><span class="box" style="background:var(--ok);border-color:var(--ok);color:var(--okt)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L19 7"/></svg></span><span style="flex:1;font-weight:600;color:${color}">${name}</span><span class="mono xs mu">${done}/${list.length} concluído</span></button>`;
     }
-    return `<section class="card period" aria-label="${name}"><button type="button" class="phead" data-expand="${p}" ${isNarrow() && complete ? 'aria-expanded="true"' : 'tabindex="-1"'}><h2 class="h" style="color:${color}">${name}</h2><span class="mono sm mu">${done}/${list.length}</span></button>
-      <div class="plist" data-p="${p}">${list.length ? '' : '<div class="empty-card">Nada neste período hoje.</div>'}
+    return `<section class="card period" aria-label="${name}"><button type="button" class="phead" data-expand="${p}" ${complete ? 'aria-expanded="true" title="Recolher"' : 'tabindex="-1"'}><h2 class="h" style="color:${color}">${name}</h2><span class="mono sm mu">${done}/${list.length}</span></button>
+      <div class="plist" data-p="${p}">${list.length ? '' : '<div class="empty-card">Nada nesta lista hoje.</div>'}
       ${list.map(o => {
         const v = day.done[o.oid], on = isDone(v), isNext = o.oid === nextId;
         let meta = '+' + o.xp + ' XP' + (o.w ? ' · <span class="cup">+1 copo</span>' : '');
         if (v === 'skip') meta = 'pulado';
         else if (on) meta = (o.time ? v + (onTime(v, o) ? ' · ok' : ' · fora') : v) + (o.w ? ' · <span class="cup">1 copo</span>' : '');
         return `<button type="button" class="task ${on ? 'on' : ''} ${isNext ? 'next' : ''}" style="${isNext ? '--hl:' + hl : ''}" data-task="${o.oid}" aria-pressed="${on}"><span class="box" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L19 7"/></svg></span><span class="lbl">${esc(o.label)}${o.time ? ' · ' + o.time : ''}</span>${isNext ? '<span class="selo">PRÓXIMA</span>' : ''}<span class="meta mono">${meta}</span></button>`;
-      }).join('')}
-      ${p === 'd' ? `<div class="xs mu" style="margin-top:4px;padding:10px 12px;border-radius:12px;border:1px dashed var(--ln)">A água fica no contador · +${CFG.xp.aguaMeta} XP ao bater a meta</div>` : ''}</div></section>`;
+      }).join('')}</div></section>`;
   })(); });
+  // Contadores seus
+  for (const c of counters()) {
+    const el = Dash.blk('c-' + c.id); if (!el) continue;
+    const v = cntOf(day, tk, c.id), ok = v >= c.meta, ft = cntTask(day, tk, c.id), un = esc(c.unit || '');
+    el.innerHTML = `<section class="card stack cntcard" aria-label="${esc(c.name)}" style="gap:8px"><div class="between"><h2 class="h">${esc(c.name)}</h2>${c.xp ? `<span class="mono xs" style="color:${ok ? 'var(--ok)' : 'var(--xp)'}">${ok ? 'meta batida · ' : ''}+${c.xp} XP</span>` : ''}</div>
+      <div class="big mono">${v}<span class="mu" style="font-size:16px"> / ${c.meta}${un ? ' ' + un : ''}</span></div>
+      <div class="bar"><div style="width:${Math.min(100, v / c.meta * 100).toFixed(1)}%;background:${ok ? 'var(--ok)' : 'var(--xp)'}"></div></div>
+      <span class="xs mu">${ok ? 'Meta de hoje batida' : 'Faltam ' + (c.meta - v) + (un ? ' ' + un : '')}${ft ? ' · ' + ft + ' das tarefas' : ''}${c.full ? ' · conta pro dia completo' : ''}</span>
+      <div style="display:flex;gap:8px;margin-top:auto"><button type="button" class="btn" data-cnt="${c.id}" data-n="-1" aria-label="Tirar ${c.step} de ${esc(c.name)}" style="width:48px;height:46px;justify-content:center;font-size:22px">−</button><button type="button" class="btn pri" data-cnt="${c.id}" data-n="1" style="flex:1;height:46px;justify-content:center">+${c.step}${un ? ' ' + un : ''}</button></div></section>`;
+  }
+  // Agora: o que precisa de atenção neste momento. Sem nada, o quadro some.
+  const ag = [];
+  for (const d of doses) if (['janela', 'atrasado', 'esquecido'].includes(d.st.k)) ag.push([d.st.k === 'janela' ? 'var(--xp)' : 'var(--bad)', esc(d.o.label) + ' · ' + d.o.time, d.st.k === 'janela' ? 'janela aberta · fecha em ' + d.st.closes + ' min' : d.st.k === 'atrasado' ? 'atrasado · ' + fmtDur(d.st.late) : 'esquecido · mais de ' + (CFG.esquecidoMin / 60) + 'h', `<button type="button" class="btn sm pri" data-take="${d.o.oid}">Feito</button>`]);
+  if (agua < meta) {
+    const wk = toMin(st.wake), sl = sleepMin();
+    if (nm > wk && nm < sl) {
+      const exp = Math.floor(meta * (nm - wk) / (sl - wk)), al = aguaLastOf(day, tk), since = nm - Math.max(al ? toMinL(al) : wk, wk);
+      if (exp - agua >= 2) ag.push(['var(--wa)', 'Água atrasada', agua + ' de ' + exp + ' copos esperados até agora', '<button type="button" class="btn sm" data-agua="1">+1 copo</button>']);
+      else if (since >= st.aguaGap) ag.push(['var(--wa)', 'Hora de um copo d’água', 'o último foi há ' + fmtDur(since), '<button type="button" class="btn sm" data-agua="1">+1 copo</button>']);
+    }
+  }
+  const nx = doses.find(d => d.st.k === 'aguardando');
+  if (nx) ag.push(['var(--nt)', 'Próximo: ' + esc(nx.o.label) + ' às ' + nx.o.time, 'em ' + fmtDur(nx.st.inMin), '']);
+  Dash.blk('agora').classList.toggle('auto-off', !ag.length);
+  $('#agoraList').innerHTML = ag.length ? ag.map(([c, t, s, b]) => `<div class="agrow"><span class="led" style="background:${c};border-color:${c}"></span><div class="stack" style="gap:2px;flex:1;min-width:0"><b>${t}</b><span class="xs mu">${s}</span></div>${b}</div>`).join('')
+    : '<div class="empty-card">Nada pendente agora. Este quadro aparece sozinho quando tem horário atrasado, água atrasada ou um próximo alarme.</div>';
+  // Nota do dia
+  const ni = $('#notaIn'); if (document.activeElement !== ni) ni.value = (DATA.days[tk] || {}).note || '';
+  HOJE_SIG = doneLists + '|' + ag.length + '|' + allDone + '|' + counters().length;
   if (Dash.editing) Dash.paintEdit();
   $$('#dash .plist').forEach(el => { if (keepScroll[el.dataset.p]) el.scrollTop = keepScroll[el.dataset.p]; markMore(el); });
 
@@ -1730,7 +1895,7 @@ function renderHoje() {
   $('#lvN').textContent = lv.n; $('#lvName').textContent = lv.name;
   $('#lvBar').style.width = lv.pct.toFixed(1) + '%'; $('#lvLine').textContent = lv.line;
   Comp.setBase(S.tired ? 'tired' : 'idle', S.recovered);
-  Layout.maybeRefit(Dash.sig() + '|' + doses.length + '|' + occ.length + '|' + window.innerWidth + 'x' + window.innerHeight + '|' + isNarrow());
+  Layout.maybeRefit(Dash.sig() + '|' + doses.length + '|' + occ.length + '|' + window.innerWidth + 'x' + window.innerHeight + '|' + isNarrow() + '|' + HOJE_SIG);
 }
 
 /* ===================== Tela Histórico ===================== */
@@ -1789,14 +1954,20 @@ const Hist = {
         cls = r === 0 ? '' : r < .25 ? 'lv1' : r < .5 ? 'lv2' : r < .85 ? 'lv3' : 'lv4';
         if (S.jokerDays.has(k)) { cls += ' jk'; tip += ' · coringa'; }
         tip += ' · ' + Math.round(r * 100) + '%';
+        if (DATA.days[k] && DATA.days[k].note) tip += ' · “' + DATA.days[k].note + '”';
       }
       heat += `<span class="cell ${cls}" title="${tip}"></span>`;
     }
     $('#hHeat').innerHTML = heat;
+    // Notas do dia (as mais recentes primeiro)
+    const notes = Object.keys(DATA.days).filter(k => k <= t && DATA.days[k].note).sort().reverse();
+    $('#hNotesInfo').textContent = notes.length ? notes.length + (notes.length === 1 ? ' nota' : ' notas') : '';
+    $('#hNotes').innerHTML = notes.length ? notes.slice(0, 60).map(k => `<div class="noterow"><span class="mono xs mu">${dm(k)}</span><span class="xs mu">${WD[weekday(k)].slice(0, 3)}</span><span style="flex:1;min-width:0">${esc(DATA.days[k].note)}</span></div>`).join('')
+      : '<div class="empty-card">Nenhuma nota ainda. No Hoje, adicione o quadro “Nota do dia” (lápis › + Adicionar quadro) e escreva uma linha sobre o dia.</div>';
     // Por tarefa
     const rows = this.rows().map(r => Object.assign(r, this.occStats(r.o, r.task)));
     const seen = {}; rows.forEach(r => { seen[r.o.label] = (seen[r.o.label] || 0) + 1; });
-    rows.forEach(r => { if (seen[r.o.label] > 1 && !r.o.part && !r.o.time) r.o = Object.assign({}, r.o, { part: PNAME[r.o.p].toLowerCase() }); });
+    rows.forEach(r => { if (seen[r.o.label] > 1 && !r.o.part && !r.o.time) r.o = Object.assign({}, r.o, { part: listName(r.o.p).toLowerCase() }); });
     const attn = rows.filter(r => r.pct !== null && r.pct < 50 && r.due >= 5).sort((a, b) => a.pct - b.pct).slice(0, 3);
     $('#hAttn').innerHTML = attn.length ? `<div class="attn"><span class="xs b warn" style="letter-spacing:.06em">PRECISAM DE ATENÇÃO</span>${attn.map(r => `<div class="rowline" style="font-size:14px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--xp)" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 8v5M12 16.5v.5"/><circle cx="12" cy="12" r="9"/></svg><span style="flex:1">${esc(occLabel(r.o))}</span><span class="xs mu">${r.pct}% em 30 dias</span></div>`).join('')}</div>` : '';
     $('#hTasks').innerHTML = rows.length ? rows.map(r => {
@@ -1855,7 +2026,12 @@ const Tasks = {
     $('#tfCancel').addEventListener('click', () => this.close());
     $('#tfSave').addEventListener('click', () => this.save());
     $('#tfArchive').addEventListener('click', () => { if (this.editing) this.archive(this.editing); });
-    $('#tfWhen').addEventListener('click', e => { const b = e.target.closest('[data-v]'); if (!b) return; const v = b.dataset.v; if (['m', 'd', 'n'].includes(v)) { this.form.type = 'simples'; this.form.p = v; } else this.form.type = v; this.paintForm(); });
+    $('#tfWhen').addEventListener('click', e => { const b = e.target.closest('[data-v]'); if (!b) return; const f = this.form, v = b.dataset.v; if (v === f.type) return;
+      if (v === 'horario') f.p = ''; else if (f.type === 'horario' && !f.p) f.p = listOf(null, (this.times()[0]) || '08:00');
+      if (v === 'duplo' && !f.p2) f.p2 = listOf('n'); f.type = v; this.paintForm(); });
+    $('#tfList').addEventListener('change', e => { this.form.p = e.target.value; this.paintForm(); });
+    $('#tfList2').addEventListener('change', e => { this.form.p2 = e.target.value; });
+    $('#tfTimes').addEventListener('input', () => { if (this.form.type === 'horario' && !this.form.p) this.paintForm(); });
     $('#tfDays').addEventListener('click', e => { const b = e.target.closest('[data-d]'); if (!b) return; const d = +b.dataset.d, s = new Set(this.form.days); if (s.has(d)) s.delete(d); else s.add(d); this.form.days = [...s].sort(); this.paintForm(); });
     $('#tfTemp').addEventListener('change', e => { this.form.temp = e.target.checked; if (this.form.temp && !this.form.start) this.form.start = logicalDate(); this.paintForm(); });
     $('#taskList').addEventListener('click', e => {
@@ -1866,12 +2042,14 @@ const Tasks = {
   },
   active() { const t = logicalDate(); return sortTasks(DATA.tasks).filter(x => !x.end || x.end >= t); },
   tags(task) {
-    const t = logicalDate(), out = [];
-    if (task.type === 'horario') out.push(['Horário · ' + task.times.join(', ') + ' · ±' + (task.tol ?? 10) + ' min', '']);
-    else if (task.type === 'duplo') out.push(['Manhã + noite', '']);
-    else out.push([PNAME[task.p] || 'Manhã', task.p === 'd' ? 'var(--ok)' : task.p === 'n' ? 'var(--nt)' : 'var(--xp)']);
-    out.push([(task.type === 'horario' ? '20 XP' : '10 XP') + (taskOccs(task).length > 1 ? ' cada' : ''), 'var(--xp)']);
-    if (task.agua) out.push(['+1 copo' + (taskOccs(task).length > 1 ? ' cada' : ''), 'var(--wa)']);
+    const t = logicalDate(), out = [], chip = id => { const l = listById(listOf(id)); return [l.name, lcolor(l.c)]; };
+    if (task.type === 'horario') { out.push(['Horário · ' + task.times.join(', ') + ' · ±' + (task.tol ?? 10) + ' min', '']); out.push(task.p ? chip(task.p) : ['lista pela hora', '']); }
+    else if (task.type === 'duplo') out.push([listName(listOf(task.p || 'm')) + ' + ' + listName(listOf(task.p2 || 'n')), '']);
+    else out.push(chip(task.p || 'm'));
+    const each = taskOccs(task).length > 1 ? ' cada' : '';
+    out.push([(task.type === 'horario' ? '20 XP' : '10 XP') + each, 'var(--xp)']);
+    if (task.agua) out.push(['+1 copo' + each, 'var(--wa)']);
+    else if (task.cnt) { const c = counterById(task.cnt); if (c) out.push(['+' + c.step + ' ' + (c.unit || c.name) + each, 'var(--wa)']); }
     const d = Array.isArray(task.days) && task.days.length ? task.days : ALLDAYS;
     if (d.length < 7) out.push([d.map(i => WD1[i]).join(' '), '']);
     if (task.start && task.start > t) out.push(['começa ' + dm(task.start), '']);
@@ -1892,27 +2070,35 @@ const Tasks = {
   open(id) {
     const task = id ? DATA.tasks.find(x => x.id === id) : null; this.editing = id;
     const dur = task && task.start && task.end ? diffDays(task.end, task.start) + 1 : 7;
-    this.form = task ? { label: task.label, type: task.type, p: task.p || 'm', times: (task.times || []).join(', '), tol: task.tol ?? 10, days: (task.days && task.days.length ? task.days : ALLDAYS).slice(), temp: !!task.end, start: task.start || logicalDate(), dur, agua: !!task.agua }
-      : { label: '', type: 'simples', p: 'm', times: '08:00', tol: 10, days: ALLDAYS.slice(), temp: false, start: logicalDate(), dur: 7, agua: false };
+    const cntSel = x => x.agua ? 'agua' : x.cnt && counterById(x.cnt) ? x.cnt : '';
+    this.form = task ? { label: task.label, type: task.type, p: task.type === 'horario' ? (task.p && listById(task.p) ? task.p : '') : listOf(task.p || 'm'), p2: listOf(task.p2 || 'n'), times: (task.times || []).join(', '), tol: task.tol ?? 10, days: (task.days && task.days.length ? task.days : ALLDAYS).slice(), temp: !!task.end, start: task.start || logicalDate(), dur, cnt: cntSel(task) }
+      : { label: '', type: 'simples', p: lists()[0].id, p2: listOf('n'), times: '08:00', tol: 10, days: ALLDAYS.slice(), temp: false, start: logicalDate(), dur: 7, cnt: '' };
     $('#tfTitle').textContent = task ? 'Editar tarefa' : 'Nova tarefa';
     $('#tfName').value = this.form.label; $('#tfTimes').value = this.form.times; $('#tfTol').value = this.form.tol;
-    $('#tfStart').value = this.form.start; $('#tfDur').value = this.form.dur; $('#tfTemp').checked = this.form.temp; $('#tfAgua').checked = this.form.agua;
+    $('#tfStart').value = this.form.start; $('#tfDur').value = this.form.dur; $('#tfTemp').checked = this.form.temp;
+    $('#tfCnt').innerHTML = '<option value="">Nenhum</option><option value="agua">Água (+1 copo)</option>' + counters().map(c => `<option value="${c.id}">${esc(c.name)} (+${c.step}${c.unit ? ' ' + esc(c.unit) : ''})</option>`).join(''); $('#tfCnt').value = this.form.cnt;
     $('#tfArchive').hidden = !task; $('#tfErr').textContent = '';
-    $('#tfMore').open = !!(task && (task.end || task.agua || (task.type === 'horario' && (task.tol ?? 10) !== 10)));
+    $('#tfMore').open = !!(task && (task.end || task.agua || task.cnt || (task.type === 'horario' && (task.tol ?? 10) !== 10)));
     $('#taskForm').hidden = false; this.paintForm(); $('#tfName').focus();
   },
   close() { $('#taskForm').hidden = true; this.editing = null; },
+  times() { return $('#tfTimes').value.split(/[,;\s]+/).filter(isTime).map(normTime).sort((a, b) => toMinL(a) - toMinL(b)); },
   paintForm() {
-    const f = this.form;
-    const when = f.type === 'simples' ? f.p : f.type;
-    $$('#tfWhen [data-v]').forEach(b => b.setAttribute('aria-checked', String(b.dataset.v === when)));
+    const f = this.form, L = lists(), opts = L.map(l => `<option value="${l.id}">${esc(l.name)}</option>`).join('');
+    $$('#tfWhen [data-v]').forEach(b => b.setAttribute('aria-checked', String(b.dataset.v === f.type)));
+    // Lista: com horário, “pela hora” põe cada horário na lista do período dele (Manhã, Durante o dia ou Noite).
+    const tm = this.times(), auto = f.type === 'horario' ? [...new Set((tm.length ? tm : ['08:00']).map(x => listName(listOf(null, x))))].join(' / ') : '';
+    $('#tfList').innerHTML = (f.type === 'horario' ? `<option value="">Pela hora (${esc(auto)})</option>` : '') + opts;
+    $('#tfList').value = f.type === 'horario' ? (f.p && listById(f.p) ? f.p : '') : listOf(f.p);
+    $('#tfListL').textContent = f.type === 'duplo' ? 'Lista da manhã' : 'Lista';
+    $('#tfList2').innerHTML = opts; $('#tfList2').value = listOf(f.p2 || 'n'); $('#tfList2Box').hidden = f.type !== 'duplo';
     $('#tfXP').textContent = { simples: '10 XP por dia', horario: '20 XP por horário · tem janela de tolerância e lembrete', duplo: '10 XP de manhã e 10 à noite' }[f.type];
     $$('#tfDays [data-d]').forEach(b => b.setAttribute('aria-pressed', String(f.days.includes(+b.dataset.d))));
     $('#tfTimeBox').hidden = f.type !== 'horario'; $('#tfTolBox').hidden = f.type !== 'horario'; $('#tfTempBox').hidden = !f.temp;
   },
   save() {
     const f = this.form, err = m => { $('#tfErr').textContent = m; };
-    f.label = $('#tfName').value.trim(); f.times = $('#tfTimes').value; f.tol = parseInt($('#tfTol').value, 10); f.start = $('#tfStart').value; f.dur = parseInt($('#tfDur').value, 10); f.temp = $('#tfTemp').checked; f.agua = $('#tfAgua').checked;
+    f.label = $('#tfName').value.trim(); f.times = $('#tfTimes').value; f.tol = parseInt($('#tfTol').value, 10); f.start = $('#tfStart').value; f.dur = parseInt($('#tfDur').value, 10); f.temp = $('#tfTemp').checked; f.cnt = $('#tfCnt').value; f.p = $('#tfList').value; f.p2 = $('#tfList2').value;
     if (!f.label) return err('Dê um nome pra tarefa.');
     if (!f.days.length) return err('Escolha pelo menos um dia da semana.');
     let times = [];
@@ -1930,7 +2116,7 @@ const Tasks = {
       start = f.start; end = addDays(f.start, f.dur - 1);
       if (end < logicalDate()) return err('Com essa data e duração, a tarefa já teria terminado.');
     }
-    const t = logicalDate(), fields = { label: f.label, type: f.type, p: f.type === 'simples' ? f.p : null, times, tol: f.type === 'horario' ? f.tol : 10, days: f.days.length === 7 ? ALLDAYS.slice() : f.days.slice(), agua: f.agua ? 1 : 0, updatedAt: Date.now() };
+    const t = logicalDate(), fields = { label: f.label, type: f.type, p: f.p || null, p2: f.type === 'duplo' ? f.p2 || null : null, times, tol: f.type === 'horario' ? f.tol : 10, days: f.days.length === 7 ? ALLDAYS.slice() : f.days.slice(), agua: f.cnt === 'agua' ? 1 : 0, cnt: f.cnt && f.cnt !== 'agua' ? f.cnt : null, updatedAt: Date.now() };
     if (this.editing) {
       const task = DATA.tasks.find(x => x.id === this.editing);
       Object.assign(task, fields);
@@ -1976,16 +2162,18 @@ const Settings = {
     $('#tgAgua').addEventListener('click', () => this.set('notifAgua', !ST().notifAgua));
     $('#tgSom').addEventListener('click', () => { this.set('som', !ST().som); if (ST().som) Sound.tick(); });
     $('#tgConf').addEventListener('click', () => this.set('confete', !ST().confete));
+    $('#tgAguaFull').addEventListener('click', () => this.set('aguaFull', ST().aguaFull === false));
     $('#themeSeg').addEventListener('click', e => { const b = e.target.closest('[data-v]'); if (!b) return; DATA.theme = b.dataset.v; saveData(); applyTheme(); this.paint(); });
-    $('#ntTest').addEventListener('click', () => notify('Teste de aviso', 'É assim que os lembretes vão aparecer.'));
+    $('#ntTest').addEventListener('click', () => testNotify());
     $('#icsExport').addEventListener('click', () => { const r = buildICS(); if (!r.n) { toast('Nenhuma tarefa com horário pra exportar.'); return; } download('horarios-habitos.ics', r.text, 'text/calendar'); toast(r.n + (r.n === 1 ? ' horário exportado.' : ' horários exportados.')); });
   },
-  set(key, v) { DATA.settings[key] = v; DATA.settings.updatedAt = Date.now(); if (key === 'aguaMeta') touchToday(); saveData(); this.paint(); },
+  set(key, v) { DATA.settings[key] = v; DATA.settings.updatedAt = Date.now(); if (key === 'aguaMeta' || key === 'aguaFull') touchToday(); saveData(); this.paint(); },
   paint() {
     const s = ST();
     for (const [id, k] of [['stWake', 'wake'], ['stSleep', 'sleep'], ['stMeta', 'aguaMeta'], ['stCopo', 'copoMl'], ['stLead', 'doseLead'], ['stGap', 'aguaGap']]) { const el = $('#' + id); if (document.activeElement !== el) el.value = s[k]; }
     $('#stCutoff').value = String(s.cutoffHour);
     for (const [id, k] of [['tgNotif', 'notif'], ['tgDose', 'notifDose'], ['tgAgua', 'notifAgua'], ['tgSom', 'som'], ['tgConf', 'confete']]) $('#' + id).setAttribute('aria-pressed', String(!!s[k]));
+    $('#tgAguaFull').setAttribute('aria-pressed', String(s.aguaFull !== false));
     $('#ntStatus').textContent = notifStatus();
     $$('#themeSeg [data-v]').forEach(b => b.setAttribute('aria-checked', String(b.dataset.v === DATA.theme)));
   }
@@ -2021,7 +2209,8 @@ const Pack = {
   // Formato compacto pro QR: só tarefas criadas ou alteradas, horários sem dois-pontos, registros em texto curto.
   task(t) {
     const o = { i: t.id, l: t.label, y: TYPE_CODE[t.type] || 's', o: t.order ?? 0 };
-    if (t.type === 'simples') o.p = t.p || 'm';
+    if (t.type === 'simples' || t.p) o.p = t.p || 'm';
+    if (t.p2) o.q = t.p2; if (t.cnt) o.n = t.cnt;
     if (t.type === 'horario') { o.t = (t.times || []).map(x => x.replace(':', '')).join(','); if ((t.tol ?? 10) !== 10) o.c = t.tol; }
     if (Array.isArray(t.days) && t.days.length && t.days.length < 7) o.d = t.days.join('');
     if (t.start) o.s = t.start; if (t.end) o.e = t.end; if (t.updatedAt) o.u = t.updatedAt; if (t.agua) o.w = 1;
@@ -2029,13 +2218,23 @@ const Pack = {
   },
   untask(o) {
     return { id: String(o.i), label: String(o.l || 'Tarefa'), type: CODE_TYPE[o.y] || 'simples', p: o.p || null, times: o.t ? String(o.t).split(',').filter(Boolean).map(x => x.slice(0, 2) + ':' + x.slice(2)) : [], tol: o.c ?? 10,
-      days: o.d ? String(o.d).split('').map(Number) : ALLDAYS.slice(), start: o.s || null, end: o.e || null, order: o.o ?? 0, updatedAt: o.u || 0, agua: o.w ? 1 : 0 };
+      days: o.d ? String(o.d).split('').map(Number) : ALLDAYS.slice(), start: o.s || null, end: o.e || null, order: o.o ?? 0, updatedAt: o.u || 0, agua: o.w ? 1 : 0, p2: o.q || null, cnt: o.n || null };
   },
-  day(d) { return [Object.entries(d.done || {}).map(([k, v]) => k + '=' + (v === 'skip' ? 'x' : v.replace(':', ''))).join(';'), d.agua || 0, d.aguaLast ? d.aguaLast.replace(':', '') : '']; },
+  day(d) {
+    const a = [Object.entries(d.done || {}).map(([k, v]) => k + '=' + (v === 'skip' ? 'x' : v.replace(':', ''))).join(';'), d.agua || 0, d.aguaLast ? d.aguaLast.replace(':', '') : ''];
+    const c = Object.entries(d.c || {}).map(([k, v]) => k + '=' + v).join(';');
+    if (c || d.note) a.push(c); if (d.note) a.push(d.note, d.nu || 0);
+    return a;
+  },
+  list(l) { const o = { i: l.id, n: l.name, c: l.c, o: l.order ?? 0, u: l.updatedAt || 0 }; if (l.del) o.x = 1; return o; },
+  unlist(o) { return { id: String(o.i), name: String(o.n || 'Lista').slice(0, 30), c: LCOLORS.some(c => c[0] === o.c) ? o.c : 'xp', order: +o.o || 0, updatedAt: +o.u || 0, del: o.x ? 1 : 0 }; },
+  cnt(c) { const o = { i: c.id, n: c.name, un: c.unit || '', s: c.step, m: c.meta, x: c.xp || 0, f: c.full ? 1 : 0, o: c.order ?? 0, u: c.updatedAt || 0 }; if (c.del) o.d = 1; return o; },
+  uncnt(o) { return sanitizeCnt({ id: String(o.i), name: o.n, unit: o.un, step: o.s, meta: o.m, xp: o.x, full: !!o.f, order: o.o, updatedAt: o.u, del: o.d ? 1 : 0 }); },
   unday(a) {
     const done = {};
     for (const part of String(a[0] || '').split(';').filter(Boolean)) { const [k, v] = part.split('='); if (k && v) done[k] = v === 'x' ? 'skip' : v.slice(0, 2) + ':' + v.slice(2); }
-    return { done, agua: +a[1] || 0, aguaLast: a[2] ? a[2].slice(0, 2) + ':' + a[2].slice(2) : null };
+    const c = {}; for (const part of String(a[3] || '').split(';').filter(Boolean)) { const [k, v] = part.split('='); if (k && +v > 0) c[k] = +v; }
+    return { done, agua: +a[1] || 0, aguaLast: a[2] ? a[2].slice(0, 2) + ':' + a[2].slice(2) : null, c, note: a[4] ? String(a[4]).slice(0, 140) : '', nu: +a[5] || 0 };
   }
 };
 const Sync = {
@@ -2045,8 +2244,10 @@ const Sync = {
     const settings = DATA.settings.updatedAt ? DATA.settings : null;
     for (const n of CFG.syncDays) {
       const days = {};
-      for (let i = 0; i < n; i++) { const k = addDays(t, -i), d = DATA.days[k]; if (d && Object.keys(d.done || {}).length + (d.agua || 0) > 0) days[k] = Pack.day(d); }
+      for (let i = 0; i < n; i++) { const k = addDays(t, -i), d = DATA.days[k]; if (d && Object.keys(d.done || {}).length + (d.agua || 0) + Object.keys(d.c || {}).length + (d.note ? 1 : 0) > 0) days[k] = Pack.day(d); }
       const pk = { t: 'hq', v: 2, c: DATA.createdAt, k: tasks, s: settings, d: days };
+      if (DATA.lists.some(l => l.updatedAt)) pk.l = DATA.lists.map(l => Pack.list(l));
+      if (DATA.counters.length) pk.n = DATA.counters.map(c => Pack.cnt(c));
       if (Dash.get().updatedAt) pk.b = Dash.pack();
       const txt = await packText(JSON.stringify(pk));
       if (txt.length <= CFG.qrMaxChars || n === 1) return { txt, n, count: Object.keys(days).length };
@@ -2062,7 +2263,7 @@ const Sync = {
     cv.width = cv.height = (n + quiet * 2) * size; g.fillStyle = '#fff'; g.fillRect(0, 0, cv.width, cv.height); g.fillStyle = '#000';
     for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (qr.isDark(r, c)) g.fillRect((c + quiet) * size, (r + quiet) * size, size, size);
     cv.dataset.text = text;
-    $('#qrInfo').textContent = `QR com as tarefas, configurações, o arranjo do painel e ${p.count} dia${p.count === 1 ? '' : 's'} com registro (até ${p.n} dias pra trás). No outro aparelho, toque em “Ler QR” e aponte a câmera.`;
+    $('#qrInfo').textContent = `QR com as tarefas, listas, contadores, configurações, o arranjo do painel e ${p.count} dia${p.count === 1 ? '' : 's'} com registro (até ${p.n} dias pra trás). No outro aparelho, toque em “Ler QR” e aponte a câmera.`;
   },
   stream: null, timer: null,
   async read() {
@@ -2080,7 +2281,7 @@ const Sync = {
     let obj; try { obj = JSON.parse(await unpackText(s)); } catch (e) { toast('QR inválido ou incompleto.'); return false; }
     if (obj && obj.t === 'hq' && obj.v === 2 && Array.isArray(obj.k) && obj.d) {
       const days = {}; for (const [k, a] of Object.entries(obj.d)) days[k] = Pack.unday(a);
-      obj = { t: 'hq', c: obj.c, tasks: obj.k.map(x => Pack.untask(x)), settings: obj.s, days, dash: obj.b && obj.b.b ? Dash.unpack(obj.b.b, obj.b.u) : null };
+      obj = { t: 'hq', c: obj.c, tasks: obj.k.map(x => Pack.untask(x)), settings: obj.s, days, dash: obj.b && obj.b.b ? Dash.unpack(obj.b.b, obj.b.u) : null, lists: Array.isArray(obj.l) ? obj.l.map(x => Pack.unlist(x)) : null, counters: Array.isArray(obj.n) ? obj.n.map(x => Pack.uncnt(x)) : null };
     }
     if (!obj || obj.t !== 'hq' || !Array.isArray(obj.tasks) || !obj.days) { toast('Esse QR não é do app Hábitos.'); return false; }
     const n = Object.keys(obj.days).length;
@@ -2089,6 +2290,9 @@ const Sync = {
     return true;
   },
   merge(obj) {
+    // Listas e contadores primeiro: o arranjo do painel e as tarefas apontam pra eles.
+    const byId = (arr, inc) => { for (const x of inc || []) { const i = arr.findIndex(y => y.id === x.id); if (i < 0) arr.push(x); else if ((x.updatedAt || 0) > (arr[i].updatedAt || 0)) arr[i] = x; } };
+    byId(DATA.lists, obj.lists); byId(DATA.counters, obj.counters);
     for (const t of obj.tasks) { const i = DATA.tasks.findIndex(x => x.id === t.id); if (i < 0) DATA.tasks.push(t); else if ((t.updatedAt || 0) > (DATA.tasks[i].updatedAt || 0)) DATA.tasks[i] = t; }
     if (obj.settings && (obj.settings.updatedAt || 0) > (DATA.settings.updatedAt || 0)) DATA.settings = Object.assign({}, DEFAULT_SETTINGS, obj.settings);
     if (obj.dash) Dash.merge(obj.dash);
@@ -2104,7 +2308,9 @@ const Sync = {
       }
       if ((sd.agua || 0) > (day.agua || 0)) { day.agua = sd.agua; added++; }
       if (sd.aguaLast && (!day.aguaLast || sd.aguaLast > day.aguaLast)) day.aguaLast = sd.aguaLast;
-      if (!day.sched) { day.sched = snapshot(k); day.meta = ST().aguaMeta; }
+      for (const [id, v] of Object.entries(sd.c || {})) if (v > ((day.c || {})[id] || 0)) { day.c = day.c || {}; day.c[id] = v; added++; }
+      if (sd.note && (!day.note || (sd.nu || 0) > (day.nu || 0))) { day.note = sd.note; day.nu = sd.nu || 0; }
+      if (!day.sched) freezeDay(day, k);
     }
     touchToday(); saveData(); return added;
   }
@@ -3179,28 +3385,161 @@ async function applyCompanion(config, images) {
   return { images: c.images.length, missing, bad, fail };
 }
 
+/* ===================== Listas suas e contadores ===================== */
+const uid = p => p + Date.now().toString(36).slice(-5) + Math.random().toString(36).slice(2, 5);
+function sanitizeCnt(c) {
+  const n = (v, a, b, d) => { v = parseInt(v, 10); return Number.isFinite(v) ? clamp(v, a, b) : d; };
+  return { id: String(c.id), name: String(c.name || 'Contador').trim().slice(0, 30) || 'Contador', unit: String(c.unit || '').trim().slice(0, 16), step: n(c.step, 1, 1000, 1), meta: n(c.meta, 1, 100000, 10),
+    xp: n(c.xp, 0, 100, 0), full: !!c.full, order: +c.order || 0, updatedAt: +c.updatedAt || 0, del: c.del ? 1 : 0 };
+}
+// Quadro novo entra no fim do painel (e o arranjo vai junto no QR).
+function dashAppend(id, w) { const d = Dash.get(); if (!d.blocks.some(b => b.id === id)) d.blocks.push({ id, w, on: true }); else { const b = d.blocks.find(x => x.id === id); b.on = true; } d.updatedAt = Date.now(); }
+
+const Lists = {
+  deleting: null,
+  create(name) {
+    // Cor livre, deixando o azul da água por último.
+    const order = DATA.lists.reduce((m, l) => Math.max(m, l.order ?? 0), -1) + 1, used = new Set(lists().map(l => l.c)), pref = [...LCOLORS.filter(x => x[0] !== 'wa'), LCOLORS.find(x => x[0] === 'wa')];
+    const c = (pref.find(x => !used.has(x[0])) || pref[order % pref.length])[0];
+    const l = { id: uid('l'), name: String(name).trim().slice(0, 30) || 'Lista', c, order, updatedAt: Date.now() };
+    DATA.lists.push(l); saveData(); dashAppend('p-' + l.id, 'm'); saveData(); renderAll(); return l;
+  },
+  touch(l) { l.updatedAt = Date.now(); saveData(); },
+  // Tarefas que usam a lista (simples, “manhã e noite” e com horário escolhido nela).
+  users(id) { const t = logicalDate(); return DATA.tasks.filter(x => (!x.end || x.end >= t) && (x.p === id || x.p2 === id || (!x.p && x.type !== 'horario' && id === lists()[0].id))); },
+  remove(id, to) {
+    const l = DATA.lists.find(x => x.id === id); if (!l || lists().length < 2) return;
+    for (const t of DATA.tasks) { let ch = false; if (t.p === id) { t.p = t.type === 'horario' && !to ? null : to; ch = true; } if (t.p2 === id) { t.p2 = to; ch = true; } if (ch) t.updatedAt = Date.now(); }
+    l.del = 1; l.updatedAt = Date.now(); this.deleting = null; touchToday(); saveData(); this.render(); Tasks.render();
+    toast('Lista “' + l.name + '” apagada.' + (to ? ' As tarefas foram pra “' + listName(to) + '”.' : ''));
+  },
+  move(id, dir) {
+    const L = lists(), i = L.findIndex(l => l.id === id), j = i + dir; if (i < 0 || j < 0 || j >= L.length) return;
+    L.forEach((l, k) => { l.order = k; }); [L[i].order, L[j].order] = [L[j].order, L[i].order]; L[i].updatedAt = L[j].updatedAt = Date.now(); saveData(); this.render();
+  },
+  render() {
+    const L = lists();
+    $('#listRows').innerHTML = L.map((l, i) => {
+      const n = this.users(l.id).length, del = this.deleting === l.id, others = L.filter(x => x.id !== l.id);
+      return `<div class="lrow stack" data-lid="${l.id}"><div class="lline">
+        <button type="button" class="swatch" data-lcolor="${l.id}" style="background:${lcolor(l.c)}" aria-label="Trocar a cor de ${esc(l.name)}" title="Trocar a cor"></button>
+        <input type="text" data-lname="${l.id}" value="${esc(l.name)}" maxlength="30" aria-label="Nome da lista">
+        <span class="xs mu" style="white-space:nowrap;margin-left:auto">${n} ${n === 1 ? 'tarefa' : 'tarefas'}</span>
+        <button type="button" class="mini" data-lmv="-1" aria-label="Subir ${esc(l.name)}" ${i === 0 ? 'disabled' : ''}>▲</button><button type="button" class="mini" data-lmv="1" aria-label="Descer ${esc(l.name)}" ${i === L.length - 1 ? 'disabled' : ''}>▼</button>
+        <button type="button" class="mini x" data-ldel aria-label="Apagar ${esc(l.name)}" title="${L.length < 2 ? 'Precisa ter pelo menos uma lista' : 'Apagar'}" ${L.length < 2 ? 'disabled' : ''}>×</button></div>
+        ${del ? `<div class="ldel">${n ? `Mover as ${n} ${n === 1 ? 'tarefa' : 'tarefas'} pra <select data-lto>${others.map(o => `<option value="${o.id}">${esc(o.name)}</option>`).join('')}</select>` : '<span>Apagar esta lista?</span>'}
+          <button type="button" class="btn sm danger" data-lyes>Apagar lista</button><button type="button" class="btn sm" data-lno>Cancelar</button>
+          <span class="xs mu" style="flex-basis:100%">O histórico dos dias que passaram não muda.</span></div>` : ''}</div>`;
+    }).join('');
+  },
+  init() {
+    $('#listNew').addEventListener('click', () => { const l = this.create('Nova lista'); this.render(); const el = $(`[data-lname="${l.id}"]`); if (el) { el.focus(); el.select(); } });
+    const box = $('#listRows');
+    box.addEventListener('click', e => {
+      const row = e.target.closest('[data-lid]'); if (!row) return; const id = row.dataset.lid, l = DATA.lists.find(x => x.id === id), q = s => e.target.closest(s);
+      if (q('[data-lcolor]')) { const i = LCOLORS.findIndex(c => c[0] === l.c); l.c = LCOLORS[(i + 1) % LCOLORS.length][0]; this.touch(l); this.render(); }
+      else if (q('[data-lmv]')) this.move(id, +q('[data-lmv]').dataset.lmv);
+      else if (q('[data-ldel]')) { this.deleting = id; this.render(); }
+      else if (q('[data-lno]')) { this.deleting = null; this.render(); }
+      else if (q('[data-lyes]')) { const sel = row.querySelector('[data-lto]'); this.remove(id, sel ? sel.value : lists().find(x => x.id !== id).id); }
+    });
+    box.addEventListener('change', e => {
+      const id = e.target.dataset.lname; if (!id) return; const l = DATA.lists.find(x => x.id === id), v = e.target.value.trim().slice(0, 30);
+      if (!v) { e.target.value = l.name; return; } if (v !== l.name) { l.name = v; this.touch(l); Tasks.render(); }
+    });
+  }
+};
+
+const Counters = {
+  create(o) {
+    const order = DATA.counters.reduce((m, c) => Math.max(m, c.order ?? 0), -1) + 1;
+    const c = sanitizeCnt(Object.assign({ id: uid('c'), xp: 10, full: false }, o, { order, updatedAt: Date.now() }));
+    DATA.counters.push(c); touchToday(); saveData(); dashAppend('c-' + c.id, 's'); saveData(); renderAll(); return c;
+  },
+  remove(id) {
+    const c = DATA.counters.find(x => x.id === id); if (!c) return;
+    const n = DATA.tasks.filter(t => t.cnt === id).length;
+    if (!confirm('Apagar o contador “' + c.name + '”?' + (n ? ' ' + n + (n === 1 ? ' tarefa deixa' : ' tarefas deixam') + ' de somar nele.' : '') + ' Os dias que passaram não mudam.')) return;
+    for (const t of DATA.tasks) if (t.cnt === id) { t.cnt = null; t.updatedAt = Date.now(); }
+    c.del = 1; c.updatedAt = Date.now(); touchToday(); saveData(); this.render(); Tasks.render(); toast('Contador apagado.');
+  },
+  render() {
+    const C = counters();
+    $('#cntRows').innerHTML = C.length ? C.map(c => `<div class="cntbox stack" data-cid="${c.id}">
+      <div class="lline"><input type="text" data-cf="name" value="${esc(c.name)}" maxlength="30" aria-label="Nome do contador" style="flex:1;min-width:0"><button type="button" class="mini x" data-cdel aria-label="Apagar ${esc(c.name)}" title="Apagar">×</button></div>
+      <div class="nums4"><label>Meta por dia<input type="number" data-cf="meta" min="1" max="100000" value="${c.meta}"></label><label>Cada toque soma<input type="number" data-cf="step" min="1" max="1000" value="${c.step}"></label>
+        <label>Unidade<input type="text" data-cf="unit" maxlength="16" value="${esc(c.unit)}" placeholder="opcional"></label><label>XP na meta<input type="number" data-cf="xp" min="0" max="100" value="${c.xp}"></label></div>
+      <label class="check"><input type="checkbox" data-cf="full" ${c.full ? 'checked' : ''}> Conta pro dia completo (dia perfeito e mapa só fecham com a meta batida)</label></div>`).join('')
+      : '<div class="empty-card">Nenhum contador seu ainda. Ex.: páginas lidas, flexões, minutos de leitura.</div>';
+  },
+  init() {
+    $('#cntNew').addEventListener('click', () => { const c = this.create({ name: 'Novo contador', meta: 10, step: 1 }); this.render(); const el = $(`[data-cid="${c.id}"] [data-cf="name"]`); if (el) { el.focus(); el.select(); } });
+    const box = $('#cntRows');
+    box.addEventListener('click', e => { const d = e.target.closest('[data-cdel]'); if (d) this.remove(d.closest('[data-cid]').dataset.cid); });
+    box.addEventListener('change', e => {
+      const f = e.target.dataset.cf; if (!f) return; const i = DATA.counters.findIndex(x => x.id === e.target.closest('[data-cid]').dataset.cid); if (i < 0) return;
+      const c = DATA.counters[i], v = f === 'full' ? e.target.checked : e.target.value;
+      if (f === 'name' && !String(v).trim()) { e.target.value = c.name; return; }
+      const nc = DATA.counters[i] = sanitizeCnt(Object.assign({}, c, { [f]: v, updatedAt: Date.now() }));
+      // Sem redesenhar o cartão (o campo ainda pode estar em foco): só mostra o valor que ficou valendo.
+      if (f !== 'full') e.target.value = nc[f];
+      touchToday(); saveData(); Tasks.render();
+    });
+  }
+};
+
+/* ===================== Nota do dia ===================== */
+const Nota = {
+  _t: 0,
+  save() {
+    clearTimeout(this._t);
+    const v = $('#notaIn').value.replace(/\s+/g, ' ').trim().slice(0, 140), tk = logicalDate(), cur = (DATA.days[tk] || {}).note || '';
+    if (v === cur) return;
+    const day = touchToday(); if (v) day.note = v; else delete day.note; day.nu = Date.now(); saveData();
+    $('#notaInfo').textContent = 'salvo às ' + hhmm(now());
+  },
+  init() {
+    const el = $('#notaIn');
+    el.addEventListener('input', () => { $('#notaInfo').textContent = ''; clearTimeout(this._t); this._t = setTimeout(() => this.save(), 600); });
+    el.addEventListener('change', () => this.save());
+    el.addEventListener('keydown', e => { if (e.key === 'Enter') { this.save(); el.blur(); } });
+  }
+};
+
 /* ===================== Painel do Hoje: quadros, ordem e tamanho ===================== */
 // O arranjo fica nos dados (vai no backup e no QR). Só o PC edita; o celular mostra os mesmos quadros, na mesma ordem, em uma coluna.
 const BLOCKS = {
   tl: { name: 'Linha do tempo', desc: 'O dia, de acordar a dormir, com o que já foi feito e os horários.' },
   dia: { name: 'Seu dia', desc: 'Anéis de progresso por período e o XP de hoje.' },
   agua: { name: 'Água', desc: 'Copos do dia, meta e os botões +1 e −.' },
-  horarios: { name: 'Horários', desc: 'Remédios e outras tarefas com horário. Só aparece quando o dia tem alarme.', auto: true },
+  horarios: { name: 'Horários', desc: 'Remédios e outras tarefas com horário. Só aparece quando o dia tem alarme e recolhe quando tudo foi feito.', auto: 'Aparece sozinho quando o dia tem alarme' },
+  agora: { name: 'Agora', desc: 'O que precisa de atenção neste momento: horário atrasado, água atrasada e o próximo alarme. Some quando não tem nada.', auto: 'Aparece sozinho quando tem algo pendente' },
   comp: { name: 'Companheiro', desc: 'Seu companheiro, o nível e o XP.' },
-  'p-m': { name: 'Manhã', desc: 'Tarefas da manhã.', list: true },
-  'p-d': { name: 'Durante o dia', desc: 'Tarefas do dia.', list: true },
-  'p-n': { name: 'Noite', desc: 'Tarefas da noite.', list: true },
   seq: { name: 'Sequência', desc: 'Dias seguidos, recorde e o coringa da semana.' },
-  mapa: { name: 'Últimas 16 semanas', desc: 'Mapa dos dias recentes.' }
+  mapa: { name: 'Últimas 16 semanas', desc: 'Mapa dos dias recentes.' },
+  nota: { name: 'Nota do dia', desc: 'Uma linha sobre o dia. Aparece no Histórico.' }
 };
+// Quadros das listas (p-<id>) e dos contadores (c-<id>) nascem e somem junto com elas.
+function blockDef(id) {
+  if (BLOCKS[id]) return BLOCKS[id];
+  if (id.startsWith('p-')) { const l = listById(id.slice(2)); return l ? { name: l.name, desc: 'Lista: as tarefas dela no dia.', list: true } : null; }
+  if (id.startsWith('c-')) { const c = counterById(id.slice(2)); return c ? { name: c.name, desc: 'Contador: meta de ' + c.meta + (c.unit ? ' ' + c.unit : '') + ', botão +' + c.step + '.' } : null; }
+  return null;
+}
 const DSIZES = [['s', 'P', 'Pequeno (1/4 da linha)'], ['m', 'M', 'Médio (1/3 da linha)'], ['l', 'G', 'Grande (metade da linha)'], ['xl', 'Inteira', 'Linha inteira']];
-const DASH_DEFAULT = [['tl', 'xl'], ['dia', 's'], ['agua', 's'], ['horarios', 's'], ['comp', 's'], ['p-m', 'm'], ['p-d', 'm'], ['p-n', 'm'], ['seq', 'l'], ['mapa', 'l']];
-function defaultDash(at = 0) { return { blocks: DASH_DEFAULT.map(([id, w]) => ({ id, w, on: true })), updatedAt: at }; }
+// Agora e Nota do dia começam fora do painel: entram por “+ Adicionar quadro”.
+const DASH_DEFAULT = [['tl', 'xl'], ['dia', 's'], ['agua', 's'], ['horarios', 's'], ['comp', 's'], ['p-m', 'm'], ['p-d', 'm'], ['p-n', 'm'], ['seq', 'l'], ['mapa', 'l'], ['agora', 's', false], ['nota', 'l', false]];
+function defaultDash(at = 0) {
+  const out = DASH_DEFAULT.filter(([id]) => blockDef(id)).map(([id, w, on]) => ({ id, w, on: on !== false }));
+  return { blocks: out.concat(dynBlocks().filter(b => !out.some(x => x.id === b.id))), updatedAt: at };
+}
+const dynBlocks = () => [...lists().map(l => ({ id: 'p-' + l.id, w: 'm', on: true })), ...counters().map(c => ({ id: 'c-' + c.id, w: 's', on: true }))];
 function sanitizeDash(d) {
   const def = defaultDash(), seen = new Set(), out = [], okW = w => DSIZES.some(s => s[0] === w);
   for (const b of d && Array.isArray(d.blocks) ? d.blocks : []) {
-    if (!b || !BLOCKS[b.id] || seen.has(b.id)) continue;
-    seen.add(b.id); out.push({ id: b.id, w: okW(b.w) ? b.w : def.blocks.find(x => x.id === b.id).w, on: b.on !== false });
+    if (!b || typeof b.id !== 'string' || !blockDef(b.id) || seen.has(b.id)) continue;
+    const dw = (def.blocks.find(x => x.id === b.id) || { w: 's' }).w;
+    seen.add(b.id); out.push({ id: b.id, w: okW(b.w) ? b.w : dw, on: b.on !== false });
   }
   for (const b of def.blocks) if (!seen.has(b.id)) out.push(b);
   return { blocks: out, updatedAt: d && Number.isFinite(+d.updatedAt) ? +d.updatedAt : 0 };
@@ -3211,7 +3550,14 @@ const Dash = {
   blk(id) { return $(`#dash .blk[data-b="${id}"]`); },
   sig() { return JSON.stringify(this.get().blocks) + (this.editing ? '|e' : ''); },
   // Ordem, tamanho e visibilidade de cada quadro (sem mexer no conteúdo: canvas e botões continuam os mesmos).
+  // Cria os quadros de listas e contadores novos e tira os que sumiram.
+  syncDom() {
+    const dash = $('#dash'), want = new Set(this.get().blocks.map(b => b.id));
+    for (const el of $$('#dash > .blk')) if (/^[pc]-/.test(el.dataset.b) && !want.has(el.dataset.b)) el.remove();
+    for (const id of want) if (!this.blk(id)) { const el = document.createElement('div'); el.className = 'blk'; el.dataset.b = id; dash.appendChild(el); }
+  },
   apply() {
+    this.syncDom();
     const d = this.get();
     d.blocks.forEach((b, i) => { const el = this.blk(b.id); if (!el) return; el.style.order = String(i); el.dataset.w = b.w; el.classList.toggle('off', !b.on); });
     document.documentElement.classList.toggle('editing', this.editing);
@@ -3234,8 +3580,8 @@ const Dash = {
     this.change(d => { const a = d.blocks, i = a.findIndex(b => b.id === id); const [x] = a.splice(i, 1); let j = a.findIndex(b => b.id === target); if (after) j++; a.splice(j, 0, x); });
   },
   setW(id, w) { this.change(d => { d.blocks.find(b => b.id === id).w = w; }); },
-  hide(id) { this.change(d => { d.blocks.find(b => b.id === id).on = false; }); toast('“' + BLOCKS[id].name + '” saiu do painel. Dá pra pôr de volta em “+ Adicionar quadro”.'); },
-  add(id) { this.change(d => { const a = d.blocks, i = a.findIndex(b => b.id === id); const [x] = a.splice(i, 1); x.on = true; a.push(x); }); this.closeCat(); toast('“' + BLOCKS[id].name + '” entrou no fim do painel.'); const el = this.blk(id); if (el) el.scrollIntoView({ block: 'nearest' }); },
+  hide(id) { this.change(d => { d.blocks.find(b => b.id === id).on = false; }); toast('“' + blockDef(id).name + '” saiu do painel. Dá pra pôr de volta em “+ Adicionar quadro”.'); },
+  add(id) { this.change(d => { const a = d.blocks, i = a.findIndex(b => b.id === id); const [x] = a.splice(i, 1); x.on = true; a.push(x); }); this.closeCat(); toast('“' + blockDef(id).name + '” entrou no fim do painel.'); const el = this.blk(id); if (el) el.scrollIntoView({ block: 'nearest' }); },
   reset() { if (!confirm('Voltar o painel pro arranjo padrão?')) return; this.change(d => { Object.assign(d, defaultDash()); }); toast('Painel no arranjo padrão.'); },
   undo() { const s = this.hist.pop(); if (!s) return; DATA.dash = JSON.parse(s); DATA.dash.updatedAt = Date.now(); saveData(); this.apply(); },
   edit(on) {
@@ -3249,8 +3595,8 @@ const Dash = {
     for (const b of this.get().blocks) {
       const el = this.blk(b.id); if (!el) continue;
       let bar = $('.edbar', el); if (!bar) { bar = document.createElement('div'); bar.className = 'edbar'; el.prepend(bar); }
-      const i = vis.indexOf(b.id), nm = BLOCKS[b.id].name;
-      bar.innerHTML = `<span class="grip" aria-hidden="true">⠿</span><b class="nm"${BLOCKS[b.id].auto ? ' title="Aparece sozinho quando o dia tem alarme"' : ''}>${esc(nm)}${BLOCKS[b.id].auto ? ' <span class="xs mu">· automático</span>' : ''}</b>`
+      const i = vis.indexOf(b.id), def = blockDef(b.id), nm = def.name;
+      bar.innerHTML = `<span class="grip" aria-hidden="true">⠿</span><b class="nm"${def.auto ? ` title="${def.auto}"` : ''}>${esc(nm)}${def.auto ? ' <span class="xs mu">· automático</span>' : def.list ? ' <span class="xs mu">· lista</span>' : b.id.startsWith('c-') ? ' <span class="xs mu">· contador</span>' : ''}</b>`
         + `<button type="button" class="mini" data-mv="-1" aria-label="Mover ${esc(nm)} pra trás" ${i <= 0 ? 'disabled' : ''}>◀</button><button type="button" class="mini" data-mv="1" aria-label="Mover ${esc(nm)} pra frente" ${i >= vis.length - 1 ? 'disabled' : ''}>▶</button>`
         + `<span class="seg sz" role="radiogroup" aria-label="Tamanho de ${esc(nm)}">${DSIZES.map(([v, s, t]) => `<button type="button" role="radio" aria-checked="${v === b.w}" data-w="${v}" title="${t}">${s}</button>`).join('')}</span>`
         + `<button type="button" class="mini x" data-hide aria-label="Esconder ${esc(nm)}" title="Esconder">×</button>`;
@@ -3260,11 +3606,25 @@ const Dash = {
   },
   openCat() {
     const off = this.get().blocks.filter(b => !b.on);
-    $('#dashCatList').innerHTML = off.length ? off.map(b => `<div class="trw"><div class="nm"><b>${esc(BLOCKS[b.id].name)}</b><span class="xs mu">${esc(BLOCKS[b.id].desc)}</span></div><button type="button" class="btn sm pri" data-add="${b.id}">Adicionar</button></div>`).join('')
+    $('#dashCatList').innerHTML = off.length ? off.map(b => `<div class="trw"><div class="nm"><b>${esc(blockDef(b.id).name)}</b><span class="xs mu">${esc(blockDef(b.id).desc)}</span></div><button type="button" class="btn sm pri" data-add="${b.id}">Adicionar</button></div>`).join('')
       : '<div class="empty-card">Todos os quadros já estão no painel. Pra tirar um, use o × dele.</div>';
-    $('#dashCat').hidden = false; const f = $('#dashCatList [data-add]') || $('#dashCatClose'); f.focus();
+    $('#catErr').textContent = ''; for (const id of ['catListName', 'catCntName', 'catCntUnit']) $('#' + id).value = ''; $('#catCntMeta').value = 10; $('#catCntStep').value = 1;
+    $('#dashCat').hidden = false; const f = $('#dashCatList [data-add]') || $('#catListName'); f.focus();
   },
   closeCat() { $('#dashCat').hidden = true; },
+  // Criar lista ou contador direto do painel (o resto se ajusta em Configurações).
+  createFromCat(kind) {
+    const err = m => { $('#catErr').textContent = m; };
+    if (kind === 'list') {
+      const name = $('#catListName').value.trim(); if (!name) return err('Dê um nome pra lista.');
+      const l = Lists.create(name); this.closeCat(); toast('Lista “' + l.name + '” criada no fim do painel. Escolha a lista das tarefas em Configurações › Tarefas.');
+    } else {
+      const name = $('#catCntName').value.trim(); if (!name) return err('Dê um nome pro contador.');
+      const c = Counters.create({ name, meta: +$('#catCntMeta').value, step: +$('#catCntStep').value, unit: $('#catCntUnit').value });
+      this.closeCat(); toast('Contador “' + c.name + '” criado no fim do painel. XP e “conta pro dia completo” ficam em Configurações › Rotina.');
+    }
+    const el = this.blk(this.get().blocks[this.get().blocks.length - 1].id); if (el) el.scrollIntoView({ block: 'nearest' });
+  },
   init() {
     $('#editBtn').addEventListener('click', () => this.edit(!this.editing));
     $('#dashDone').addEventListener('click', () => this.edit(false));
@@ -3272,7 +3632,11 @@ const Dash = {
     $('#dashUndo').addEventListener('click', () => this.undo());
     $('#dashReset').addEventListener('click', () => this.reset());
     $('#dashCatClose').addEventListener('click', () => this.closeCat());
-    $('#dashCat').addEventListener('click', e => { const b = e.target.closest('[data-add]'); if (b) this.add(b.dataset.add); else if (e.target.id === 'dashCat') this.closeCat(); });
+    $('#dashCat').addEventListener('click', e => {
+      const b = e.target.closest('[data-add]'), nw = e.target.closest('[data-new]');
+      if (b) this.add(b.dataset.add); else if (nw) this.createFromCat(nw.dataset.new); else if (e.target.id === 'dashCat') this.closeCat();
+    });
+    $('#dashCat').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.matches('input')) { e.preventDefault(); this.createFromCat(e.target.closest('[data-form]').dataset.form); } });
     $('#dashCat').addEventListener('keydown', e => { if (e.key === 'Escape') this.closeCat(); });
     const dash = $('#dash');
     dash.addEventListener('click', e => {
@@ -3294,9 +3658,10 @@ const Dash = {
   },
   // QR: arranjo compacto, ex. "tl4,dia1,!mapa3" (tamanho 1–4, ! = escondido).
   pack() { const d = this.get(); return { b: d.blocks.map(b => (b.on ? '' : '!') + b.id + (DSIZES.findIndex(s => s[0] === b.w) + 1)).join(','), u: d.updatedAt }; },
+  // Sem limpar aqui: listas e contadores novos do outro aparelho só existem depois de juntar (merge).
   unpack(s, u) {
     const blocks = String(s || '').split(',').filter(Boolean).map(x => { const m = x.match(/^(!?)(.+?)(\d)$/); return m ? { id: m[2], w: (DSIZES[+m[3] - 1] || DSIZES[0])[0], on: !m[1] } : null; }).filter(Boolean);
-    return sanitizeDash({ blocks, updatedAt: +u || 0 });
+    return { blocks, updatedAt: +u || 0 };
   },
   merge(d) { if (d && d.updatedAt > this.get().updatedAt) { DATA.dash = sanitizeDash(d); this._v = -1; } }
 };
@@ -3401,7 +3766,7 @@ let VIEW = 'hoje';
 function renderAll() {
   if (VIEW === 'hoje') renderHoje();
   if (VIEW === 'historico') Hist.render();
-  if (VIEW === 'config') { CfgTabs.paint(); Tasks.render(); Settings.paint(); Layout.paint(); Ed.render(); paintBackupSize(); }
+  if (VIEW === 'config') { CfgTabs.paint(); Tasks.render(); Lists.render(); Counters.render(); Settings.paint(); Layout.paint(); Ed.render(); paintBackupSize(); }
   if (VIEW !== 'hoje') { const S = Game.summary(); $('#streakTop').textContent = S.streak + (S.streak === 1 ? ' dia' : ' dias'); $('#dateLabel').textContent = dateLabel(logicalDate()); $('#clockLabel').textContent = hhmm(now()); }
 }
 function route() {
@@ -3417,7 +3782,7 @@ function route() {
   Dash.apply(); renderAll(); Layout.apply();
 }
 async function init() {
-  applyTheme(); Comp.init(); Ed.init(); Tasks.init(); Settings.init(); Layout.init(); Dash.init(); CfgTabs.init(); Ed.reset();
+  applyTheme(); Comp.init(); Ed.init(); Tasks.init(); Settings.init(); Layout.init(); Dash.init(); CfgTabs.init(); Lists.init(); Counters.init(); Nota.init(); Ed.reset();
   $('#themeBtn').addEventListener('click', () => { const cur = document.documentElement.dataset.theme; DATA.theme = cur === 'light' ? 'dark' : 'light'; saveData(); applyTheme(); Settings.paint(); if (VIEW === 'config') Ed.render(); });
   $('#fsBtn').addEventListener('click', () => { if (document.fullscreenElement) document.exitFullscreen(); else if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(() => {}); });
   $('#bannerClose').addEventListener('click', () => { $('#banner').hidden = true; });
@@ -3425,10 +3790,13 @@ async function init() {
   $('#aguaMinus').addEventListener('click', () => changeAgua(-1));
   $('#dash').addEventListener('click', e => {
     if (Dash.editing) return;
-    const t = e.target.closest('[data-task]'); if (t) { toggleTask(t.dataset.task); return; }
-    const x = e.target.closest('[data-expand]'); if (x && isNarrow()) { expanded[x.dataset.expand] = !expanded[x.dataset.expand]; renderHoje(); }
+    const q = s => e.target.closest(s);
+    const t = q('[data-task]'); if (t) { toggleTask(t.dataset.task); return; }
+    const a = q('[data-take]'), sk = q('[data-skip]'), c = q('[data-cnt]'), w = q('[data-agua]');
+    if (a) { takeDose(a.dataset.take); return; } if (sk) { skipDose(sk.dataset.skip); return; }
+    if (c) { changeCnt(c.dataset.cnt, +c.dataset.n); return; } if (w) { changeAgua(1); return; }
+    const x = q('[data-expand]'); if (x) { expanded[x.dataset.expand] = !expanded[x.dataset.expand]; renderHoje(); Layout.apply(); }
   });
-  $('#medCard').addEventListener('click', e => { const a = e.target.closest('[data-take]'), s = e.target.closest('[data-skip]'); if (a) takeDose(a.dataset.take); else if (s) skipDose(s.dataset.skip); });
   $('#hFilter').addEventListener('click', e => { const b = e.target.closest('[data-f]'); if (b) { Hist.filter = b.dataset.f; Hist.render(); } });
   $('#qrShow').addEventListener('click', () => Sync.show());
   $('#qrRead').addEventListener('click', () => Sync.read());
@@ -3459,7 +3827,7 @@ async function init() {
     if (!ok && navigator.storage && navigator.storage.persist) ok = await navigator.storage.persist();
     $('#persistInfo').textContent = ok ? 'Armazenamento persistente concedido: o navegador não apaga esses dados sozinho.' : 'O navegador pode apagar esses dados se faltar espaço ou se você limpar os dados do site. Exporte o companheiro pra ter uma cópia.';
   } catch (e) { $('#persistInfo').textContent = 'Não deu pra verificar a persistência deste navegador. Exporte o companheiro pra ter uma cópia.'; }
-  window.__app = { Game, CC: () => CC, DATA: () => DATA, SAVED, ED, Ed, Comp, Layout, stageLayout, sanitizeComp, SheetSet, IDB, imgDbKey, applyCompanion, aguaOf, taskCups, Dash, CfgTabs, sanitizeDash, Sync, Hist, Tasks, buildICS, occurrencesFor, Remind, logicalDate, saveData, touchToday };
+  window.__app = { Game, CC: () => CC, DATA: () => DATA, SAVED, ED, Ed, Comp, Layout, stageLayout, sanitizeComp, SheetSet, IDB, imgDbKey, applyCompanion, aguaOf, taskCups, Dash, CfgTabs, sanitizeDash, Lists, Counters, Nota, lists, counters, cntOf, listOf, Pack, notify, testNotify, Sync, Hist, Tasks, buildICS, occurrencesFor, Remind, logicalDate, saveData, touchToday };
 }
 init();
 </script>
