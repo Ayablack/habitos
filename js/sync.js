@@ -92,8 +92,10 @@ const Sync = {
     const p = await this.payload(), text = this.base() + '#sync=' + p.txt;
     let qr;
     try { qr = qrcode(0, 'L'); qr.addData(text, 'Byte'); qr.make(); } catch (e) { toast('Dados demais pro QR. Use “Compartilhar backup”.'); return; }
-    const n = qr.getModuleCount(), quiet = 4, size = Math.max(5, Math.floor(340 / (n + quiet * 2))), cv = $('#qrCanvas'), g = cv.getContext('2d');
-    cv.width = cv.height = (n + quiet * 2) * size; g.fillStyle = '#fff'; g.fillRect(0, 0, cv.width, cv.height); g.fillStyle = '#000';
+    // Tamanho pelo espaço do cartão (até 340 px), em pixels reais da tela: cabe no celular e cada quadradinho fica nítido pra câmera.
+    const n = qr.getModuleCount(), quiet = 4, m = n + quiet * 2, cv = $('#qrCanvas'), g = cv.getContext('2d'), dpr = window.devicePixelRatio || 1;
+    const avail = Math.min(340, $('.qrbox').clientWidth || 340), size = Math.max(1, Math.floor(avail * dpr / m));
+    cv.width = cv.height = m * size; cv.style.width = (m * size / dpr) + 'px'; g.fillStyle = '#fff'; g.fillRect(0, 0, cv.width, cv.height); g.fillStyle = '#000';
     for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (qr.isDark(r, c)) g.fillRect((c + quiet) * size, (r + quiet) * size, size, size);
     cv.dataset.text = text;
     $('#qrInfo').textContent = `QR com as tarefas, listas, contadores, configurações, o arranjo do painel e ${p.count} dia${p.count === 1 ? '' : 's'} com registro (até ${p.n} dias pra trás). No outro aparelho, toque em “Ler QR” e aponte a câmera.`;
