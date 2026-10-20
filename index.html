@@ -1029,6 +1029,52 @@ function occurrencesFor(k, tasks = DATA.tasks) { return sortTasks(tasks).filter(
 // Retrato das tarefas do dia. A marca “conta como copo” (w) só vale a partir do dia em que a ligação com o contador de água existe (aguaSince).
 function snapshot(k, tasks = DATA.tasks, since = DATA.aguaSince) { return occurrencesFor(k, tasks).map(o => { const s = o.time ? { oid: o.oid, xp: o.xp, time: o.time, tol: o.tol } : { oid: o.oid, xp: o.xp }; if (o.w === 1 && (!since || k >= since)) s.w = 1; else if (typeof o.w === 'string') s.w = o.w; return s; }); }
 function occLabel(o) { return o.label + (o.part ? ' (' + o.part + ')' : '') + (o.time ? ' · ' + o.time : ''); }
+// Validação de tudo que entra de fora (navegador, backup e QR): ids, horários e datas no formato certo, números nos limites, textos com tamanho máximo.
+// Assim nada que chega por um arquivo ou por um link vira código na página, e uma configuração estranha não quebra a tela.
+const SAFE_ID = /^[A-Za-z0-9_-]{1,40}$/, OID = /^[A-Za-z0-9_-]{1,40}(@[A-Za-z0-9:]{1,5})?$/, DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const okId = v => typeof v === 'string' && SAFE_ID.test(v);
+const okDate = v => typeof v === 'string' && DATE_RE.test(v);
+const numIn = (v, a, b, d) => { v = Number(v); return Number.isFinite(v) ? clamp(v, a, b) : d; };
+const intIn = (v, a, b, d) => { v = parseInt(v, 10); return Number.isFinite(v) ? clamp(v, a, b) : d; };
+const timeOr = (v, d = null) => typeof v === 'string' && isTime(v) ? normTime(v) : d;
+function cleanSettings(s) {
+  const D = DEFAULT_SETTINGS; s = Object.assign({}, D, s && typeof s === 'object' ? s : {});
+  return Object.assign(s, { wake: timeOr(s.wake, D.wake), sleep: timeOr(s.sleep, D.sleep), cutoffHour: intIn(s.cutoffHour, 0, 6, D.cutoffHour), aguaMeta: intIn(s.aguaMeta, 1, 30, D.aguaMeta),
+    copoMl: intIn(s.copoMl, 50, 1000, D.copoMl), doseLead: intIn(s.doseLead, 0, 60, D.doseLead), aguaGap: intIn(s.aguaGap, 30, 480, D.aguaGap),
+    notif: !!s.notif, notifDose: !!s.notifDose, notifAgua: !!s.notifAgua, som: !!s.som, confete: !!s.confete, aguaFull: s.aguaFull !== false, updatedAt: numIn(s.updatedAt, 0, 1e15, 0) });
+}
+function cleanTask(t) {
+  if (!t || typeof t !== 'object' || !okId(t.id)) return null;
+  const days = [...new Set((Array.isArray(t.days) ? t.days : []).map(Number).filter(d => Number.isInteger(d) && d >= 0 && d <= 6))].sort((a, b) => a - b);
+  return Object.assign({}, t, { label: String(t.label ?? '').trim().slice(0, 60) || 'Tarefa', type: ['simples', 'horario', 'duplo'].includes(t.type) ? t.type : 'simples',
+    p: okId(t.p) ? t.p : null, p2: okId(t.p2) ? t.p2 : null, times: [...new Set((Array.isArray(t.times) ? t.times : []).map(x => timeOr(x)).filter(Boolean))], tol: intIn(t.tol, 0, 120, 10),
+    days: days.length ? days : ALLDAYS.slice(), start: okDate(t.start) ? t.start : null, end: okDate(t.end) ? t.end : null, order: numIn(t.order, -1e9, 1e9, 0),
+    updatedAt: numIn(t.updatedAt, 0, 1e15, 0), agua: t.agua ? 1 : 0, cnt: okId(t.cnt) ? t.cnt : null });
+}
+function cleanList(l) {
+  if (!l || typeof l !== 'object' || !okId(l.id)) return null;
+  return { id: l.id, name: String(l.name ?? '').trim().slice(0, 30) || 'Lista', c: LCOLORS.some(c => c[0] === l.c) ? l.c : 'xp', order: numIn(l.order, -1e9, 1e9, 0), updatedAt: numIn(l.updatedAt, 0, 1e15, 0), ...(l.del ? { del: 1 } : {}) };
+}
+const cleanCnt = c => c && typeof c === 'object' && okId(c.id) ? sanitizeCnt(c) : null;
+function cleanDay(day) {
+  if (!day || typeof day !== 'object') return null;
+  const out = Object.assign({}, day, { done: {}, agua: intIn(day.agua, 0, 30, 0) });
+  for (const [k, v] of Object.entries(day.done && typeof day.done === 'object' ? day.done : {})) { const tm = v === 'skip' ? v : timeOr(v); if (OID.test(k) && tm) out.done[k] = tm; }
+  const al = timeOr(day.aguaLast); if (al) out.aguaLast = al; else delete out.aguaLast;
+  delete out.c; if (day.c && typeof day.c === 'object') { out.c = {}; for (const [k, v] of Object.entries(day.c)) { const n = intIn(v, 0, 1e7, 0); if (okId(k) && n > 0) out.c[k] = n; } }
+  if (day.note) out.note = String(day.note).slice(0, 140); else delete out.note;
+  if ('nu' in day) out.nu = numIn(day.nu, 0, 1e15, 0);
+  delete out.sched; if (Array.isArray(day.sched)) out.sched = day.sched.filter(o => o && OID.test(o.oid)).map(o => {
+    const s = { oid: o.oid, xp: intIn(o.xp, 0, 1000, 10) }, tm = timeOr(o.time); if (tm) { s.time = tm; s.tol = intIn(o.tol, 0, 120, 10); } if (o.w === 1 || okId(o.w)) s.w = o.w; return s; });
+  const m = intIn(day.meta, 1, 30, 0); if (m) out.meta = m; else delete out.meta;
+  delete out.cm; if (day.cm && typeof day.cm === 'object') { out.cm = {}; for (const [k, v] of Object.entries(day.cm)) if (okId(k) && Array.isArray(v)) out.cm[k] = [intIn(v[0], 1, 100000, 10), intIn(v[1], 0, 100, 0), v[2] ? 1 : 0, intIn(v[3], 1, 1000, 1)]; }
+  if ('af' in day) out.af = day.af ? 1 : 0;
+  return out;
+}
+function cleanDays(days) {
+  const out = {}; for (const [k, v] of Object.entries(days && typeof days === 'object' ? days : {})) { const day = okDate(k) ? cleanDay(v) : null; if (day) out[k] = day; }
+  return out;
+}
 function migrate(d) {
   if (!d || typeof d !== 'object' || !d.days || typeof d.days !== 'object') return null;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(d.aguaSince || '')) d.aguaSince = logicalDate();
@@ -1037,12 +1083,14 @@ function migrate(d) {
     for (const k of Object.keys(d.days)) { const day = d.days[k]; day.done = day.done || {}; day.agua = day.agua || 0; day.sched = snapshot(k, d.tasks, d.aguaSince); day.meta = 10; }
   }
   if (d.version !== 2) return null;
-  d.settings = Object.assign({}, DEFAULT_SETTINGS, d.settings || {});
-  if (!Array.isArray(d.lists) || !d.lists.length) d.lists = clone(DEFAULT_LISTS);
-  if (!Array.isArray(d.counters)) d.counters = [];
-  if (!Array.isArray(d.tasks)) d.tasks = clone(DEFAULT_TASKS);
-  for (const t of d.tasks) if (t && t.id === 'a1' && t.agua === undefined && /[áa]gua/i.test(t.label || '')) t.agua = 1;
-  if (!d.createdAt) d.createdAt = logicalDate();
+  for (const t of Array.isArray(d.tasks) ? d.tasks : []) if (t && t.id === 'a1' && t.agua === undefined && /[áa]gua/i.test(t.label || '')) t.agua = 1;
+  d.settings = cleanSettings(d.settings);
+  d.lists = (Array.isArray(d.lists) ? d.lists : []).map(cleanList).filter(Boolean);
+  if (!d.lists.length) d.lists = clone(DEFAULT_LISTS);
+  d.counters = (Array.isArray(d.counters) ? d.counters : []).map(cleanCnt).filter(Boolean);
+  d.tasks = (Array.isArray(d.tasks) ? d.tasks : clone(DEFAULT_TASKS)).map(cleanTask).filter(Boolean);
+  d.days = cleanDays(d.days);
+  if (!okDate(d.createdAt)) d.createdAt = logicalDate();
   if (!['dark', 'light', 'auto'].includes(d.theme)) d.theme = 'dark';
   // Congela o retrato de dias que ainda não têm um, pra mudanças futuras em tarefas e metas não alterarem o passado.
   for (const k of Object.keys(d.days)) { const day = d.days[k]; if (!day || typeof day !== 'object') { delete d.days[k]; continue; } day.done = day.done || {}; if (!day.sched) day.sched = snapshot(k, d.tasks, d.aguaSince); if (!day.meta) day.meta = d.settings.aguaMeta; }
@@ -1243,7 +1291,7 @@ function sanitizeGrid(g) {
 // Tamanho da imagem no companheiro (1 = 100%). Fica entre 25% e 400%.
 const sanitizeK = v => { const n = +v; return Number.isFinite(n) && n > 0 ? clamp(Math.round(n * 100) / 100, 0.25, 4) : 1; };
 function sanitizeFrames(list) {
-  return (Array.isArray(list) ? list : []).filter(f => f && typeof f.id === 'string' && [f.x, f.y, f.w, f.h].every(Number.isFinite) && f.w >= 1 && f.h >= 1)
+  return (Array.isArray(list) ? list : []).filter(f => f && typeof f.id === 'string' && /^f\d+$/.test(f.id) && [f.x, f.y, f.w, f.h].every(Number.isFinite) && f.w >= 1 && f.h >= 1)
     .map(f => { const r = { x: Math.round(f.x), y: Math.round(f.y), w: Math.round(f.w), h: Math.round(f.h) }, q = f.o && [f.o.x, f.o.y, f.o.w, f.o.h].every(Number.isFinite) ? f.o : r;
       return { id: f.id, img: typeof f.img === 'string' ? f.img : '', x: r.x, y: r.y, w: r.w, h: r.h, o: { x: Math.round(q.x), y: Math.round(q.y), w: Math.round(q.w), h: Math.round(q.h) } }; });
 }
@@ -1956,7 +2004,7 @@ const Hist = {
         tip += ' · ' + Math.round(r * 100) + '%';
         if (DATA.days[k] && DATA.days[k].note) tip += ' · “' + DATA.days[k].note + '”';
       }
-      heat += `<span class="cell ${cls}" title="${tip}"></span>`;
+      heat += `<span class="cell ${cls}" title="${esc(tip)}"></span>`;
     }
     $('#hHeat').innerHTML = heat;
     // Notas do dia (as mais recentes primeiro)
@@ -2284,6 +2332,9 @@ const Sync = {
       obj = { t: 'hq', c: obj.c, tasks: obj.k.map(x => Pack.untask(x)), settings: obj.s, days, dash: obj.b && obj.b.b ? Dash.unpack(obj.b.b, obj.b.u) : null, lists: Array.isArray(obj.l) ? obj.l.map(x => Pack.unlist(x)) : null, counters: Array.isArray(obj.n) ? obj.n.map(x => Pack.uncnt(x)) : null };
     }
     if (!obj || obj.t !== 'hq' || !Array.isArray(obj.tasks) || !obj.days) { toast('Esse QR não é do app Hábitos.'); return false; }
+    // O link pode ter vindo de qualquer lugar: passa pela mesma validação do backup antes de juntar.
+    obj = { c: okDate(obj.c) ? obj.c : null, tasks: obj.tasks.map(cleanTask).filter(Boolean), settings: obj.settings ? cleanSettings(obj.settings) : null, days: cleanDays(obj.days), dash: obj.dash || null,
+      lists: Array.isArray(obj.lists) ? obj.lists.map(cleanList).filter(Boolean) : null, counters: Array.isArray(obj.counters) ? obj.counters.map(cleanCnt).filter(Boolean) : null };
     const n = Object.keys(obj.days).length;
     if (!confirm('Juntar ' + n + ' dia' + (n === 1 ? '' : 's') + ' de registros e as tarefas do outro aparelho com os deste? Nada é apagado.')) return false;
     const added = this.merge(obj); renderAll(); toast(added + ' registro' + (added === 1 ? '' : 's') + ' novo' + (added === 1 ? '' : 's') + ' recebido' + (added === 1 ? '' : 's') + '.');
@@ -2294,7 +2345,7 @@ const Sync = {
     const byId = (arr, inc) => { for (const x of inc || []) { const i = arr.findIndex(y => y.id === x.id); if (i < 0) arr.push(x); else if ((x.updatedAt || 0) > (arr[i].updatedAt || 0)) arr[i] = x; } };
     byId(DATA.lists, obj.lists); byId(DATA.counters, obj.counters);
     for (const t of obj.tasks) { const i = DATA.tasks.findIndex(x => x.id === t.id); if (i < 0) DATA.tasks.push(t); else if ((t.updatedAt || 0) > (DATA.tasks[i].updatedAt || 0)) DATA.tasks[i] = t; }
-    if (obj.settings && (obj.settings.updatedAt || 0) > (DATA.settings.updatedAt || 0)) DATA.settings = Object.assign({}, DEFAULT_SETTINGS, obj.settings);
+    if (obj.settings && (obj.settings.updatedAt || 0) > (DATA.settings.updatedAt || 0)) DATA.settings = cleanSettings(obj.settings);
     if (obj.dash) Dash.merge(obj.dash);
     if (obj.c && obj.c < DATA.createdAt) DATA.createdAt = obj.c;
     let added = 0;
