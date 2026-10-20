@@ -175,11 +175,7 @@ function cleanDays(days) {
 function migrate(d) {
   if (!d || typeof d !== 'object' || !d.days || typeof d.days !== 'object') return null;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(d.aguaSince || '')) d.aguaSince = logicalDate();
-  if (d.version === 1) {
-    d.version = 2; d.tasks = clone(DEFAULT_TASKS); d.settings = Object.assign({}, DEFAULT_SETTINGS);
-    for (const k of Object.keys(d.days)) { const day = d.days[k]; day.done = day.done || {}; day.agua = day.agua || 0; day.sched = snapshot(k, d.tasks, d.aguaSince); day.meta = 10; }
-  }
-  if (d.version !== 2) return null;
+  if (d.version !== 2) return null;   // todas as versões publicadas usam o formato 2
   for (const t of Array.isArray(d.tasks) ? d.tasks : []) if (t && t.id === 'a1' && t.agua === undefined && /[áa]gua/i.test(t.label || '')) t.agua = 1;
   d.settings = cleanSettings(d.settings);
   d.lists = (Array.isArray(d.lists) ? d.lists : []).map(cleanList).filter(Boolean);
