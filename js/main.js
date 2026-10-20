@@ -57,7 +57,13 @@ async function init() {
   await loadSavedImages();
   Ed.reset();
   route();
-  const tickAll = () => { Remind.tick(); if (VIEW === 'hoje') renderHoje(); };
+  // Redesenhar troca os botões das tarefas. Se isso cair no meio de um toque, o toque se perde: espera o dedo soltar.
+  let pressing = false, pending = false;
+  const redraw = () => { if (VIEW !== 'hoje') return; if (pressing) { pending = true; return; } pending = false; renderHoje(); };
+  document.addEventListener('pointerdown', () => { pressing = true; }, true);
+  const release = () => { pressing = false; if (pending) setTimeout(redraw, 300); };
+  document.addEventListener('pointerup', release, true); document.addEventListener('pointercancel', release, true);
+  const tickAll = () => { Remind.tick(); redraw(); };
   setInterval(tickAll, 30000); setTimeout(() => Remind.tick(), 1500);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) tickAll(); });
   if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)) navigator.serviceWorker.register('sw.js').then(r => { SWREG = r; }).catch(() => {});
