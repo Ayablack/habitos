@@ -66,6 +66,5 @@ async function init() {
     if (!ok && navigator.storage && navigator.storage.persist) ok = await navigator.storage.persist();
     $('#persistInfo').textContent = ok ? 'Armazenamento persistente concedido: o navegador não apaga esses dados sozinho.' : 'O navegador pode apagar esses dados se faltar espaço ou se você limpar os dados do site. Exporte o companheiro pra ter uma cópia.';
   } catch (e) { $('#persistInfo').textContent = 'Não deu pra verificar a persistência deste navegador. Exporte o companheiro pra ter uma cópia.'; }
-  window.__app = { Game, CC: () => CC, DATA: () => DATA, SAVED, ED, Ed, Comp, Layout, stageLayout, sanitizeComp, SheetSet, IDB, imgDbKey, applyCompanion, aguaOf, taskCups, Dash, CfgTabs, sanitizeDash, Lists, Counters, Nota, lists, counters, cntOf, listOf, Pack, notify, testNotify, Sync, Hist, Tasks, buildICS, occurrencesFor, Remind, logicalDate, saveData, touchToday };
 }
 init();
