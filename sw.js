@@ -1,12 +1,11 @@
 // Service worker do Hábitos: guarda o app pra funcionar offline. Os seus dados ficam no navegador, não aqui.
-const CACHE = 'habitos-v9';
-const FONTS = CACHE + '-fontes';
+const CACHE = 'habitos-v10';
 const JS = ['qrcode', 'base', 'companheiro', 'avisos', 'hoje', 'historico', 'config', 'sync', 'editor', 'backup', 'listas', 'painel', 'main'];
-const ASSETS = ['./', './index.html', './css/app.css', ...JS.map(n => './js/' + n + '.js'), './manifest.webmanifest', './icon.svg', './icon-192.png', './icon-512.png', './icon-maskable.png'];
+const ASSETS = ['./', './index.html', './css/app.css', ...JS.map(n => './js/' + n + '.js'), './fonts/sora.woff2', './fonts/silkscreen.woff2', './fonts/jetbrains-mono.woff2', './manifest.webmanifest', './icon.svg', './icon-192.png', './icon-512.png', './icon-maskable.png'];
 // Com internet ruim, espera a rede no máximo isso antes de abrir o que está guardado.
 const WAIT_MS = 2500;
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting())); });
-self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE && k !== FONTS).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
+self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 // Arquivos do app: tenta a versão nova na rede; se ela demorar ou falhar, usa a guardada.
 // Só guarda respostas que deram certo e vieram deste endereço (Wi-Fi de hotel que redireciona pra uma página de login não entra).
 function fresh(e, req, key) {
@@ -21,12 +20,6 @@ self.addEventListener('fetch', e => {
   const url = new URL(req.url);
   if (url.origin === location.origin) {
     e.respondWith(fresh(e, req, req.mode === 'navigate' ? './index.html' : req));
-  } else if (/fonts\.(googleapis|gstatic)\.com$/.test(url.hostname)) {
-    e.respondWith(caches.open(FONTS).then(async c => {
-      const hit = await c.match(req);
-      const net = fetch(req).then(r => { if (r.ok || r.type === 'opaque') c.put(req, r.clone()); return r; }).catch(() => hit);
-      return hit || net;
-    }));
   }
 });
 self.addEventListener('notificationclick', e => {

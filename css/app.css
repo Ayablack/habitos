@@ -1,3 +1,7 @@
+/* Fontes guardadas no próprio app (subconjunto latin). Sora e JetBrains Mono são variáveis: um arquivo cobre todos os pesos. */
+@font-face{font-family:'Sora';font-style:normal;font-weight:400 700;font-display:swap;src:url(../fonts/sora.woff2) format('woff2')}
+@font-face{font-family:'Silkscreen';font-style:normal;font-weight:400;font-display:swap;src:url(../fonts/silkscreen.woff2) format('woff2')}
+@font-face{font-family:'JetBrains Mono';font-style:normal;font-weight:500 700;font-display:swap;src:url(../fonts/jetbrains-mono.woff2) format('woff2')}
 :root{--bg:#0F1115;--sf:#171A21;--sf2:#1E222B;--ln:#2A2F3A;--tx:#E8EAED;--mu:#9AA0AA;--ok:#3DDC97;--okt:#0F1115;--xp:#F5B83D;--wa:#5AA9FF;--nt:#B49CFF;--bad:#FF7A7A;--track:#262B35;--xpln:#5A4618;color-scheme:dark}
 :root[data-theme="light"]{--bg:#F4F5F7;--sf:#FFFFFF;--sf2:#F3F5F8;--ln:#E1E4EA;--tx:#14171C;--mu:#596170;--ok:#0E8A57;--okt:#FFFFFF;--xp:#9A5F08;--wa:#1F6FCB;--nt:#6A47D6;--bad:#C93C3C;--track:#E3E6EC;--xpln:#E8D2A8;color-scheme:light}
 *{box-sizing:border-box}
