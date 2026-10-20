@@ -36,10 +36,21 @@ const Pack = {
     return { id: String(o.i), label: String(o.l || 'Tarefa'), type: CODE_TYPE[o.y] || 'simples', p: o.p || null, times: o.t ? String(o.t).split(',').filter(Boolean).map(x => x.slice(0, 2) + ':' + x.slice(2)) : [], tol: o.c ?? 10,
       days: o.d ? String(o.d).split('').map(Number) : ALLDAYS.slice(), start: o.s || null, end: o.e || null, order: o.o ?? 0, updatedAt: o.u || 0, agua: o.w ? 1 : 0, p2: o.q || null, cnt: o.n || null };
   },
-  day(d) {
+  // Retrato do dia (tarefas, meta da água e contadores daquele dia). Só vai no QR quando é diferente do que o outro aparelho
+  // montaria com as tarefas e metas de agora; assim o XP e a % dos dias passados ficam iguais nos dois aparelhos.
+  frozen(d, k) {
+    const x = {};
+    if (Array.isArray(d.sched) && JSON.stringify(d.sched) !== JSON.stringify(snapshot(k))) x.s = d.sched.map(o => [o.oid, o.xp, o.time || '', o.time ? o.tol : '', o.w ?? ''].join('|'));
+    if (d.meta && d.meta !== ST().aguaMeta) x.m = d.meta;
+    if (d.cm && JSON.stringify(d.cm) !== JSON.stringify(cntDefs())) x.cm = d.cm;
+    if (d.af !== undefined && d.af !== (ST().aguaFull !== false ? 1 : 0)) x.af = d.af;
+    return Object.keys(x).length ? x : null;
+  },
+  day(d, k) {
     const a = [Object.entries(d.done || {}).map(([k, v]) => k + '=' + (v === 'skip' ? 'x' : v.replace(':', ''))).join(';'), d.agua || 0, d.aguaLast ? d.aguaLast.replace(':', '') : ''];
     const c = Object.entries(d.c || {}).map(([k, v]) => k + '=' + v).join(';');
-    if (c || d.note) a.push(c); if (d.note) a.push(d.note, d.nu || 0);
+    const f = this.frozen(d, k);
+    if (c || d.note || f) a.push(c); if (d.note || f) a.push(d.note || '', d.nu || 0); if (f) a.push(f);
     return a;
   },
   list(l) { const o = { i: l.id, n: l.name, c: l.c, o: l.order ?? 0, u: l.updatedAt || 0 }; if (l.del) o.x = 1; return o; },
@@ -50,7 +61,13 @@ const Pack = {
     const done = {};
     for (const part of String(a[0] || '').split(';').filter(Boolean)) { const [k, v] = part.split('='); if (k && v) done[k] = v === 'x' ? 'skip' : v.slice(0, 2) + ':' + v.slice(2); }
     const c = {}; for (const part of String(a[3] || '').split(';').filter(Boolean)) { const [k, v] = part.split('='); if (k && +v > 0) c[k] = +v; }
-    return { done, agua: +a[1] || 0, aguaLast: a[2] ? a[2].slice(0, 2) + ':' + a[2].slice(2) : null, c, note: a[4] ? String(a[4]).slice(0, 140) : '', nu: +a[5] || 0 };
+    const out = { done, agua: +a[1] || 0, aguaLast: a[2] ? a[2].slice(0, 2) + ':' + a[2].slice(2) : null, c, note: a[4] ? String(a[4]).slice(0, 140) : '', nu: +a[5] || 0 };
+    const f = a[6] && typeof a[6] === 'object' ? a[6] : null;
+    if (f) {
+      if (Array.isArray(f.s)) out.sched = f.s.map(x => { const [oid, xp, time, tol, w] = String(x).split('|'), o = { oid, xp: +xp }; if (time) { o.time = time; o.tol = +tol; } if (w) o.w = w === '1' ? 1 : w; return o; });
+      if (f.m) out.meta = f.m; if (f.cm) out.cm = f.cm; if (f.af !== undefined) out.af = f.af;
+    }
+    return out;
   }
 };
 const Sync = {
@@ -60,7 +77,7 @@ const Sync = {
     const settings = DATA.settings.updatedAt ? DATA.settings : null;
     for (const n of CFG.syncDays) {
       const days = {};
-      for (let i = 0; i < n; i++) { const k = addDays(t, -i), d = DATA.days[k]; if (d && Object.keys(d.done || {}).length + (d.agua || 0) + Object.keys(d.c || {}).length + (d.note ? 1 : 0) > 0) days[k] = Pack.day(d); }
+      for (let i = 0; i < n; i++) { const k = addDays(t, -i), d = DATA.days[k]; if (d && Object.keys(d.done || {}).length + (d.agua || 0) + Object.keys(d.c || {}).length + (d.note ? 1 : 0) > 0) days[k] = Pack.day(d, k); }
       const pk = { t: 'hq', v: 2, c: DATA.createdAt, k: tasks, s: settings, d: days };
       if (DATA.lists.some(l => l.updatedAt)) pk.l = DATA.lists.map(l => Pack.list(l));
       if (DATA.counters.length) pk.n = DATA.counters.map(c => Pack.cnt(c));
@@ -129,7 +146,8 @@ const Sync = {
       if (sd.aguaLast && (!day.aguaLast || sd.aguaLast > day.aguaLast)) day.aguaLast = sd.aguaLast;
       for (const [id, v] of Object.entries(sd.c || {})) if (v > ((day.c || {})[id] || 0)) { day.c = day.c || {}; day.c[id] = v; added++; }
       if (sd.note && (!day.note || (sd.nu || 0) > (day.nu || 0))) { day.note = sd.note; day.nu = sd.nu || 0; }
-      if (!day.sched) freezeDay(day, k);
+      // Dia novo neste aparelho: usa o retrato que veio do outro, se veio; senão, monta com as tarefas de agora.
+      if (!day.sched) { freezeDay(day, k); for (const f of ['sched', 'meta', 'cm', 'af']) if (sd[f] !== undefined) day[f] = sd[f]; }
     }
     touchToday(); saveData(); return added;
   }
