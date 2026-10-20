@@ -653,7 +653,8 @@ var Ed = {
     if (!obj || obj.type !== 'habitos-companheiro') { toast('Esse arquivo não é uma exportação de companheiro.'); return; }
     const has = CC.images.length || CC.frames.length;
     if ((has || this.isDirty()) && !confirm('Importar troca o companheiro atual pelo do arquivo (imagens, recortes e sequências)' + (this.isDirty() ? ', e descarta as alterações não salvas' : '') + '. Pra guardar o atual, exporte antes. Continuar?')) return;
-    const r = await applyCompanion(obj.config, obj.images || obj.image);
+    if (!obj.config || obj.config.v !== 3) { toast('Esse companheiro foi exportado numa versão antiga (16/10) e não pode mais ser importado.'); return; }
+    const r = await applyCompanion(obj.config, obj.images);
     toast(r.missing ? `Companheiro importado, mas ${r.missing === 1 ? '1 imagem não veio' : r.missing + ' imagens não vieram'} no arquivo. Escolha o arquivo de novo na etapa Imagem.` : r.fail ? 'Importado, mas o navegador não deixou guardar as imagens: elas somem ao recarregar.' : `Companheiro importado com ${r.images === 1 ? '1 imagem' : r.images + ' imagens'}.`);
   },
 

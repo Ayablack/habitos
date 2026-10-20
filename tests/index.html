@@ -23,28 +23,31 @@ iframe{border:0;height:800px;display:block}
 // Cada teste abre o app real (../index.html) num iframe. As variáveis do app (DATA, Game, Sync...) são lidas com w.eval,
 // que roda no escopo global do iframe e enxerga também as declaradas com const e let.
 const espera = ms => new Promise(r => setTimeout(r, ms));
-async function abrir({ largura = 1200, hash = 'hoje', dados = null } = {}) {
+async function abrir({ largura = 1200, hash = 'hoje', dados = null, extra = {} } = {}) {
   localStorage.clear(); sessionStorage.clear();
   if (dados) localStorage.setItem('habitos.v1', JSON.stringify(dados));
+  for (const [k, v] of Object.entries(extra)) localStorage.setItem(k, v);
   const palco = document.getElementById('palco'); palco.innerHTML = '';
   const f = document.createElement('iframe'); f.style.width = largura + 'px';
   f.src = '../index.html#' + hash; palco.appendChild(f);
-  await new Promise(r => f.addEventListener('load', r, { once: true }));
-  const w = f.contentWindow;
-  // O início do app é assíncrono (lê as imagens do companheiro antes de desenhar): espera a tela aparecer.
-  for (let i = 0; i < 100 && !w.document.querySelector('#view-' + hash + ':not([hidden])'); i++) await espera(50);
-  await espera(150);
-  w.confirm = () => true;
+  return pronto(f, hash);
+}
+// Espera o app de verdade (e não a página em branco que o quadro mostra antes): scripts carregados e a tela certa aparecendo.
+// O início do app é assíncrono (lê as imagens do companheiro antes de desenhar); a data no topo só aparece quando ele terminou.
+async function pronto(f, hash) {
+  const ok = () => { try { const w = f.contentWindow; return /index\.html$/.test(w.location.pathname) && w.document.readyState === 'complete' && typeof w.renderHoje === 'function' && w.document.querySelector('#view-' + hash + ':not([hidden])') && w.document.querySelector('#dateLabel').textContent !== ''; } catch (e) { return false; } };
+  for (let i = 0; i < 200 && !ok(); i++) await espera(50);
+  if (!ok()) throw new Error('o app não abriu');
+  await espera(200);
+  const w = f.contentWindow; w.confirm = () => true;
   return { w, E: s => w.eval(s), f };
 }
 // Recarrega o app com os dados que ele salvou (como fechar e abrir de novo).
 async function recarregar(f, hash = 'hoje') {
+  const antes = f.contentWindow.document;
   f.contentWindow.location.reload();
-  await new Promise(r => f.addEventListener('load', r, { once: true }));
-  const w = f.contentWindow;
-  for (let i = 0; i < 100 && !w.document.querySelector('#view-' + hash + ':not([hidden])'); i++) await espera(50);
-  await espera(150); w.confirm = () => true;
-  return { w, E: s => w.eval(s), f };
+  for (let i = 0; i < 200 && f.contentWindow.document === antes; i++) await espera(25);
+  return pronto(f, hash);
 }
 // Compara sem depender da ordem das chaves e mostra só o primeiro ponto diferente.
 function diferenca(a, b, p = '') {
@@ -173,7 +176,7 @@ const TESTES = [
     igual([...w.document.scripts].filter(sc => /js\/editor\.js/.test(sc.src)).length, 1, 'carregou o editor mais de uma vez');
   }],
   ['Editor: importar folha de sprites, detectar e salvar', async () => {
-    const { w, E } = await abrir({ hash: 'config' });
+    const { w, E, f } = await abrir({ hash: 'config' });
     w.document.querySelector('[data-tab2="comp"]').click();
     for (let i = 0; i < 60 && E('Ed.provisorio'); i++) await espera(50);
     // Folha de teste: 3 bonecos de 8×12 px num fundo verde sólido (o app deve tirar o fundo sozinho).
@@ -188,6 +191,25 @@ const TESTES = [
     certo(await E('Ed').save(), 'não salvou');
     igual(E('CC.images.length'), 1, 'imagens no companheiro salvo');
     certo(E('SAVED.has(CC.images[0].id)'), 'a imagem salva não ficou disponível');
+    const depois = await recarregar(f, 'config');
+    certo(depois.E('SAVED.has(CC.images[0].id)'), 'depois de abrir de novo, a imagem do companheiro não voltou');
+  }],
+  ['Cópias do companheiro antigo somem do navegador', async () => {
+    const a = await abrir({ extra: { 'habitos.companheiro.v1-backup': '{"fw":32}', 'habitos.companheiro.v2-backup': '{"v":2}' } });
+    certo(!localStorage.getItem('habitos.companheiro.v1-backup') && !localStorage.getItem('habitos.companheiro.v2-backup'), 'cópias no localStorage ficaram');
+    await a.E(`IDB.set('companion.image', new Blob(['x']))`);
+    const { E } = await recarregar(a.f);
+    await espera(300);
+    certo(!(await E(`IDB.get('companion.image')`)), 'imagem antiga ficou no IndexedDB');
+  }],
+  ['Backup antigo: registros entram, companheiro antigo avisa', async () => {
+    const { w, E } = await abrir(); let msg = ''; w.toast = m => { msg = m; };
+    const backup = { type: 'habitos-backup', v: 2, data: { version: 2, createdAt: '2026-10-16', days: { '2026-10-16': { done: { d1: '08:00' }, agua: 3 } } },
+      companion: { config: { fw: 32, fh: 32, frames: { grid: { idle: [0, 1] } } }, image: { dataURL: 'data:image/png;base64,AAAA' } } };
+    await E('importBackup')(new w.File([JSON.stringify(backup)], 'velho.json', { type: 'application/json' }));
+    igual(E(`DATA.days['2026-10-16'].done`), { d1: '08:00' }, 'registros do backup');
+    certo(/versão antiga/.test(msg), 'faltou o aviso do companheiro antigo: ' + msg);
+    igual(E('CC.images.length'), 0, 'companheiro não deveria mudar');
   }],
   ['Versão: sw.js e index.html usam o js/versao.js', async () => {
     const [html, sw, ver] = await Promise.all(['../index.html', '../sw.js', '../js/versao.js'].map(u => fetch(u, { cache: 'no-store' }).then(r => r.text())));

@@ -40,7 +40,7 @@ function emptyState(fps = 8) { return { seq: [], fps, loop: true, align: 'pes', 
 const emptyStates = () => ({ idle: emptyState(), celebrate: emptyState(), tired: emptyState(), levelup: emptyState() });
 const defaultKey = () => ({ on: false, mode: 'borda', colors: [], tol: 24, trim: 0 });
 const defaultGrid = () => ({ fw: 32, fh: 32, mx: 0, my: 0, sx: 0, sy: 0 });
-function defaultComp() { return { v: 3, scale: 3, alpha: 8, images: [], frames: [], states: emptyStates(), nextId: 1, nextImg: 1, legacy: null }; }
+function defaultComp() { return { v: 3, scale: 3, alpha: 8, images: [], frames: [], states: emptyStates(), nextId: 1, nextImg: 1 }; }
 function newImage(id, name, size, w, h) { return { id, name: String(name || 'imagem').slice(0, 120), size: size || 0, w, h, k: 1, key: defaultKey(), grid: defaultGrid() }; }
 function gridDims(g, W, H) { return { cols: Math.max(0, Math.floor((W - g.mx + g.sx) / (g.fw + g.sx))), rows: Math.max(0, Math.floor((H - g.my + g.sy) / (g.fh + g.sy))) }; }
 function gridRect(g, i, W, H) {
@@ -51,7 +51,7 @@ function gridRect(g, i, W, H) {
 const rgbOf = c => Array.isArray(c) && c.length >= 3 ? c.slice(0, 3).map(v => toInt(v, 0, 0, 255)) : null;
 function sanitizeKey(k) {
   k = Object.assign(defaultKey(), k || {});
-  const cols = (Array.isArray(k.colors) ? k.colors : [k.color]).map(rgbOf).filter(Boolean).slice(0, 6);
+  const cols = (Array.isArray(k.colors) ? k.colors : []).map(rgbOf).filter(Boolean).slice(0, 6);
   return { on: !!k.on && cols.length > 0, mode: ['borda', 'global'].includes(k.mode) ? k.mode : 'borda', colors: cols, tol: toInt(k.tol, 24, 0, 255), trim: toInt(k.trim, 0, 0, 3) };
 }
 function sanitizeGrid(g) {
@@ -77,49 +77,9 @@ function sanitizeStates(states, ids) {
   return out;
 }
 const maxNum = (ids, p) => ids.reduce((m, id) => { const n = parseInt(String(id).slice(p.length), 10); return String(id).startsWith(p) && n > m ? n : m; }, 0);
-// Manter: as versões de 16/10 (até 16h39) salvavam o companheiro nos formatos v1 e v2, e backups ou exportações daquela
-// época só abrem com estas conversões. A pessoa pediu pra não apagar.
-// Formato antigo (v1): todos os quadros com o mesmo tamanho, índices de grade ou posições livres por estado.
-// A migração cria um recorte por quadro e alinha "pelo recorte", que reproduz exatamente a aparência antiga.
-function migrateComp1(c) {
-  const o = { v: 2, image: null, scale: 3, alpha: 8, key: defaultKey(), grid: defaultGrid(), frames: [], states: emptyStates(), nextId: 1, legacy: null };
-  const g = { fw: toInt(c.fw, 32, 1, 4096), fh: toInt(c.fh, 32, 1, 4096), mx: toInt(c.mx, 0, 0, 4096), my: toInt(c.my, 0, 0, 4096), sx: toInt(c.sx, 0, 0, 4096), sy: toInt(c.sy, 0, 0, 4096) };
-  o.legacy = clone(c); o.grid = g; o.scale = toInt(c.scale, 3, 1, 8);
-  o.image = c.image && c.image.w ? { name: c.image.name, size: c.image.size, w: c.image.w, h: c.image.h } : null;
-  const k = c.key || {};
-  o.key = { on: !!k.on, mode: 'global', colors: Array.isArray(k.color) ? [k.color.slice(0, 3)] : [], tol: toInt(k.tol, 24, 0, 255) };
-  const fps = toInt(c.fps, 8, 1, 24), mode = c.mode === 'free' ? 'free' : 'grid', lists = (c.frames || {})[mode] || {}, byKey = {};
-  for (const s of SKEYS) {
-    const st = emptyState(fps); st.align = 'recorte';
-    for (const f of Array.isArray(lists[s]) ? lists[s] : []) {
-      let r = null;
-      if (mode === 'grid' && typeof f === 'number' && o.image) r = gridRect(g, f, o.image.w, o.image.h);
-      else if (mode === 'free' && f && typeof f.x === 'number') r = { x: f.x, y: f.y, w: g.fw, h: g.fh };
-      if (!r) continue;
-      const key = r.x + ',' + r.y + ',' + r.w + ',' + r.h;
-      if (!byKey[key]) { const id = 'f' + o.nextId++; byKey[key] = id; o.frames.push({ id, x: r.x, y: r.y, w: r.w, h: r.h, o: { x: r.x, y: r.y, w: r.w, h: r.h } }); }
-      st.seq.push({ f: byKey[key], dx: 0, dy: 0 });
-    }
-    o.states[s] = st;
-  }
-  return o;
-}
-// v2 → v3: a imagem única vira a “imagem 1”, com o mesmo fundo, a mesma grade e 100% de tamanho. Nada muda na aparência.
-function migrateComp2(c) {
-  const frames = sanitizeFrames(c.frames), ids = new Set(frames.map(f => f.id)), o = defaultComp();
-  const im = c.image && typeof c.image === 'object' ? c.image : null;
-  if (im || frames.length) {
-    o.images = [Object.assign(newImage('i1', im ? im.name : 'imagem', im ? toInt(im.size, 0, 0, 1e10) : 0, im ? toInt(im.w, 0, 0, 1e5) : 0, im ? toInt(im.h, 0, 0, 1e5) : 0), { key: sanitizeKey(c.key), grid: sanitizeGrid(c.grid) })];
-    o.nextImg = 2;
-  }
-  o.frames = frames.map(f => Object.assign(f, { img: 'i1' }));
-  o.states = sanitizeStates(c.states, ids);
-  o.scale = c.scale; o.alpha = c.alpha; o.nextId = c.nextId; o.legacy = c.legacy || null;
-  return o;
-}
 function sanitizeComp(c) {
   if (!c || typeof c !== 'object') return defaultComp();
-  if (c.v !== 3) return sanitizeComp(migrateComp2(c.v === 2 ? c : migrateComp1(c)));
+  if (c.v !== 3) return defaultComp();   // os formatos v1 e v2 (versões de 16/10) não são mais lidos
   const o = defaultComp(), seen = new Set();
   o.images = (Array.isArray(c.images) ? c.images : []).filter(im => im && typeof im.id === 'string' && /^i\d+$/.test(im.id) && !seen.has(im.id) && seen.add(im.id)).slice(0, MAX_IMAGES)
     .map(im => ({ id: im.id, name: String(im.name || 'imagem').slice(0, 120), size: toInt(im.size, 0, 0, 1e10), w: toInt(im.w, 0, 0, 1e5), h: toInt(im.h, 0, 0, 1e5), k: sanitizeK(im.k), key: sanitizeKey(im.key), grid: sanitizeGrid(im.grid) }));
@@ -130,16 +90,11 @@ function sanitizeComp(c) {
   o.scale = toInt(c.scale, 3, 1, 8); o.alpha = toInt(c.alpha, 8, 0, 254);
   o.nextId = Math.max(toInt(c.nextId, 1, 1, 1e9), maxNum([...ids], 'f') + 1);
   o.nextImg = Math.max(toInt(c.nextImg, 1, 1, 1e9), maxNum([...imgs], 'i') + 1);
-  o.legacy = c.legacy && typeof c.legacy === 'object' ? c.legacy : null;
   return o;
 }
-let CC = (() => {
-  let raw = null; try { raw = JSON.parse(localStorage.getItem(CKEY)); } catch (e) {}
-  const c = sanitizeComp(raw);
-  // Formato antigo: guarda uma cópia do jeito que estava antes de converter.
-  if (raw && raw.v !== 3) { try { localStorage.setItem(CKEY + '.v' + (raw.v === 2 ? 2 : 1) + '-backup', JSON.stringify(raw)); localStorage.setItem(CKEY, JSON.stringify(c)); } catch (e) {} }
-  return c;
-})();
+let CC = (() => { let raw = null; try { raw = JSON.parse(localStorage.getItem(CKEY)); } catch (e) {} return sanitizeComp(raw); })();
+// Cópias de segurança das conversões de 16/10 (formatos v1 e v2 do companheiro): não são mais usadas.
+try { localStorage.removeItem(CKEY + '.v1-backup'); localStorage.removeItem(CKEY + '.v2-backup'); } catch (e) {}
 let CC_VER = 0;
 function saveComp() { CC_VER++; try { localStorage.setItem(CKEY, JSON.stringify(CC)); } catch (e) { toast('Não consegui salvar as configurações do companheiro.'); } }
 
@@ -168,7 +123,7 @@ function bgMatcher(colors, t, between) {
     return r >= lo[0] && r <= hi[0] && g >= lo[1] && g <= hi[1] && b >= lo[2] && b <= hi[2] && Math.max(r, g, b) - Math.min(r, g, b) <= chroma;
   };
 }
-const keyColors = key => key && Array.isArray(key.colors) && key.colors.length ? key.colors : key && Array.isArray(key.color) ? [key.color] : [];
+const keyColors = key => key && Array.isArray(key.colors) ? key.colors : [];
 // Preenche a partir das bordas tudo que for fundo (ou transparente). Protege pixels do personagem com a mesma cor.
 function floodEdges(p, W, H, colors, t) {
   const vis = new Uint8Array(W * H), q = new Int32Array(W * H); let qh = 0, qt = 0; const m = bgMatcher(colors, t, true);
@@ -273,22 +228,17 @@ class SheetSet {
   sig(cfg) { return this.v + '|' + cfg.images.map(im => { const s = this.get(im.id); return im.id + ':' + im.k + ':' + (s && s.img ? s.w + 'x' + s.h + s.sig : '-'); }).join(','); }
 }
 const SAVED = new SheetSet();
-// Lê do navegador as imagens do companheiro salvo. A imagem do formato antigo (uma só) vira a imagem 1.
+// Lê do navegador as imagens do companheiro salvo.
 async function loadSavedImages() {
   SAVED.clear();
   for (const im of CC.images) {
     try {
-      let blob = await IDB.get(imgDbKey(im.id)), legacy = false;
-      if (!blob && im.id === 'i1') { blob = await IDB.get('companion.image'); legacy = !!blob; }
-      if (!blob) continue;
-      const sh = new SheetImage(); await sh.load(blob);
-      if (legacy) {
-        if (im.w && (sh.w !== im.w || sh.h !== im.h)) continue;
-        try { await IDB.set(imgDbKey(im.id), blob); } catch (e) {}
-      }
-      SAVED.put(im.id, sh);
+      const blob = await IDB.get(imgDbKey(im.id)); if (!blob) continue;
+      const sh = new SheetImage(); await sh.load(blob); SAVED.put(im.id, sh);
     } catch (e) { console.warn('Imagem do companheiro indisponível:', im.id, e); }
   }
+  // Imagem do formato antigo (uma só, versões de 16/10): já foi copiada pra imagem 1 e não é mais usada.
+  try { await IDB.del('companion.image'); } catch (e) {}
 }
 
 /* ===================== Alinhamento e área de exibição comum ===================== */

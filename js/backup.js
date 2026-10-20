@@ -59,15 +59,16 @@ async function importBackup(file) {
   if (!data) { toast('Esse arquivo não é um backup do app.'); return; }
   if (!confirm('Importar este backup substitui os registros e o companheiro deste navegador. Continuar?')) return;
   DATA = data; if (DATA.days[logicalDate()]) touchToday(); saveData();
-  let r = null;
-  if (obj.companion && obj.companion.config) r = await applyCompanion(obj.companion.config, obj.companion.images || obj.companion.image);
+  let r = null; const cfg = obj.companion && obj.companion.config;
+  if (cfg && cfg.v !== 3) { applyTheme(); renderAll(); toast('Registros importados. O companheiro desse backup é de uma versão antiga (16/10) e não pode mais ser importado.'); return; }
+  if (cfg) r = await applyCompanion(cfg, obj.companion.images);
   applyTheme(); renderAll();
   toast(r && r.missing ? `Backup importado, mas ${r.missing === 1 ? '1 imagem do companheiro não veio' : r.missing + ' imagens do companheiro não vieram'} no arquivo. Escolha o arquivo de novo em Configurações › Companheiro.` : 'Backup importado.');
 }
-// Troca o companheiro salvo pelo de um arquivo (exportação ou backup). Aceita o formato antigo (uma imagem) e o novo (várias).
+// Troca o companheiro salvo pelo de um arquivo (exportação ou backup).
 async function applyCompanion(config, images) {
   const c = sanitizeComp(config);
-  const list = Array.isArray(images) ? images : images && images.dataURL ? [Object.assign({}, images, { id: images.id || (c.images[0] && c.images[0].id) })] : [];
+  const list = Array.isArray(images) ? images : [];
   const set = new SheetSet(); let bad = 0, fail = false;
   for (const it of list) {
     if (!it || typeof it.dataURL !== 'string' || !c.images.some(im => im.id === it.id) || set.has(it.id)) continue;
@@ -77,8 +78,7 @@ async function applyCompanion(config, images) {
   for (const im of c.images) {
     if (set.has(im.id)) continue;
     const s = SAVED.get(im.id), old = CC.images.find(x => x.id === im.id);
-    if (s && s.img && old && old.name === im.name && s.w === im.w && s.h === im.h) { set.put(im.id, s); continue; }
-    if (im.id === 'i1') { try { const b = await IDB.get('companion.image'); if (b) { const sh = new SheetImage(); await sh.load(b); if (sh.w === im.w && sh.h === im.h) set.put(im.id, sh); } } catch (e) {} }
+    if (s && s.img && old && old.name === im.name && s.w === im.w && s.h === im.h) set.put(im.id, s);
   }
   for (const im of c.images) { const s = set.get(im.id); if (s && s.blob) { try { await IDB.set(imgDbKey(im.id), s.blob); } catch (e) { fail = true; } } }
   for (const im of CC.images) if (!set.has(im.id)) { try { await IDB.del(imgDbKey(im.id)); } catch (e) {} }
