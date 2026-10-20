@@ -39,7 +39,11 @@ No Chrome, clique no ícone de instalar na barra de endereço, ou em **⋮ › T
 
 ## Atualizar o app no GitHub Pages
 
-No repositório, clique em **Add file › Upload files**, arraste o `index.html`, o `sw.js` e as pastas `css`, `js` e `fonts` novos e clique em **Commit changes**. Em 1 ou 2 minutos o site atualiza. Seus registros e o companheiro salvo continuam no navegador: a nova versão converte o companheiro antigo sozinha, sem mudar a aparência, e guarda uma cópia do formato antigo. A imagem que você já tinha vira a **imagem 1**, em 100%.
+1. Aumente o número em `js/versao.js` (ex.: de `'12'` pra `'13'`).
+2. Rode os testes: `python tests/rodar.py`.
+3. Envie: `git push` (a pasta já está ligada ao repositório) ou, pelo site, **Add file › Upload files** com o `index.html`, o `sw.js` e as pastas `css`, `js` e `fonts`.
+
+Em 1 ou 2 minutos o site atualiza. Quem estiver com o app aberto vê a faixa **Versão nova do app pronta** com o botão **Recarregar**. A versão em uso aparece em **Configurações › Dados**. Seus registros e o companheiro continuam no navegador.
 
 ## Painel do Hoje
 

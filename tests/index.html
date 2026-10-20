@@ -136,20 +136,48 @@ const TESTES = [
       igual(w.document.documentElement.scrollWidth <= w.innerWidth, true, largura + ' px: página rola pros lados');
     }
   }],
+  ['Versão: sw.js e index.html usam o js/versao.js', async () => {
+    const [html, sw, ver] = await Promise.all(['../index.html', '../sw.js', '../js/versao.js'].map(u => fetch(u, { cache: 'no-store' }).then(r => r.text())));
+    certo(/const VERSAO = '[A-Za-z0-9]+';/.test(ver), 'js/versao.js sem a constante VERSAO');
+    certo(html.indexOf('js/versao.js') > 0 && html.indexOf('js/versao.js') < html.indexOf('js/base.js'), 'index.html precisa carregar js/versao.js antes de js/base.js');
+    certo(sw.includes("importScripts('js/versao.js')") && sw.includes("'habitos-v' + VERSAO") && sw.includes("'versao'"), 'sw.js precisa importar a versão, usar no CACHE e guardar o arquivo offline');
+  }],
   ['Mapa do Histórico abre mostrando hoje no celular', async () => {
     const { w } = await abrir({ largura: 375, hash: 'historico' });
     const box = w.document.querySelector('#hHeat').parentElement;
     certo(box.scrollWidth > box.clientWidth, 'o mapa deveria ser mais largo que a tela');
     certo(box.scrollLeft >= box.scrollWidth - box.clientWidth - 2, 'o mapa não rolou até hoje');
   }],
+  // Por último: deixa o service worker numa versão "99" de mentira.
+  ['Faixa "Versão nova" aparece quando o app é atualizado', async () => {
+    // Abre na versão atual; só depois o servidor passa a entregar a "99", como numa publicação com o app aberto.
+    const { w, E } = await abrir();
+    for (let i = 0; i < 100 && !w.navigator.serviceWorker.controller; i++) await espera(100);
+    certo(w.navigator.serviceWorker.controller, 'o service worker não assumiu a página');
+    for (let i = 0; i < 50 && !E('SWREG'); i++) await espera(100);
+    const liga = await fetch('/__versao', { method: 'POST', body: '99' }).catch(() => null);
+    if (!liga || !liga.ok) return 'pulado (só roda pelo tests/rodar.py)';
+    try {
+      certo(E('VERSAO') !== '99', 'a página já abriu na versão nova');
+      await E('SWREG').update();
+      const faixa = w.document.querySelector('#banner'), botao = w.document.querySelector('#bannerAct');
+      for (let i = 0; i < 100 && faixa.hidden; i++) await espera(100);
+      if (faixa.hidden) {
+        const reg = E('SWREG'), pergunta = sw => new Promise(res => { if (!sw) return res('sem sw'); const ch = new w.MessageChannel(); ch.port1.onmessage = e => res(e.data); sw.postMessage('versao', [ch.port2]); setTimeout(() => res('sem resposta'), 2000); });
+        throw new Error('a faixa de versão nova não apareceu · ' + JSON.stringify({ controle: await pergunta(w.navigator.serviceWorker.controller), ativo: await pergunta(reg.active), esperando: !!reg.waiting, instalando: !!reg.installing, VERSAO: E('VERSAO') }));
+      }
+      certo(w.document.querySelector('#bannerText').textContent.includes('Versão nova'), 'a faixa de versão nova não apareceu');
+      certo(!botao.hidden && botao.textContent === 'Recarregar', 'faltou o botão Recarregar');
+    } finally { await fetch('/__versao', { method: 'POST', body: '' }); }
+  }],
 ];
 
 (async () => {
   const linhas = [], out = document.getElementById('resultado'); let falhas = 0;
   for (const [nome, fn] of TESTES) {
-    try { await fn(); linhas.push('PASSOU  ' + nome); }
+    try { const r = await fn(); linhas.push((typeof r === 'string' ? 'PULOU   ' + nome + ' — ' + r : 'PASSOU  ' + nome)); }
     catch (e) { falhas++; linhas.push('FALHOU  ' + nome + '\n        ' + (e && e.message || e)); }
-    out.innerHTML = linhas.map(l => `<div class="${l.startsWith('PASSOU') ? 'ok' : 'erro'}">${l.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</div>`).join('') + '<div>Rodando…</div>';
+    out.innerHTML = linhas.map(l => `<div class="${l.startsWith('FALHOU') ? 'erro' : 'ok'}">${l.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</div>`).join('') + '<div>Rodando…</div>';
   }
   const resumo = falhas ? `${falhas} de ${TESTES.length} testes falharam.` : `Todos os ${TESTES.length} testes passaram.`;
   out.innerHTML = out.innerHTML.replace('<div>Rodando…</div>', `<div><b>${resumo}</b></div>`);

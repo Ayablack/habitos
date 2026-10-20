@@ -37,6 +37,7 @@ a{color:inherit}
 .nag{display:flex;align-items:center;flex-wrap:wrap;gap:8px 14px;padding:10px 14px;border-radius:14px;border:1px dashed var(--xp);background:var(--sf);font-size:13px}
 .nag span{flex:1 1 240px}
 .banner button{border:none;background:transparent;color:inherit;font-size:20px;cursor:pointer;min-width:36px;min-height:36px}
+.banner #bannerAct{font-size:14px;font-weight:600;background:var(--bg);color:var(--tx);border-radius:8px;padding:0 14px}
 /* linha do tempo */
 .tl{position:relative;height:92px;margin-top:4px}
 .tl .band{position:absolute;top:18px;bottom:22px;border-radius:10px}

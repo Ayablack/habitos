@@ -28,7 +28,8 @@ function confetti() {
   setTimeout(() => box.remove(), 2600);
 }
 let SWREG = null;
-const Banner = { show(title, body) { $('#bannerText').textContent = title + (body ? ' — ' + body : ''); $('#banner').hidden = false; } };
+// acao (opcional): { label, fn } vira um botão na faixa, como o Recarregar da versão nova.
+const Banner = { show(title, body, acao) { $('#bannerText').textContent = title + (body ? ' — ' + body : ''); const b = $('#bannerAct'); b.hidden = !acao; if (acao) { b.textContent = acao.label; b.onclick = acao.fn; } $('#banner').hidden = false; } };
 async function notify(title, body, tag = title) {
   Sound.alert();
   let sys = false;

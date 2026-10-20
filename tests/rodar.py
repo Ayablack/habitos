@@ -13,6 +13,7 @@ NAVEGADORES = [
     '/usr/bin/google-chrome', '/usr/bin/chromium',
 ]
 resultado, pronto = [], threading.Event()
+versao_teste = [None]   # o teste de versão nova troca a versão que o servidor entrega
 
 
 class Servidor(http.server.SimpleHTTPRequestHandler):
@@ -23,7 +24,18 @@ class Servidor(http.server.SimpleHTTPRequestHandler):
         self.send_header('Cache-Control', 'no-store')
         super().end_headers()
 
+    def do_GET(self):
+        if versao_teste[0] and self.path.split('?')[0] == '/js/versao.js':
+            corpo = f"const VERSAO = '{versao_teste[0]}';".encode()
+            self.send_response(200); self.send_header('Content-Type', 'text/javascript'); self.send_header('Content-Length', str(len(corpo)))
+            self.end_headers(); self.wfile.write(corpo); return
+        super().do_GET()
+
     def do_POST(self):
+        if self.path == '/__versao':
+            v = self.rfile.read(int(self.headers.get('Content-Length', 0))).decode().strip()
+            versao_teste[0] = v if v.isalnum() else None
+            self.send_response(204); self.end_headers(); return
         if self.path != '/__resultado':
             self.send_error(404); return
         resultado.append(self.rfile.read(int(self.headers.get('Content-Length', 0))).decode('utf-8'))
@@ -31,6 +43,13 @@ class Servidor(http.server.SimpleHTTPRequestHandler):
 
     def log_message(self, *a):
         pass
+
+
+class Http(http.server.ThreadingHTTPServer):
+    def handle_error(self, request, client_address):
+        # O navegador fecha conexões no meio quando um teste troca de página: isso não é erro do app.
+        if isinstance(sys.exc_info()[1], (ConnectionAbortedError, ConnectionResetError, BrokenPipeError)): return
+        super().handle_error(request, client_address)
 
 
 def porta_livre():
@@ -44,7 +63,7 @@ def main():
     if not nav:
         print('Não achei o Edge nem o Chrome. Abra tests/index.html por um servidor http e veja o resultado na página.'); return 2
     porta = porta_livre()
-    srv = http.server.ThreadingHTTPServer(('127.0.0.1', porta), Servidor)
+    srv = Http(('127.0.0.1', porta), Servidor)
     threading.Thread(target=srv.serve_forever, daemon=True).start()
     perfil = tempfile.mkdtemp(prefix='habitos-testes-')
     proc = subprocess.Popen([nav, '--headless=new', '--disable-gpu', '--no-first-run', '--user-data-dir=' + perfil,

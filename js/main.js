@@ -26,6 +26,7 @@ async function init() {
   $('#themeBtn').addEventListener('click', () => { const cur = document.documentElement.dataset.theme; DATA.theme = cur === 'light' ? 'dark' : 'light'; saveData(); applyTheme(); Settings.paint(); if (VIEW === 'config') Ed.render(); });
   $('#fsBtn').addEventListener('click', () => { if (document.fullscreenElement) document.exitFullscreen(); else if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(() => {}); });
   $('#bannerClose').addEventListener('click', () => { $('#banner').hidden = true; });
+  $('#appVer').textContent = 'Versão do app: ' + VERSAO;
   $('#aguaPlus').addEventListener('click', () => changeAgua(1));
   $('#aguaMinus').addEventListener('click', () => changeAgua(-1));
   $('#dash').addEventListener('click', e => {
@@ -67,7 +68,19 @@ async function init() {
   const tickAll = () => { Remind.tick(); redraw(); };
   setInterval(tickAll, 30000); setTimeout(() => Remind.tick(), 1500);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) tickAll(); });
-  if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)) navigator.serviceWorker.register('sw.js').then(r => { SWREG = r; }).catch(() => {});
+  if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)) {
+    // Versão nova: quando um service worker novo assume esta página, pergunta a versão dele; se for outra, oferece recarregar.
+    // Sem service worker antes (primeira visita), não avisa nada. Ao voltar pra aba, procura atualização no máximo a cada 30 min.
+    const tinha = !!navigator.serviceWorker.controller; let procurou = Date.now();
+    const versaoDe = sw => new Promise(res => { if (!sw) return res(null); const ch = new MessageChannel(); ch.port1.onmessage = e => res(e.data); sw.postMessage('versao', [ch.port2]); setTimeout(() => res(null), 3000); });
+    navigator.serviceWorker.addEventListener('controllerchange', async () => {
+      if (!tinha) return;
+      const v = await versaoDe(navigator.serviceWorker.controller);
+      if (v && v !== VERSAO) Banner.show('Versão nova do app pronta', null, { label: 'Recarregar', fn: () => location.reload() });
+    });
+    document.addEventListener('visibilitychange', () => { if (!document.hidden && SWREG && Date.now() - procurou > 30 * 60e3) { procurou = Date.now(); SWREG.update().catch(() => {}); } });
+    navigator.serviceWorker.register('sw.js').then(r => { SWREG = r; }).catch(() => {});
+  }
   try {
     let ok = navigator.storage && navigator.storage.persisted ? await navigator.storage.persisted() : false;
     if (!ok && navigator.storage && navigator.storage.persist) ok = await navigator.storage.persist();

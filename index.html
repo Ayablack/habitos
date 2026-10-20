@@ -22,7 +22,7 @@
     <button id="fsBtn" class="icon" aria-label="Tela cheia"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
   </div>
 </header>
-<div id="banner" class="banner" role="alert" hidden><span id="bannerText"></span><button type="button" id="bannerClose" aria-label="Fechar aviso">×</button></div>
+<div id="banner" class="banner" role="alert" hidden><span id="bannerText"></span><button type="button" id="bannerAct" hidden></button><button type="button" id="bannerClose" aria-label="Fechar aviso">×</button></div>
 
 <!-- ===================== HOJE ===================== -->
 <main id="view-hoje" class="view stack" style="gap:18px">
@@ -531,6 +531,7 @@
       <span class="sm mu">Um arquivo com tudo: registros, tarefas, configurações, painel e companheiro. Use pra mudar de aparelho ou guardar uma cópia.</span>
       <label class="check"><input type="checkbox" id="bkImg" checked> <span id="bkImgL">Incluir as imagens do companheiro no backup</span></label>
       <span class="xs mu" id="bkSize"></span>
+      <span class="xs mu" id="appVer"></span>
       <div class="btnrow"><button type="button" class="btn sm" id="bkShare">Compartilhar backup</button><button type="button" class="btn sm" id="bkExport">Exportar backup</button><label class="btn sm" style="cursor:pointer">Importar backup<input type="file" id="bkImport" accept="application/json,.json" hidden></label></div>
     </section>
   </div>
@@ -547,6 +548,7 @@
 </div>
 <div id="toast" class="toast" role="status" hidden></div>
 
+<script src="js/versao.js"></script>
 <script src="js/qrcode.js"></script>
 <script src="js/base.js"></script>
 <script src="js/companheiro.js"></script>

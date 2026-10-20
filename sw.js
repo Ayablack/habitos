@@ -1,6 +1,7 @@
 // Service worker do Hábitos: guarda o app pra funcionar offline. Os seus dados ficam no navegador, não aqui.
-const CACHE = 'habitos-v11';
-const JS = ['qrcode', 'base', 'companheiro', 'avisos', 'hoje', 'historico', 'config', 'sync', 'editor', 'backup', 'listas', 'painel', 'main'];
+importScripts('js/versao.js');
+const CACHE = 'habitos-v' + VERSAO;
+const JS = ['versao', 'qrcode', 'base', 'companheiro', 'avisos', 'hoje', 'historico', 'config', 'sync', 'editor', 'backup', 'listas', 'painel', 'main'];
 const ASSETS = ['./', './index.html', './css/app.css', ...JS.map(n => './js/' + n + '.js'), './fonts/sora.woff2', './fonts/silkscreen.woff2', './fonts/jetbrains-mono.woff2', './manifest.webmanifest', './icon.svg', './icon-192.png', './icon-512.png', './icon-maskable.png'];
 // Com internet ruim, espera a rede no máximo isso antes de abrir o que está guardado.
 const WAIT_MS = 2500;
@@ -23,6 +24,8 @@ self.addEventListener('fetch', e => {
     e.respondWith(fresh(e, req, req.mode === 'navigate' ? './index.html' : req));
   }
 });
+// O app pergunta a versão deste service worker pra saber se tem versão nova pra oferecer.
+self.addEventListener('message', e => { if (e.data === 'versao' && e.ports[0]) e.ports[0].postMessage(VERSAO); });
 self.addEventListener('notificationclick', e => {
   e.notification.close();
   e.waitUntil(self.clients.matchAll({ type: 'window' }).then(cs => cs.length ? cs[0].focus() : self.clients.openWindow('./#hoje')));
