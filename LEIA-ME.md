@@ -117,7 +117,7 @@ Nada vai pro companheiro da tela Hoje até você salvar. **Desfazer** (ou Ctrl+Z
 - Ficam **só no navegador** onde você usa o app. Cada endereço tem seus próprios dados: o app aberto pelo arquivo no PC e o app no GitHub Pages **não enxergam os dados um do outro**.
 - **Pra mudar de endereço ou de aparelho**, use **Configurações › Dados › Exportar backup** e depois **Importar backup** no outro lugar. Deixe marcado **Incluir as imagens do companheiro**: sem elas, o companheiro chega sem as imagens. O app avisa quando o arquivo passa de 5 MB.
 - **Pra passar os dias recentes pro celular**, use **Configurações › Dados › Mostrar QR** no PC e aponte a câmera do celular. O QR leva também as tarefas, as listas, os contadores, as notas do dia e o arranjo do painel. Com o app no GitHub Pages, a própria câmera do celular abre o link e junta os dados. Os dados se juntam sem apagar nada. Desmarcar uma tarefa num aparelho não desmarca no outro.
-- Limpar os dados do site no navegador apaga tudo. Faça backups de vez em quando.
+- Limpar os dados do site no navegador apaga tudo. Faça backups de vez em quando. Se o último backup (exportado ou compartilhado) passar de 14 dias, ou se você ainda não fez nenhum e já tem uma semana de registros, a tela **Hoje** mostra um aviso com **Fazer backup**. **Agora não** esconde o aviso por 7 dias. Esse controle vale só pro navegador onde você está.
 
 ## Lembretes
 

@@ -21,7 +21,7 @@ function route() {
   Dash.apply(); renderAll(); Layout.apply();
 }
 async function init() {
-  applyTheme(); Comp.init(); Ed.init(); Tasks.init(); Settings.init(); Layout.init(); Dash.init(); CfgTabs.init(); Lists.init(); Counters.init(); Nota.init(); Ed.reset();
+  applyTheme(); Comp.init(); Ed.init(); Tasks.init(); Settings.init(); Layout.init(); Dash.init(); CfgTabs.init(); Lists.init(); Counters.init(); Nota.init(); BackupNag.init(); Ed.reset();
   $('#themeBtn').addEventListener('click', () => { const cur = document.documentElement.dataset.theme; DATA.theme = cur === 'light' ? 'dark' : 'light'; saveData(); applyTheme(); Settings.paint(); if (VIEW === 'config') Ed.render(); });
   $('#fsBtn').addEventListener('click', () => { if (document.fullscreenElement) document.exitFullscreen(); else if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(() => {}); });
   $('#bannerClose').addEventListener('click', () => { $('#banner').hidden = true; });

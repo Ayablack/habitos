@@ -20,15 +20,38 @@ async function backupText(withImages) {
   const out = { type: 'habitos-backup', v: 3, exportedAt: new Date().toISOString(), data: DATA, companion: { config: CC, images: withImages ? await compImagesOut(CC, SAVED) : [] } };
   return JSON.stringify(out);
 }
-async function exportBackup() { download('backup-habitos-' + logicalDate() + '.json', await backupText($('#bkImg').checked)); }
+async function exportBackup() { download('backup-habitos-' + logicalDate() + '.json', await backupText($('#bkImg').checked)); BackupNag.done(); }
 async function shareBackup() {
   const txt = await backupText($('#bkImg').checked), name = 'backup-habitos-' + logicalDate() + '.json';
   try {
     const file = new File([txt], name, { type: 'application/json' });
-    if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: 'Backup do Hábitos' }); return; }
+    if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: 'Backup do Hábitos' }); BackupNag.done(); return; }
   } catch (e) { if (e && e.name === 'AbortError') return; }
-  download(name, txt); toast('Este navegador não compartilha arquivos: o backup foi baixado.');
+  download(name, txt); BackupNag.done(); toast('Este navegador não compartilha arquivos: o backup foi baixado.');
 }
+/* ===================== Lembrete de backup ===================== */
+// Os dados só existem neste navegador: se o último backup ficou velho, a tela Hoje mostra um aviso discreto.
+// Vale só pra este aparelho (não vai no QR nem no backup).
+const BackupNag = {
+  KEY: 'habitos.backup', EVERY: 14, SNOOZE: 7, MIN_DAYS: 7,
+  get() { try { const o = JSON.parse(localStorage.getItem(this.KEY)); return o && typeof o === 'object' ? o : {}; } catch (e) { return {}; } },
+  set(p) { try { localStorage.setItem(this.KEY, JSON.stringify(Object.assign(this.get(), p))); } catch (e) {} },
+  init() {
+    $('#bkNagGo').addEventListener('click', () => { CfgTabs.go('dados'); location.hash = '#config'; });
+    $('#bkNagLater').addEventListener('click', () => { this.set({ snooze: Date.now() + this.SNOOZE * 864e5 }); this.paint(); toast('Combinado: lembro de novo em ' + this.SNOOZE + ' dias.'); });
+  },
+  done() { this.set({ last: Date.now(), snooze: 0 }); this.paint(); },
+  // Dias com algum registro (tarefa, água, contador ou nota).
+  daysWithRecords() { return Object.values(DATA.days).filter(d => Object.keys(d.done || {}).length || d.agua || (d.c && Object.keys(d.c).length) || d.note).length; },
+  text() {
+    const o = this.get(), t = Date.now();
+    if (o.snooze && t < o.snooze) return '';
+    if (!o.last) return this.daysWithRecords() >= this.MIN_DAYS ? 'Você ainda não fez nenhum backup. Seus registros ficam só neste navegador.' : '';
+    const d = Math.floor((t - o.last) / 864e5);
+    return d >= this.EVERY ? `Seu último backup foi há ${d} dias. Seus registros ficam só neste navegador.` : '';
+  },
+  paint() { const txt = this.text(); $('#bkNagText').textContent = txt; $('#bkNag').hidden = !txt || Dash.editing; }
+};
 async function importBackup(file) {
   if (!file) return;
   let obj; try { obj = JSON.parse(await readText(file)); } catch (e) { toast('Arquivo inválido.'); return; }

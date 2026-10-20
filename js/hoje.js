@@ -41,6 +41,7 @@ function renderHoje() {
   const S = Game.summary(), lv = Game.level(S.xp), xpHoje = Game.dayXP(DATA.days[tk], tk);
   $('#dateLabel').textContent = dateLabel(tk);
   $('#clockLabel').textContent = hhmm(n);
+  BackupNag.paint();
   $('#streakTop').textContent = S.streak + (S.streak === 1 ? ' dia' : ' dias');
 
   const doses = occ.filter(o => o.time).map(o => ({ o, st: doseStatus(o, day, nm) }));
