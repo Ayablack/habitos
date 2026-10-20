@@ -77,6 +77,8 @@ function sanitizeStates(states, ids) {
   return out;
 }
 const maxNum = (ids, p) => ids.reduce((m, id) => { const n = parseInt(String(id).slice(p.length), 10); return String(id).startsWith(p) && n > m ? n : m; }, 0);
+// Manter: as versões de 16/10 (até 16h39) salvavam o companheiro nos formatos v1 e v2, e backups ou exportações daquela
+// época só abrem com estas conversões. A pessoa pediu pra não apagar.
 // Formato antigo (v1): todos os quadros com o mesmo tamanho, índices de grade ou posições livres por estado.
 // A migração cria um recorte por quadro e alinha "pelo recorte", que reproduz exatamente a aparência antiga.
 function migrateComp1(c) {
