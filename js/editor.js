@@ -121,7 +121,8 @@ function bgLine(info, key) {
 }
 
 /* ===================== Editor de companheiros ===================== */
-const Ed = {
+// var (e não const): substitui o Ed provisório que o main.js cria enquanto este arquivo não foi carregado.
+var Ed = {
   // adv: modo avançado (as 5 etapas). O resumo (estados e atalhos) é o padrão; a escolha fica neste aparelho.
   adv: (() => { try { return localStorage.getItem('habitos.editor') === 'avancado'; } catch (e) { return false; } })(),
   d: null, ver: 0, step: 1, state: 'idle', img: null, sel: [], seqSel: [], pick: [], hist: [], newBlobs: new Set(), quick: false, fresh: false, view: 'proc', picking: false,

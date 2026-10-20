@@ -171,7 +171,7 @@ const CfgTabs = {
     $('#goEditDash').addEventListener('click', () => { location.hash = '#hoje'; setTimeout(() => Dash.edit(true), 50); });
     this.paint();
   },
-  go(t) { if (!this.names.includes(t)) return; this.cur = t; try { localStorage.setItem('habitos.cfgtab', t); } catch (e) {} this.paint(); if (t === 'comp') Ed.render(); window.scrollTo({ top: 0 }); },
+  go(t) { if (!this.names.includes(t)) return; this.cur = t; try { localStorage.setItem('habitos.cfgtab', t); } catch (e) {} this.paint(); renderEditor(); window.scrollTo({ top: 0 }); },
   paint() {
     $$('#cfgTabs [data-tab2]').forEach(b => { const on = b.dataset.tab2 === this.cur; b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1; });
     $$('.cfgtab').forEach(el => { el.hidden = el.id !== 'tab-' + this.cur; });

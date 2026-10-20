@@ -159,6 +159,36 @@ const TESTES = [
     botao.dispatchEvent(new w.PointerEvent('pointerup', { bubbles: true })); await espera(450);
     certo(!botao.isConnected, 'não redesenhou depois de soltar');
   }],
+  ['Editor do companheiro só carrega quando a aba abre', async () => {
+    const { w, E } = await abrir({ hash: 'config' });
+    const carregado = () => [...w.document.scripts].some(sc => /js\/editor\.js/.test(sc.src));
+    certo(!carregado() && E('Ed.provisorio') === true, 'o editor carregou antes da hora');
+    w.document.querySelector('[data-tab2="comp"]').click();
+    for (let i = 0; i < 60 && E('Ed.provisorio'); i++) await espera(50);
+    await espera(200);
+    certo(carregado() && !E('Ed.provisorio'), 'o editor não carregou ao abrir a aba Companheiro');
+    igual(w.document.querySelectorAll('#ceStatus .stchip').length, 4, 'status dos 4 estados do companheiro');
+    certo(!w.document.querySelector('#ceEmpty').hidden, 'aviso de companheiro vazio');
+    w.document.querySelector('[data-tab2="dados"]').click(); w.document.querySelector('[data-tab2="comp"]').click(); await espera(100);
+    igual([...w.document.scripts].filter(sc => /js\/editor\.js/.test(sc.src)).length, 1, 'carregou o editor mais de uma vez');
+  }],
+  ['Editor: importar folha de sprites, detectar e salvar', async () => {
+    const { w, E } = await abrir({ hash: 'config' });
+    w.document.querySelector('[data-tab2="comp"]').click();
+    for (let i = 0; i < 60 && E('Ed.provisorio'); i++) await espera(50);
+    // Folha de teste: 3 bonecos de 8×12 px num fundo verde sólido (o app deve tirar o fundo sozinho).
+    const cv = document.createElement('canvas'); cv.width = 48; cv.height = 16; const g = cv.getContext('2d');
+    g.fillStyle = '#00ff00'; g.fillRect(0, 0, 48, 16); g.fillStyle = '#c03030'; [2, 18, 34].forEach(x => g.fillRect(x, 2, 8, 12));
+    const blob = await new Promise(r => cv.toBlob(r, 'image/png'));
+    E('Ed').quick = true;
+    await E('Ed').addImageFile(new w.File([blob], 'folha.png', { type: 'image/png' }));
+    for (let i = 0; i < 60 && E('Ed.d.frames.length') < 3; i++) await espera(50);
+    igual(E('Ed.d.frames.length'), 3, 'recortes detectados');
+    certo(E('Ed.im().key.on'), 'o fundo verde deveria ser removido');
+    certo(await E('Ed').save(), 'não salvou');
+    igual(E('CC.images.length'), 1, 'imagens no companheiro salvo');
+    certo(E('SAVED.has(CC.images[0].id)'), 'a imagem salva não ficou disponível');
+  }],
   ['Versão: sw.js e index.html usam o js/versao.js', async () => {
     const [html, sw, ver] = await Promise.all(['../index.html', '../sw.js', '../js/versao.js'].map(u => fetch(u, { cache: 'no-store' }).then(r => r.text())));
     certo(/const VERSAO = '[A-Za-z0-9]+';/.test(ver), 'js/versao.js sem a constante VERSAO');

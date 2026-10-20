@@ -2,10 +2,25 @@
 'use strict';
 /* ===================== Navegação e inicialização ===================== */
 let VIEW = 'hoje';
+// Editor do companheiro: um terço do código e usado pouco, então só é carregado quando a aba Configurações › Companheiro abre.
+// Até lá, Ed é um substituto que não faz nada; js/editor.js troca pelo de verdade.
+var Ed = { provisorio: true, pvPlaying: true, init() {}, reset() {}, render() {}, onLeave() {}, isDirty() { return false; }, pvSync() {} };
+let edCarregando = null;
+function carregarEditor() {
+  if (!Ed.provisorio) return Promise.resolve();
+  return edCarregando = edCarregando || new Promise((res, rej) => {
+    const s = document.createElement('script'); s.src = 'js/editor.js';
+    s.onload = () => { Ed.init(); Ed.reset(); res(); };
+    s.onerror = () => { edCarregando = null; s.remove(); toast('Não consegui abrir o editor do companheiro. Confira a internet e tente de novo.'); rej(new Error('editor')); };
+    document.head.appendChild(s);
+  });
+}
+// Mostra o editor quando a aba do companheiro está aberta (carregando o arquivo na primeira vez).
+function renderEditor() { if (VIEW === 'config' && CfgTabs.cur === 'comp') carregarEditor().then(() => Ed.render(), () => {}); }
 function renderAll() {
   if (VIEW === 'hoje') renderHoje();
   if (VIEW === 'historico') Hist.render();
-  if (VIEW === 'config') { CfgTabs.paint(); Tasks.render(); Lists.render(); Counters.render(); Settings.paint(); Layout.paint(); Ed.render(); paintBackupSize(); }
+  if (VIEW === 'config') { CfgTabs.paint(); Tasks.render(); Lists.render(); Counters.render(); Settings.paint(); Layout.paint(); renderEditor(); paintBackupSize(); }
   if (VIEW !== 'hoje') { const S = Game.summary(); $('#streakTop').textContent = S.streak + (S.streak === 1 ? ' dia' : ' dias'); $('#dateLabel').textContent = dateLabel(logicalDate()); $('#clockLabel').textContent = hhmm(now()); }
 }
 function route() {
