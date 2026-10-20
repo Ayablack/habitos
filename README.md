@@ -150,6 +150,16 @@ Desmarcar tira o XP e marcar de novo devolve o mesmo valor, então não tem como
 
 Um dia sem registro por semana é coberto pelo **coringa** e não quebra a sequência. Dois dias completos sem registro deixam o companheiro desanimado, e ele volta ao normal na próxima tarefa.
 
+## Testes
+
+Antes de publicar uma mudança no código, rode:
+
+```
+python tests/rodar.py
+```
+
+Ele abre o app no Edge (ou Chrome) sem janela e confere XP, sequência e coringa, QR, backup, a validação dos dados e o tamanho das telas no celular. Leva menos de 1 minuto e mostra **PASSOU** ou **FALHOU** em cada teste. Também dá pra abrir `tests/index.html` por um endereço `http://` e ver o resultado na página.
+
 ## Créditos
 
 Gerador de QR: qrcode-generator, de Kazuhiko Arase, licença MIT.

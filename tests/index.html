@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Testes do Hábitos</title>
+<style>
+body{margin:0;padding:16px;background:#0F1115;color:#E8EAED;font:14px/1.5 system-ui,sans-serif}
+h1{font-size:18px;margin:0 0 12px}
+#resultado{white-space:pre-wrap;font-family:ui-monospace,monospace;font-size:13px}
+.ok{color:#3DDC97}.erro{color:#FF7A7A}
+#palco{position:absolute;left:-10000px;top:0}
+iframe{border:0;height:800px;display:block}
+</style>
+</head>
+<body>
+<h1>Testes do Hábitos</h1>
+<p>Abra esta página por um endereço http (o <code>rodar.py</code> faz isso). Cada teste abre o app de verdade num quadro escondido.</p>
+<div id="resultado">Rodando…</div>
+<div id="palco"></div>
+<script>
+'use strict';
+// Cada teste abre o app real (../index.html) num iframe. As variáveis do app (DATA, Game, Sync...) são lidas com w.eval,
+// que roda no escopo global do iframe e enxerga também as declaradas com const e let.
+const espera = ms => new Promise(r => setTimeout(r, ms));
+async function abrir({ largura = 1200, hash = 'hoje', dados = null } = {}) {
+  localStorage.clear(); sessionStorage.clear();
+  if (dados) localStorage.setItem('habitos.v1', JSON.stringify(dados));
+  const palco = document.getElementById('palco'); palco.innerHTML = '';
+  const f = document.createElement('iframe'); f.style.width = largura + 'px';
+  f.src = '../index.html#' + hash; palco.appendChild(f);
+  await new Promise(r => f.addEventListener('load', r, { once: true }));
+  const w = f.contentWindow;
+  // O início do app é assíncrono (lê as imagens do companheiro antes de desenhar): espera a tela aparecer.
+  for (let i = 0; i < 100 && !w.document.querySelector('#view-' + hash + ':not([hidden])'); i++) await espera(50);
+  await espera(150);
+  w.confirm = () => true;
+  return { w, E: s => w.eval(s), f };
+}
+// Recarrega o app com os dados que ele salvou (como fechar e abrir de novo).
+async function recarregar(f, hash = 'hoje') {
+  f.contentWindow.location.reload();
+  await new Promise(r => f.addEventListener('load', r, { once: true }));
+  const w = f.contentWindow;
+  for (let i = 0; i < 100 && !w.document.querySelector('#view-' + hash + ':not([hidden])'); i++) await espera(50);
+  await espera(150); w.confirm = () => true;
+  return { w, E: s => w.eval(s), f };
+}
+// Compara sem depender da ordem das chaves e mostra só o primeiro ponto diferente.
+function diferenca(a, b, p = '') {
+  if (a && b && typeof a === 'object' && typeof b === 'object') {
+    for (const k of new Set([...Object.keys(a), ...Object.keys(b)])) { const d = diferenca(a[k], b[k], p + '.' + k); if (d) return d; }
+    return null;
+  }
+  return a === b ? null : `${p || 'valor'}: esperado ${JSON.stringify(b)}, veio ${JSON.stringify(a)}`;
+}
+function igual(a, b, msg) { const d = diferenca(a, b); if (d) throw new Error((msg ? msg + ': ' : '') + d); }
+function certo(v, msg) { if (!v) throw new Error(msg); }
+
+// Monta o texto de um link #sync= a partir de um objeto, do mesmo jeito que o app (deflate + base64 de URL).
+async function linkSync(E, obj) { return 'x#sync=' + await E('packText')(JSON.stringify(obj)); }
+
+const TESTES = [
+  ['App abre sem erro e mostra as tarefas padrão', async () => {
+    const { w, E } = await abrir();
+    for (const g of ['DATA', 'Game', 'Sync', 'Hist', 'Dash', 'Layout', 'Comp', 'renderHoje', 'backupText', 'importBackup']) certo(E('typeof ' + g) !== 'undefined', 'faltou ' + g + ' (algum arquivo js falhou ao carregar)');
+    igual(w.document.querySelectorAll('[data-task]').length, 14, 'tarefas padrão na tela');
+  }],
+  ['Link de QR com código malicioso é descartado', async () => {
+    const { w, E } = await abrir(); w.__pwn = 0;
+    const mal = '"><img src=x onerror="window.__pwn=1">', k = E('logicalDate()');
+    const ok = await E('Sync').receive(await linkSync(E, { t: 'hq', v: 2, c: k,
+      k: [{ i: 'x' + mal, l: 'Tarefa ' + mal, y: 'h', t: '0800', o: 99 }, { i: 'boa1', l: 'Boa <b>tarefa</b>', y: 's', p: 'm', o: 98, u: Date.now() }],
+      s: { wake: mal, sleep: 'lixo', aguaMeta: 'abc', copoMl: 99999, updatedAt: Date.now() + 1e6 },
+      d: { [k]: ['boa1=0815;r1=' + mal + ';id"ruim=0900', 2, '', '', 'nota com "aspas"', Date.now()] } }));
+    await espera(300);
+    certo(ok, 'o QR válido deveria ser aceito');
+    igual(w.__pwn, 0, 'código rodou');
+    igual(w.document.querySelectorAll('img').length, 0, 'imagem injetada na página');
+    certo(!E('DATA.tasks').some(t => t.id.includes('<')), 'tarefa com id malicioso entrou');
+    igual(E('DATA.tasks').find(t => t.id === 'boa1').label, 'Boa <b>tarefa</b>', 'tarefa boa');
+    igual(E('DATA.days[logicalDate()].done'), { boa1: '08:15' }, 'marcações do dia');
+  }],
+  ['Configurações inválidas voltam pro padrão', async () => {
+    const { E } = await abrir({ dados: { version: 2, createdAt: '2026-01-01', days: {}, settings: { wake: 'abc', sleep: '25:99', aguaMeta: -3, copoMl: 'x', cutoffHour: 99 } } });
+    const s = E('DATA.settings');
+    igual([s.wake, s.sleep, s.aguaMeta, s.copoMl, s.cutoffHour], ['08:00', '22:00', 1, 200, 6]);
+  }],
+  ['XP de um dia segue as regras', async () => {
+    const { E } = await abrir(); const day = (done, agua) => ({ done, agua, meta: 10, sched: [{ oid: 'a', xp: 10 }, { oid: 'b', xp: 20, time: '08:00', tol: 10 }] });
+    igual(E('Game').dayXP(day({ a: '08:00', b: '08:05' }, 10), '2026-01-05'), 80, 'simples 10 + horário 20 + água 20 + dia completo 30');
+    igual(E('Game').dayXP(day({ a: '08:00' }, 10), '2026-01-05'), 30, 'simples 10 + água 20, sem dia completo');
+    igual(E('Game').dayXP(day({ a: '08:00', b: '08:05' }, 9), '2026-01-05'), 30, 'sem a meta de água não tem dia completo');
+    igual(E('Game').dayXP(day({ a: 'skip' }, 0), '2026-01-05'), 0, 'pulado não vale XP');
+  }],
+  ['Sequência: o coringa cobre 1 dia por semana', async () => {
+    const { E } = await abrir();
+    // Semana de referência inteira no passado (começa no domingo). Todo dia tem registro, menos os que faltam.
+    const montar = faltam => E(`(() => { const t = logicalDate(), W = addDays(weekStart(t), -14), ini = addDays(W, -7), faltam = ${JSON.stringify(faltam)}.map(n => addDays(W, n));
+      DATA.createdAt = ini; DATA.days = {};
+      for (let k = ini; k <= t; k = addDays(k, 1)) if (!faltam.includes(k)) DATA.days[k] = { done: { d1: '08:00' }, agua: 0 };
+      saveData(); return { s: Game.summary().streak, total: diffDays(t, ini) + 1, depois: diffDays(t, addDays(W, 3)) + 1 }; })()`);
+    const um = montar([1]); igual(um.s, um.total - 1, '1 dia faltando (segunda) é coberto pelo coringa');
+    const dois = montar([1, 2]); igual(dois.s, dois.depois, '2 dias faltando na mesma semana quebram a sequência');
+  }],
+  ['QR ida e volta (com o retrato de um dia passado)', async () => {
+    const { E } = await abrir();
+    const r = await E(`(async () => { const k = addDays(logicalDate(), -2);
+      DATA.days[k] = { done: { d1: '08:00', velha: '09:00', a1: '08:05' }, agua: 3, sched: [{ oid: 'd1', xp: 10 }, { oid: 'a1', xp: 10, w: 1 }, { oid: 'velha', xp: 10 }], meta: 4, cm: {}, af: 1 };
+      DATA.days[logicalDate()] = { done: { d1: '07:30' }, agua: 2 }; saveData();
+      const antes = Game.dayXP(DATA.days[k], k), hoje = JSON.stringify(DATA.days[logicalDate()].done), p = await Sync.payload();
+      delete DATA.days[k]; DATA.days[logicalDate()].done = {}; saveData();
+      await Sync.receive('x#sync=' + p.txt);
+      return { antes, depois: Game.dayXP(DATA.days[k], k), meta: DATA.days[k].meta, hoje: JSON.stringify(DATA.days[logicalDate()].done) === hoje, tamanho: p.txt.length }; })()`);
+    igual(r.depois, r.antes, 'XP do dia passado igual nos dois aparelhos');
+    igual(r.meta, 4, 'meta de água daquele dia');
+    certo(r.hoje, 'marcações de hoje voltaram');
+    certo(r.tamanho <= 700, 'QR passou do tamanho máximo: ' + r.tamanho);
+  }],
+  ['Backup ida e volta', async () => {
+    const a = await abrir();
+    a.E(`DATA.days[logicalDate()] = { done: { d1: '07:00', fd: '22:00' }, agua: 4, note: 'dia "bom"' }; saveData();`);
+    const { w, E } = await recarregar(a.f);
+    const antes = JSON.stringify(E('DATA')), txt = await E('backupText')(false);
+    E(`DATA.days['2020-01-01'] = { done: { d1: '08:00' }, agua: 1 }; saveData();`);
+    await E('importBackup')(new w.File([txt], 'b.json', { type: 'application/json' }));
+    igual(E('DATA'), JSON.parse(antes), 'dados depois de importar');
+  }],
+  ['QR cabe no cartão do celular (375 e 300 px)', async () => {
+    for (const largura of [375, 300]) {
+      const { w } = await abrir({ largura, hash: 'config' });
+      w.document.querySelector('[data-tab2="dados"]').click(); w.document.querySelector('#qrShow').click(); await espera(400);
+      const cv = w.document.querySelector('#qrCanvas'), b = cv.getBoundingClientRect(), card = cv.closest('.card').getBoundingClientRect();
+      certo(b.width > 100, largura + ' px: QR não apareceu');
+      certo(b.right <= card.right + 1 && Math.abs(b.width - b.height) < 1, largura + ' px: QR com ' + Math.round(b.width) + ' px passa do cartão (até ' + Math.round(card.right) + ')');
+      igual(w.document.documentElement.scrollWidth <= w.innerWidth, true, largura + ' px: página rola pros lados');
+    }
+  }],
+  ['Mapa do Histórico abre mostrando hoje no celular', async () => {
+    const { w } = await abrir({ largura: 375, hash: 'historico' });
+    const box = w.document.querySelector('#hHeat').parentElement;
+    certo(box.scrollWidth > box.clientWidth, 'o mapa deveria ser mais largo que a tela');
+    certo(box.scrollLeft >= box.scrollWidth - box.clientWidth - 2, 'o mapa não rolou até hoje');
+  }],
+];
+
+(async () => {
+  const linhas = [], out = document.getElementById('resultado'); let falhas = 0;
+  for (const [nome, fn] of TESTES) {
+    try { await fn(); linhas.push('PASSOU  ' + nome); }
+    catch (e) { falhas++; linhas.push('FALHOU  ' + nome + '\n        ' + (e && e.message || e)); }
+    out.innerHTML = linhas.map(l => `<div class="${l.startsWith('PASSOU') ? 'ok' : 'erro'}">${l.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</div>`).join('') + '<div>Rodando…</div>';
+  }
+  const resumo = falhas ? `${falhas} de ${TESTES.length} testes falharam.` : `Todos os ${TESTES.length} testes passaram.`;
+  out.innerHTML = out.innerHTML.replace('<div>Rodando…</div>', `<div><b>${resumo}</b></div>`);
+  localStorage.clear(); document.getElementById('palco').innerHTML = '';
+  // Pro rodar.py: manda o resultado de volta pro servidor de testes (abrindo a página à mão, isso só falha em silêncio).
+  fetch('/__resultado', { method: 'POST', body: linhas.join('\n') + '\n' + resumo }).catch(() => {});
+})();
+</script>
+</body>
+</html>
