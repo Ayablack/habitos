@@ -60,8 +60,15 @@ async function init() {
   Ed.reset();
   route();
   // Redesenhar troca os botões das tarefas. Se isso cair no meio de um toque, o toque se perde: espera o dedo soltar.
-  let pressing = false, pending = false;
-  const redraw = () => { if (VIEW !== 'hoje') return; if (pressing) { pending = true; return; } pending = false; renderHoje(); };
+  // Pra gastar menos bateria: só redesenha com a aba visível e quando algo mudou (o minuto do relógio, o dia, os dados ou o companheiro).
+  let pressing = false, pending = false, last = '';
+  const redraw = () => {
+    if (VIEW !== 'hoje' || document.hidden) return;
+    if (pressing) { pending = true; return; }
+    const sig = hhmm(now()) + '|' + logicalDate() + '|' + DATA_VER + '|' + CC_VER;
+    if (sig === last) return;
+    pending = false; last = sig; renderHoje();
+  };
   document.addEventListener('pointerdown', () => { pressing = true; }, true);
   const release = () => { pressing = false; if (pending) setTimeout(redraw, 300); };
   document.addEventListener('pointerup', release, true); document.addEventListener('pointercancel', release, true);

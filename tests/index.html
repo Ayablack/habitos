@@ -136,6 +136,29 @@ const TESTES = [
       igual(w.document.documentElement.scrollWidth <= w.innerWidth, true, largura + ' px: página rola pros lados');
     }
   }],
+  ['Tela Hoje só redesenha quando algo muda e com a aba visível', async () => {
+    while (new Date().getSeconds() > 45) await espera(1000);   // longe da virada do minuto
+    const { w, E } = await abrir(), aviso = () => w.document.dispatchEvent(new w.Event('visibilitychange'));
+    aviso(); await espera(50);
+    const botao = w.document.querySelector('[data-task]');
+    aviso(); await espera(50);
+    certo(botao.isConnected, 'redesenhou sem nada ter mudado');
+    E('saveData()'); aviso(); await espera(50);
+    certo(!botao.isConnected, 'não redesenhou depois que os dados mudaram');
+    const botao2 = w.document.querySelector('[data-task]');
+    Object.defineProperty(w.document, 'hidden', { configurable: true, get: () => true });
+    E('saveData()'); aviso(); await espera(50);
+    certo(botao2.isConnected, 'redesenhou com a aba escondida');
+  }],
+  ['Redesenho espera o toque terminar', async () => {
+    const { w, E } = await abrir(), aviso = () => w.document.dispatchEvent(new w.Event('visibilitychange'));
+    const botao = w.document.querySelector('[data-task]');
+    botao.dispatchEvent(new w.PointerEvent('pointerdown', { bubbles: true }));
+    E('saveData()'); aviso(); await espera(50);
+    certo(botao.isConnected, 'trocou o botão no meio do toque');
+    botao.dispatchEvent(new w.PointerEvent('pointerup', { bubbles: true })); await espera(450);
+    certo(!botao.isConnected, 'não redesenhou depois de soltar');
+  }],
   ['Versão: sw.js e index.html usam o js/versao.js', async () => {
     const [html, sw, ver] = await Promise.all(['../index.html', '../sw.js', '../js/versao.js'].map(u => fetch(u, { cache: 'no-store' }).then(r => r.text())));
     certo(/const VERSAO = '[A-Za-z0-9]+';/.test(ver), 'js/versao.js sem a constante VERSAO');
