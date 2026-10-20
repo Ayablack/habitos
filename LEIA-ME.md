@@ -6,7 +6,9 @@ Painel de hábitos diários que roda direto no navegador, sem servidor e sem con
 
 | Arquivo | Pra que serve |
 |---|---|
-| `index.html` | O app inteiro. Também funciona sozinho, com dois cliques. |
+| `index.html` | A página do app. Abra com dois cliques pra usar no PC. |
+| `css/app.css` | A aparência (cores, tamanhos, layout). |
+| `js/` | O funcionamento, um arquivo por parte: `hoje.js` (tela Hoje), `historico.js`, `config.js`, `editor.js` (editor do companheiro), `sync.js` (QR), `backup.js` e outros. |
 | `manifest.webmanifest` | Permite instalar como app no celular e no PC. |
 | `sw.js` | Faz o app abrir sem internet depois da primeira visita. |
 | `icon.svg`, `icon-192.png`, `icon-512.png`, `icon-maskable.png` | Ícones do app. |
@@ -20,7 +22,7 @@ Abra o `index.html` com dois cliques no Chrome. Tudo funciona, menos a instalaç
 Assim o app ganha um endereço tipo `https://SEU-USUARIO.github.io/habitos/`, instala no celular e abre sem internet.
 
 1. Entre em github.com e crie um repositório novo chamado `habitos`. Pode ser **público** (o GitHub Pages grátis exige isso). Seus registros não vão pra lá: só os arquivos do app.
-2. No repositório, clique em **Add file › Upload files** e arraste **todos os arquivos desta pasta**. Clique em **Commit changes**.
+2. No repositório, clique em **Add file › Upload files** e arraste **todos os arquivos e as pastas `css` e `js`**. Clique em **Commit changes**.
 3. Vá em **Settings › Pages**. Em **Source**, escolha **Deploy from a branch**, branch **main**, pasta **/ (root)**, e salve.
 4. Espere 1 ou 2 minutos e abra `https://SEU-USUARIO.github.io/habitos/`.
 
@@ -36,7 +38,7 @@ No Chrome, clique no ícone de instalar na barra de endereço, ou em **⋮ › T
 
 ## Atualizar o app no GitHub Pages
 
-No repositório, clique em **Add file › Upload files**, arraste o `index.html` e o `sw.js` novos e clique em **Commit changes**. Em 1 ou 2 minutos o site atualiza. Seus registros e o companheiro salvo continuam no navegador: a nova versão converte o companheiro antigo sozinha, sem mudar a aparência, e guarda uma cópia do formato antigo. A imagem que você já tinha vira a **imagem 1**, em 100%.
+No repositório, clique em **Add file › Upload files**, arraste o `index.html`, o `sw.js` e as pastas `css` e `js` novos e clique em **Commit changes**. Em 1 ou 2 minutos o site atualiza. Seus registros e o companheiro salvo continuam no navegador: a nova versão converte o companheiro antigo sozinha, sem mudar a aparência, e guarda uma cópia do formato antigo. A imagem que você já tinha vira a **imagem 1**, em 100%.
 
 ## Painel do Hoje
 

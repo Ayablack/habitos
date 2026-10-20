@@ -1,7 +1,8 @@
 // Service worker do Hábitos: guarda o app pra funcionar offline. Os seus dados ficam no navegador, não aqui.
-const CACHE = 'habitos-v8';
+const CACHE = 'habitos-v9';
 const FONTS = CACHE + '-fontes';
-const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon.svg', './icon-192.png', './icon-512.png', './icon-maskable.png'];
+const JS = ['qrcode', 'base', 'companheiro', 'avisos', 'hoje', 'historico', 'config', 'sync', 'editor', 'backup', 'listas', 'painel', 'main'];
+const ASSETS = ['./', './index.html', './css/app.css', ...JS.map(n => './js/' + n + '.js'), './manifest.webmanifest', './icon.svg', './icon-192.png', './icon-512.png', './icon-maskable.png'];
 // Com internet ruim, espera a rede no máximo isso antes de abrir o que está guardado.
 const WAIT_MS = 2500;
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting())); });
