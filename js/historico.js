@@ -2,7 +2,8 @@
 'use strict';
 /* ===================== Tela Histórico ===================== */
 const Hist = {
-  filter: 'all',
+  // jump: rolar o mapa até hoje no próximo desenho (ao abrir o Histórico ou trocar o filtro).
+  filter: 'all', jump: true,
   rows() {
     const t = logicalDate();
     return sortTasks(DATA.tasks).filter(task => !task.end || task.end >= t).flatMap(task => taskOccs(task).map(o => ({ o, task })));
@@ -61,6 +62,8 @@ const Hist = {
       heat += `<span class="cell ${cls}" title="${esc(tip)}"></span>`;
     }
     $('#hHeat').innerHTML = heat;
+    // O mapa é mais largo que a tela do celular: mostra o fim, onde está hoje. Num redesenho comum, fica onde a pessoa deixou.
+    if (this.jump) { const box = $('#hHeat').parentElement; box.scrollLeft = box.scrollWidth; this.jump = false; }
     // Notas do dia (as mais recentes primeiro)
     const notes = Object.keys(DATA.days).filter(k => k <= t && DATA.days[k].note).sort().reverse();
     $('#hNotesInfo').textContent = notes.length ? notes.length + (notes.length === 1 ? ' nota' : ' notas') : '';

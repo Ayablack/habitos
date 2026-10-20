@@ -189,7 +189,12 @@ function renderHoje() {
     else { const r = Game.ratio(DATA.days[k], k); cls = r === 0 ? '' : r < .25 ? 'lv1' : r < .5 ? 'lv2' : r < .85 ? 'lv3' : 'lv4'; if (S.jokerDays.has(k)) cls += ' jk'; }
     heat += `<span class="cell ${cls}" title="${dm(k)}"></span>`;
   }
+  // Tela estreita: o mapa fica no fim (hoje), a menos que a pessoa tenha arrastado pra ver semanas antigas.
+  const hbox = $('#heat').parentElement;
+  if (!hbox._seen) { hbox._seen = true; for (const ev of ['pointerdown', 'wheel', 'touchstart']) hbox.addEventListener(ev, () => { hbox._moved = true; }, { passive: true }); }
+  const keep = hbox._moved && hbox.scrollLeft < hbox.scrollWidth - hbox.clientWidth - 2;
   $('#heat').innerHTML = heat;
+  if (!keep) { hbox.scrollLeft = hbox.scrollWidth; hbox._moved = false; }
 
   // Nível e companheiro
   $('#lvN').textContent = lv.n; $('#lvName').textContent = lv.name;
