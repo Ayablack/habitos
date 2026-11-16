@@ -157,7 +157,7 @@ const Dash = {
     const blocks = String(s || '').split(',').filter(Boolean).map(x => { const m = x.match(/^(!?)(.+?)(\d)$/); return m ? { id: m[2], w: (DSIZES[+m[3] - 1] || DSIZES[0])[0], on: !m[1] } : null; }).filter(Boolean);
     return { blocks, updatedAt: +u || 0 };
   },
-  merge(d) { if (d && d.updatedAt > this.get().updatedAt) { DATA.dash = sanitizeDash(d); this._v = -1; } }
+  merge(d) { if (d && newer(d, this.get())) { DATA.dash = sanitizeDash(d); this._v = -1; } }
 };
 
 /* ===================== Abas das Configurações ===================== */

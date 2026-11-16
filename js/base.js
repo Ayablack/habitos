@@ -166,8 +166,18 @@ function cleanDay(day) {
   const m = intIn(day.meta, 1, 30, 0); if (m) out.meta = m; else delete out.meta;
   delete out.cm; if (day.cm && typeof day.cm === 'object') { out.cm = {}; for (const [k, v] of Object.entries(day.cm)) if (okId(k) && Array.isArray(v)) out.cm[k] = [intIn(v[0], 1, 100000, 10), intIn(v[1], 0, 100, 0), v[2] ? 1 : 0, intIn(v[3], 1, 1000, 1)]; }
   if ('af' in day) out.af = day.af ? 1 : 0;
+  delete out.t; if (day.t && typeof day.t === 'object') { out.t = {}; for (const [k, v] of Object.entries(day.t)) { const n = numIn(v, 0, 1e15, 0); if (TKEY.test(k) && n) out.t[k] = n; } }
   return out;
 }
+// Hora da última mudança de cada item do dia (day.t): tarefa marcada ou desmarcada, copos de água (~agua) e contadores (~c:id).
+// É o que deixa dois aparelhos se entenderem: vale a mudança mais recente de cada item, inclusive desmarcar.
+// Qual versão de um item vale: a alterada por último; no empate, uma regra fixa (pra dois aparelhos escolherem a mesma).
+function newer(a, b) { const x = +a.updatedAt || 0, y = +b.updatedAt || 0; return x > y || (x === y && JSON.stringify(a) > JSON.stringify(b)); }
+const TKEY = /^(~agua|~c:[A-Za-z0-9_-]{1,40}|[A-Za-z0-9_-]{1,40}(@[A-Za-z0-9:]{1,5})?)$/;
+function dayMarks(day) { const m = { '~agua': day.agua || 0 }; for (const [k, v] of Object.entries(day.done || {})) m[k] = v; for (const [k, v] of Object.entries(day.c || {})) m['~c:' + k] = v; return m; }
+function stampDay(day, was) { const cur = dayMarks(day), at = Date.now(); for (const k of new Set([...Object.keys(was), ...Object.keys(cur)])) if (was[k] !== cur[k]) { day.t = day.t || {}; day.t[k] = at; } }
+// Tarefas apagadas de vez (id → quando): sem isso, o outro aparelho traria a tarefa de volta ao sincronizar.
+function cleanGone(g) { const out = {}; for (const [k, v] of Object.entries(g && typeof g === 'object' ? g : {})) { const n = numIn(v, 0, 1e15, 0); if (okId(k) && n) out[k] = n; } return out; }
 function cleanDays(days) {
   const out = {}; for (const [k, v] of Object.entries(days && typeof days === 'object' ? days : {})) { const day = okDate(k) ? cleanDay(v) : null; if (day) out[k] = day; }
   return out;
@@ -182,7 +192,7 @@ function migrate(d) {
   if (!d.lists.length) d.lists = clone(DEFAULT_LISTS);
   d.counters = (Array.isArray(d.counters) ? d.counters : []).map(cleanCnt).filter(Boolean);
   d.tasks = (Array.isArray(d.tasks) ? d.tasks : clone(DEFAULT_TASKS)).map(cleanTask).filter(Boolean);
-  d.days = cleanDays(d.days);
+  d.days = cleanDays(d.days); d.gone = cleanGone(d.gone);
   if (!okDate(d.createdAt)) d.createdAt = logicalDate();
   if (!['dark', 'light', 'auto'].includes(d.theme)) d.theme = 'dark';
   // Congela o retrato de dias que ainda não têm um, pra mudanças futuras em tarefas e metas não alterarem o passado.
@@ -198,7 +208,7 @@ function loadData() {
 }
 DATA = loadData();
 const ST = () => DATA.settings;
-function saveData() { DATA_VER++; try { localStorage.setItem(KEY, JSON.stringify(DATA)); } catch (e) { toast('Não consegui salvar no navegador.'); } }
+function saveData() { DATA_VER++; try { localStorage.setItem(KEY, JSON.stringify(DATA)); } catch (e) { toast('Não consegui salvar no navegador.'); } if (typeof Nuvem !== 'undefined') Nuvem.agendar(); }
 function todayDay() { const k = logicalDate(); if (!DATA.days[k]) DATA.days[k] = { done: {}, agua: 0 }; return DATA.days[k]; }
 // Retrato do dia: tarefas, meta de água e contadores valendo hoje. Mudanças depois não alteram dias que já passaram.
 function freezeDay(day, k) { day.sched = snapshot(k); day.meta = ST().aguaMeta; day.cm = cntDefs(); day.af = ST().aguaFull !== false ? 1 : 0; return day; }

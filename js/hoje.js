@@ -3,7 +3,7 @@
 /* ===================== Ações ===================== */
 function commit(mutator) {
   const before = Game.summary(), tk = logicalDate(), wasComplete = Game.complete(DATA.days[tk], tk);
-  const day = touchToday(); mutator(day); saveData();
+  const day = touchToday(), was = dayMarks(day); mutator(day); stampDay(day, was); saveData();
   const after = Game.summary(), isComplete = Game.complete(DATA.days[tk], tk);
   const lb = Game.level(before.xp).n, la = Game.level(after.xp).n;
   if (la > lb) Comp.react('levelup', 'NÍVEL ' + la);

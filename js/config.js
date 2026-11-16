@@ -115,7 +115,7 @@ const Tasks = {
     const task = DATA.tasks.find(x => x.id === id); if (!task) return;
     if (!confirm('Arquivar “' + task.label + '”? Ela some a partir de hoje, mas o histórico e o XP já ganho ficam.')) return;
     const t = logicalDate();
-    if (!this.hasHistory(id) && (!task.start || task.start >= t)) DATA.tasks = DATA.tasks.filter(x => x.id !== id);
+    if (!this.hasHistory(id) && (!task.start || task.start >= t)) { DATA.tasks = DATA.tasks.filter(x => x.id !== id); (DATA.gone = DATA.gone || {})[id] = Date.now(); }
     else { task.end = addDays(t, -1); if (task.start && task.start > task.end) task.start = task.end; task.updatedAt = Date.now(); }
     touchToday(); saveData(); this.close(); this.render(); toast('Tarefa arquivada.');
   },

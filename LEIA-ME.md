@@ -117,6 +117,17 @@ Cada animação pode vir de uma folha diferente (por exemplo, uma pro Repouso e 
 
 Nada vai pro companheiro da tela Hoje até você salvar. **Desfazer** (ou Ctrl+Z) volta as últimas mudanças, e **Descartar** volta pro que estava salvo. Cada estado tem sua própria sequência, velocidade, repetição e alinhamento. Estado sem quadros usa o Repouso com um efeito (partículas, brilho ou tons de cinza).
 
+## Sincronizar sozinho com o Google
+
+Em **Configurações › Dados › Entrar com Google**, entre com a mesma conta no PC e no celular. Daí em diante, o que você marcar num aparelho aparece no outro em segundos, sem QR.
+
+- **O que sincroniza:** tarefas, registros dos dias, listas, contadores, notas, configurações e o arranjo do painel. As imagens do companheiro e os ajustes de tela ficam só no aparelho.
+- **Sem internet** o app funciona igual e sincroniza quando a conexão voltar. Se os dois aparelhos mexerem no mesmo dia, vale a mudança mais recente de cada item (inclusive desmarcar).
+- **Só funciona pelo endereço https** do app. Abrindo o `index.html` com dois cliques, o app funciona, mas não sincroniza.
+- **Onde ficam os dados:** num banco do Firebase (Google), no projeto `habitos` da sua conta. Só a conta que entrou lê e grava os próprios dados.
+- **Pra parar:** **Parar de sincronizar neste aparelho**. Os dados continuam no aparelho.
+- **Na pasta:** `js/nuvem.js` (a sincronização) e `vendor/firebase/` (a biblioteca do Firebase). Ao atualizar no GitHub, envie também a pasta `vendor`.
+
 ## Seus dados
 
 - Ficam **só no navegador** onde você usa o app. Cada endereço tem seus próprios dados: o app aberto pelo arquivo no PC e o app no GitHub Pages **não enxergam os dados um do outro**.

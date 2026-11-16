@@ -245,6 +245,72 @@ const TESTES = [
       certo(!botao.hidden && botao.textContent === 'Recarregar', 'faltou o botão Recarregar');
     } finally { await fetch('/__versao', { method: 'POST', body: '' }); }
   }],
+  ['Sincronização: desmarcar num aparelho desmarca no outro, e o que só o outro marcou fica', async () => {
+    const { E } = await abrir(); const k = E('logicalDate()');
+    E('toggleTask')('d1'); E('toggleTask')('c1');
+    const t0 = E('DATA').days[k].t; certo(t0 && t0.d1 && t0.c1, 'marcar não guardou a hora da mudança');
+    // O outro aparelho desmarcou d1 depois e marcou b1; c1 ele nem tocou.
+    E('Sync').merge({ tasks: [], days: { [k]: { done: { b1: '09:00' }, agua: 0, t: { d1: Date.now() + 5000, b1: Date.now() + 5000 } } } });
+    const d = E('DATA').days[k].done;
+    certo(!d.d1, 'd1 devia ter sido desmarcada'); certo(d.c1, 'c1 (só deste aparelho) sumiu'); igual(d.b1, '09:00', 'b1 do outro aparelho');
+    // Uma mudança mais antiga do outro aparelho não desfaz a daqui.
+    E('toggleTask')('d1'); E('Sync').merge({ tasks: [], days: { [k]: { done: {}, agua: 0, t: { d1: 5 } } } });
+    certo(E('DATA').days[k].done.d1, 'uma mudança antiga desmarcou d1');
+  }],
+  ['Sincronização: juntar dá o mesmo resultado nos dois aparelhos, em qualquer ordem', async () => {
+    const { E } = await abrir(); const k = E('addDays')(E('logicalDate()'), -1), now = Date.now();
+    const A = { done: { d1: '08:00', c1: '08:10' }, agua: 3, c: {}, t: { d1: now - 100, c1: now - 50, '~agua': now - 10 }, sched: [{ oid: 'd1', xp: 10 }, { oid: 'c1', xp: 10 }], meta: 10 };
+    const B = { done: { c1: '08:30', fd: '22:00' }, agua: 5, c: {}, t: { d1: now - 20, fd: now - 5, '~agua': now - 60 }, sched: [{ oid: 'd1', xp: 10 }, { oid: 'c1', xp: 10 }, { oid: 'fd', xp: 10 }], meta: 8 };
+    const junta = (x, y) => { E('DATA').days[k] = JSON.parse(JSON.stringify(x)); E('Sync').merge({ tasks: [], days: { [k]: JSON.parse(JSON.stringify(y)) } }); return JSON.parse(JSON.stringify(E('DATA').days[k])); };
+    const ab = junta(A, B), ba = junta(B, A);
+    igual(ab, ba, 'A+B diferente de B+A');
+    certo(!ab.done.d1, 'd1: valia o desmarcar mais recente (B)'); igual(ab.done.fd, '22:00', 'fd'); igual(ab.agua, 3, 'água: valia a mudança mais recente (A)');
+    igual(junta(ab, A), ab, 'juntar de novo mudou o resultado');
+  }],
+  ['Sincronização: tarefa apagada não volta pelo outro aparelho', async () => {
+    const { E } = await abrir();
+    const nova = { id: 'tnova1', label: 'Some', type: 'simples', p: 'm', times: [], tol: 10, days: [0, 1, 2, 3, 4, 5, 6], start: E('logicalDate()'), end: null, order: 99, updatedAt: Date.now() - 1000, agua: 0 };
+    E('DATA').tasks.push(JSON.parse(JSON.stringify(nova))); E('Tasks').archive('tnova1');
+    certo(!E('DATA').tasks.some(t => t.id === 'tnova1'), 'a tarefa não foi apagada'); certo(E('DATA').gone.tnova1, 'faltou registrar que foi apagada');
+    E('Sync').merge({ tasks: [nova], days: {} });
+    certo(!E('DATA').tasks.some(t => t.id === 'tnova1'), 'a tarefa apagada voltou');
+  }],
+  ['Sincronização: recebe da nuvem, envia só o que mudou e não fica em vai e volta', async () => {
+    const { w, E } = await abrir(); const k = E('logicalDate()'), ontem = E('addDays')(k, -1);
+    E('toggleTask')('d1'); E('toggleTask')('c1');
+    const sets = [], ouv = {};
+    const col = path => ({ doc: id => docRef(path + '/' + id), onSnapshot: cb => { ouv.meses = cb; return () => {}; } });
+    const docRef = path => ({ collection: n => col(path + '/' + n), onSnapshot: cb => { ouv.base = cb; return () => {}; }, set: d => { sets.push([path, d]); return Promise.resolve(); } });
+    const N = E('Nuvem'); N.ligar({ collection: col }, 'u1');
+    igual(sets.length, 0, 'enviou antes de ouvir a nuvem');
+    const remoto = { [k]: { done: { b1: '09:00' }, agua: 2, t: { d1: Date.now() + 5000, b1: Date.now() + 5000, '~agua': Date.now() + 5000 } }, [ontem]: { done: { fd: '22:10' }, agua: 0 } };
+    const porMes = {}; for (const d of Object.keys(remoto)) (porMes[d.slice(0, 7)] = porMes[d.slice(0, 7)] || {})[d] = remoto[d];
+    const mudancas = objs => ({ metadata: {}, docChanges: () => Object.entries(objs).map(([id, j]) => ({ type: 'added', doc: { id, data: () => ({ j }) } })) });
+    ouv.base({ metadata: {}, exists: false, data: () => null });
+    igual(sets.length, 0, 'enviou antes de receber os meses');
+    ouv.meses(mudancas(Object.fromEntries(Object.entries(porMes).map(([m, o]) => [m, JSON.stringify(o)]))));
+    const hoje = E('DATA').days[k];
+    certo(!hoje.done.d1 && hoje.done.c1 && hoje.done.b1 === '09:00' && hoje.agua === 2, 'não juntou o dia de hoje direito: ' + JSON.stringify(hoje.done));
+    igual(E('DATA').days[ontem].done.fd, '22:10', 'dia de ontem que só existia na nuvem');
+    certo(sets.some(s => s[0] === 'usuarios/u1/dados/base'), 'não enviou a base'); certo(sets.some(s => s[0] === 'usuarios/u1/meses/' + k.slice(0, 7)), 'não enviou o mês');
+    // A nuvem devolve o que acabou de receber: nada novo pra enviar.
+    const n1 = sets.length, eco = () => { const b = sets.filter(s => s[0].endsWith('/base')).pop(); ouv.base({ metadata: {}, exists: true, data: () => b[1] });
+      ouv.meses(mudancas(Object.fromEntries(sets.filter(s => s[0].includes('/meses/')).map(s => [s[0].split('/').pop(), s[1].j])))); };
+    eco(); await espera(1800); igual(sets.length, n1, 'reenviou sem ter mudado nada');
+    // Uma marcação nova envia só o mês de hoje.
+    E('toggleTask')('bn'); await espera(1900);
+    igual(sets.length, n1 + 1, 'envios depois de marcar uma tarefa'); igual(sets[n1][0], 'usuarios/u1/meses/' + k.slice(0, 7), 'documento enviado');
+    certo(JSON.parse(sets[n1][1].j)[k].done.bn, 'a marcação nova não foi no envio');
+    // Dado inválido vindo da nuvem é descartado pela validação.
+    ouv.meses(mudancas({ [k.slice(0, 7)]: JSON.stringify({ [k]: { done: { 'x"><img src=x>': '10:00', pr: '25:99' }, agua: 2 } }) }));
+    certo(!Object.keys(E('DATA').days[k].done).some(x => x.includes('<')) && !E('DATA').days[k].done.pr, 'dado inválido da nuvem entrou');
+    N.desligar();
+  }],
+  ['Sincronização: sem login, o app não carrega a biblioteca do Firebase e mostra o botão Entrar', async () => {
+    const { w } = await abrir({ hash: 'config', extra: { 'habitos.cfgtab': 'dados' } }); await espera(1500);
+    certo(typeof w.firebase === 'undefined', 'carregou o Firebase sem a sincronização estar ligada');
+    certo(!w.document.querySelector('#nvIn').hidden && w.document.querySelector('#nvOut').hidden, 'botões da sincronização');
+  }],
 ];
 
 (async () => {
