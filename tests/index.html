@@ -60,29 +60,27 @@ function diferenca(a, b, p = '') {
 function igual(a, b, msg) { const d = diferenca(a, b); if (d) throw new Error((msg ? msg + ': ' : '') + d); }
 function certo(v, msg) { if (!v) throw new Error(msg); }
 
-// Monta o texto de um link #sync= a partir de um objeto, do mesmo jeito que o app (deflate + base64 de URL).
-async function linkSync(E, obj) { return 'x#sync=' + await E('packText')(JSON.stringify(obj)); }
 
 const TESTES = [
   ['App abre sem erro e mostra as tarefas padrão', async () => {
     const { w, E } = await abrir();
-    for (const g of ['DATA', 'Game', 'Sync', 'Hist', 'Dash', 'Layout', 'Comp', 'renderHoje', 'backupText', 'importBackup']) certo(E('typeof ' + g) !== 'undefined', 'faltou ' + g + ' (algum arquivo js falhou ao carregar)');
+    for (const g of ['DATA', 'Game', 'Sync', 'Nuvem', 'Hist', 'Dash', 'Layout', 'Comp', 'renderHoje', 'backupText', 'importBackup']) certo(E('typeof ' + g) !== 'undefined', 'faltou ' + g + ' (algum arquivo js falhou ao carregar)');
     igual(w.document.querySelectorAll('[data-task]').length, 14, 'tarefas padrão na tela');
   }],
-  ['Link de QR com código malicioso é descartado', async () => {
+  ['Backup com código malicioso não roda nada na página', async () => {
     const { w, E } = await abrir(); w.__pwn = 0;
     const mal = '"><img src=x onerror="window.__pwn=1">', k = E('logicalDate()');
-    const ok = await E('Sync').receive(await linkSync(E, { t: 'hq', v: 2, c: k,
-      k: [{ i: 'x' + mal, l: 'Tarefa ' + mal, y: 'h', t: '0800', o: 99 }, { i: 'boa1', l: 'Boa <b>tarefa</b>', y: 's', p: 'm', o: 98, u: Date.now() }],
-      s: { wake: mal, sleep: 'lixo', aguaMeta: 'abc', copoMl: 99999, updatedAt: Date.now() + 1e6 },
-      d: { [k]: ['boa1=0815;r1=' + mal + ';id"ruim=0900', 2, '', '', 'nota com "aspas"', Date.now()] } }));
-    await espera(300);
-    certo(ok, 'o QR válido deveria ser aceito');
+    const dados = { version: 2, createdAt: k, settings: { wake: mal, sleep: 'lixo', aguaMeta: 'abc', copoMl: 99999 },
+      tasks: [{ id: 'x' + mal, label: 'Tarefa ' + mal, type: 'horario', times: ['08:00'] }, { id: 'boa1', label: 'Boa <b>tarefa</b>', type: 'simples', p: 'm', updatedAt: Date.now() }],
+      days: { [k]: { done: { boa1: '08:15', r1: mal, 'id"ruim': '09:00' }, agua: 2, note: 'nota com "aspas" ' + mal } } };
+    await E('importBackup')(new w.File([JSON.stringify({ type: 'habitos-backup', data: dados })], 'b.json', { type: 'application/json' }));
+    w.location.hash = '#historico'; await espera(300); w.location.hash = '#hoje'; await espera(300);
     igual(w.__pwn, 0, 'código rodou');
     igual(w.document.querySelectorAll('img').length, 0, 'imagem injetada na página');
     certo(!E('DATA.tasks').some(t => t.id.includes('<')), 'tarefa com id malicioso entrou');
     igual(E('DATA.tasks').find(t => t.id === 'boa1').label, 'Boa <b>tarefa</b>', 'tarefa boa');
     igual(E('DATA.days[logicalDate()].done'), { boa1: '08:15' }, 'marcações do dia');
+    igual([E('DATA.settings.wake'), E('DATA.settings.copoMl')], ['08:00', 1000], 'configurações');
   }],
   ['Configurações inválidas voltam pro padrão', async () => {
     const { E } = await abrir({ dados: { version: 2, createdAt: '2026-01-01', days: {}, settings: { wake: 'abc', sleep: '25:99', aguaMeta: -3, copoMl: 'x', cutoffHour: 99 } } });
@@ -106,19 +104,16 @@ const TESTES = [
     const um = montar([1]); igual(um.s, um.total - 1, '1 dia faltando (segunda) é coberto pelo coringa');
     const dois = montar([1, 2]); igual(dois.s, dois.depois, '2 dias faltando na mesma semana quebram a sequência');
   }],
-  ['QR ida e volta (com o retrato de um dia passado)', async () => {
+  ['Nuvem leva o retrato de um dia passado (XP igual nos dois aparelhos)', async () => {
     const { E } = await abrir();
-    const r = await E(`(async () => { const k = addDays(logicalDate(), -2);
+    const r = E(`(() => { const k = addDays(logicalDate(), -2);
       DATA.days[k] = { done: { d1: '08:00', velha: '09:00', a1: '08:05' }, agua: 3, sched: [{ oid: 'd1', xp: 10 }, { oid: 'a1', xp: 10, w: 1 }, { oid: 'velha', xp: 10 }], meta: 4, cm: {}, af: 1 };
-      DATA.days[logicalDate()] = { done: { d1: '07:30' }, agua: 2 }; saveData();
-      const antes = Game.dayXP(DATA.days[k], k), hoje = JSON.stringify(DATA.days[logicalDate()].done), p = await Sync.payload();
-      delete DATA.days[k]; DATA.days[logicalDate()].done = {}; saveData();
-      await Sync.receive('x#sync=' + p.txt);
-      return { antes, depois: Game.dayXP(DATA.days[k], k), meta: DATA.days[k].meta, hoje: JSON.stringify(DATA.days[logicalDate()].done) === hoje, tamanho: p.txt.length }; })()`);
-    igual(r.depois, r.antes, 'XP do dia passado igual nos dois aparelhos');
+      saveData(); const antes = Game.dayXP(DATA.days[k], k), docs = Nuvem.docs();
+      delete DATA.days[k]; saveData();
+      Nuvem.remoto = docs; Nuvem.veio = { base: true, meses: true }; Nuvem.chegou(); Nuvem.pronto = false;
+      return { antes, depois: Game.dayXP(DATA.days[k], k), meta: DATA.days[k].meta }; })()`);
+    igual(r.depois, r.antes, 'XP do dia passado');
     igual(r.meta, 4, 'meta de água daquele dia');
-    certo(r.hoje, 'marcações de hoje voltaram');
-    certo(r.tamanho <= 700, 'QR passou do tamanho máximo: ' + r.tamanho);
   }],
   ['Backup ida e volta', async () => {
     const a = await abrir();
@@ -128,16 +123,6 @@ const TESTES = [
     E(`DATA.days['2020-01-01'] = { done: { d1: '08:00' }, agua: 1 }; saveData();`);
     await E('importBackup')(new w.File([txt], 'b.json', { type: 'application/json' }));
     igual(E('DATA'), JSON.parse(antes), 'dados depois de importar');
-  }],
-  ['QR cabe no cartão do celular (375 e 300 px)', async () => {
-    for (const largura of [375, 300]) {
-      const { w } = await abrir({ largura, hash: 'config' });
-      w.document.querySelector('[data-tab2="dados"]').click(); w.document.querySelector('#qrShow').click(); await espera(400);
-      const cv = w.document.querySelector('#qrCanvas'), b = cv.getBoundingClientRect(), card = cv.closest('.card').getBoundingClientRect();
-      certo(b.width > 100, largura + ' px: QR não apareceu');
-      certo(b.right <= card.right + 1 && Math.abs(b.width - b.height) < 1, largura + ' px: QR com ' + Math.round(b.width) + ' px passa do cartão (até ' + Math.round(card.right) + ')');
-      igual(w.document.documentElement.scrollWidth <= w.innerWidth, true, largura + ' px: página rola pros lados');
-    }
   }],
   ['Tela Hoje só redesenha quando algo muda e com a aba visível', async () => {
     while (new Date().getSeconds() > 45) await espera(1000);   // longe da virada do minuto
@@ -308,6 +293,7 @@ const TESTES = [
   }],
   ['Sincronização: sem login, o app não carrega a biblioteca do Firebase e mostra o botão Entrar', async () => {
     const { w } = await abrir({ hash: 'config', extra: { 'habitos.cfgtab': 'dados' } }); await espera(1500);
+    certo(!w.document.querySelector('#qrShow') && typeof w.qrcode === 'undefined', 'o QR ainda está no app');
     certo(typeof w.firebase === 'undefined', 'carregou o Firebase sem a sincronização estar ligada');
     certo(!w.document.querySelector('#nvIn').hidden && w.document.querySelector('#nvOut').hidden, 'botões da sincronização');
   }],

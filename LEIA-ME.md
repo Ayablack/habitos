@@ -1,6 +1,6 @@
 # Hábitos
 
-Painel de hábitos diários que roda direto no navegador, sem servidor e sem conta. Seus dados ficam guardados no próprio navegador.
+Painel de hábitos diários que roda direto no navegador. Seus dados ficam no próprio navegador e, se você entrar com o Google, sincronizam sozinhos entre o PC e o celular.
 
 ## O que tem na pasta
 
@@ -8,7 +8,7 @@ Painel de hábitos diários que roda direto no navegador, sem servidor e sem con
 |---|---|
 | `index.html` | A página do app. Abra com dois cliques pra usar no PC. |
 | `css/app.css` | A aparência (cores, tamanhos, layout). |
-| `js/` | O funcionamento, um arquivo por parte: `hoje.js` (tela Hoje), `historico.js`, `config.js`, `editor.js` (editor do companheiro), `sync.js` (QR), `backup.js` e outros. |
+| `js/` | O funcionamento, um arquivo por parte: `hoje.js` (tela Hoje), `historico.js`, `config.js`, `editor.js` (editor do companheiro), `nuvem.js` e `sync.js` (sincronização com o Google), `backup.js` e outros. |
 | `fonts/` | As fontes do app (Sora, Silkscreen e JetBrains Mono), guardadas aqui pra não depender da internet. |
 | `manifest.webmanifest` | Permite instalar como app no celular e no PC. |
 | `sw.js` | Faz o app abrir sem internet depois da primeira visita. |
@@ -67,7 +67,7 @@ E trazer dois quadros que começam fora do painel:
 
 O anel do **Seu dia** tem um anel por lista (até 4) e um da água; a legenda mostra todas as listas e os contadores.
 
-O arranjo fica salvo na hora e vai junto no **QR** e no **backup**. O celular não edita: ele mostra os mesmos quadros, na mesma ordem, em uma coluna. Depois de mudar no PC, leia o QR no celular pra atualizar.
+O arranjo fica salvo na hora e vai junto na **sincronização** e no **backup**. O celular não edita: ele mostra os mesmos quadros, na mesma ordem, em uma coluna.
 
 Ainda no modo de edição, **Tela deste aparelho** ajusta só o aparelho onde você está:
 
@@ -84,7 +84,7 @@ Ficam em 5 abas: **Tarefas**, **Rotina e lembretes**, **Companheiro**, **Aparên
 
 - **Tarefa nova:** nome, **Tipo** (Uma vez, Com horário ou Manhã e noite), **Lista** e dias. Tarefa com horário pode ficar **Pela hora**: cada horário vai pra lista do período dele (Manhã, Durante o dia ou Noite). Manhã e noite escolhe uma lista pra cada vez. Tolerância do horário, **Ao marcar, soma no contador** e temporária ficam em Mais opções.
 - **Aparência:** tema, som, confete e **Animar mesmo com "reduzir movimento"** (se o Windows estiver com os efeitos de animação desligados, o companheiro fica parado; ligue essa opção pra animar só no app).
-- **Dados:** QR pro outro aparelho e backup.
+- **Dados:** sincronizar com o Google e backup.
 
 ## Companheiro: importação rápida
 
@@ -119,7 +119,7 @@ Nada vai pro companheiro da tela Hoje até você salvar. **Desfazer** (ou Ctrl+Z
 
 ## Sincronizar sozinho com o Google
 
-Em **Configurações › Dados › Entrar com Google**, entre com a mesma conta no PC e no celular. Daí em diante, o que você marcar num aparelho aparece no outro em segundos, sem QR.
+Em **Configurações › Dados › Entrar com Google**, entre com a mesma conta no PC e no celular. Daí em diante, o que você marcar num aparelho aparece no outro em segundos.
 
 - **O que sincroniza:** tarefas, registros dos dias, listas, contadores, notas, configurações e o arranjo do painel. As imagens do companheiro e os ajustes de tela ficam só no aparelho.
 - **Sem internet** o app funciona igual e sincroniza quando a conexão voltar. Se os dois aparelhos mexerem no mesmo dia, vale a mudança mais recente de cada item (inclusive desmarcar).
@@ -130,10 +130,9 @@ Em **Configurações › Dados › Entrar com Google**, entre com a mesma conta 
 
 ## Seus dados
 
-- Ficam **só no navegador** onde você usa o app. Cada endereço tem seus próprios dados: o app aberto pelo arquivo no PC e o app no GitHub Pages **não enxergam os dados um do outro**.
+- Ficam **no navegador** onde você usa o app e, com a sincronização ligada, também na sua conta Google. Sem sincronização, cada endereço tem seus próprios dados: o app aberto pelo arquivo no PC e o app no GitHub Pages **não enxergam os dados um do outro**.
 - **Pra mudar de endereço ou de aparelho**, use **Configurações › Dados › Exportar backup** e depois **Importar backup** no outro lugar. Deixe marcado **Incluir as imagens do companheiro**: sem elas, o companheiro chega sem as imagens. O app avisa quando o arquivo passa de 5 MB.
-- **Pra passar os dias recentes pro celular**, use **Configurações › Dados › Mostrar QR** no PC e aponte a câmera do celular. O QR leva também as tarefas, as listas, os contadores, as notas do dia e o arranjo do painel. Com o app no GitHub Pages, a própria câmera do celular abre o link e junta os dados. Os dados se juntam sem apagar nada. Desmarcar uma tarefa num aparelho não desmarca no outro.
-- Limpar os dados do site no navegador apaga tudo. Faça backups de vez em quando. Se o último backup (exportado ou compartilhado) passar de 14 dias, ou se você ainda não fez nenhum e já tem uma semana de registros, a tela **Hoje** mostra um aviso com **Fazer backup**. **Agora não** esconde o aviso por 7 dias. Esse controle vale só pro navegador onde você está.
+- Limpar os dados do site no navegador apaga tudo. Faça backups de vez em quando: a sincronização não leva as imagens do companheiro, e algo apagado sem querer some dos dois aparelhos. A tela **Hoje** lembra com **Fazer backup** quando o último backup passa de 14 dias (60 dias com a sincronização ligada). **Agora não** esconde o aviso por 7 dias. Esse controle vale só pro navegador onde você está.
 
 ## Lembretes
 
@@ -173,8 +172,4 @@ Antes de publicar uma mudança no código, rode:
 python tests/rodar.py
 ```
 
-Ele abre o app no Edge (ou Chrome) sem janela e confere XP, sequência e coringa, QR, backup, a validação dos dados e o tamanho das telas no celular. Leva menos de 1 minuto e mostra **PASSOU** ou **FALHOU** em cada teste. Também dá pra abrir `tests/index.html` por um endereço `http://` e ver o resultado na página.
-
-## Créditos
-
-Gerador de QR: qrcode-generator, de Kazuhiko Arase, licença MIT.
+Ele abre o app no Edge (ou Chrome) sem janela e confere XP, sequência e coringa, sincronização, backup, a validação dos dados e o tamanho das telas no celular. Leva menos de 1 minuto e mostra **PASSOU** ou **FALHOU** em cada teste. Também dá pra abrir `tests/index.html` por um endereço `http://` e ver o resultado na página.

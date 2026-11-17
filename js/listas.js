@@ -2,7 +2,7 @@
 'use strict';
 /* ===================== Listas suas e contadores ===================== */
 const uid = p => p + Date.now().toString(36).slice(-5) + Math.random().toString(36).slice(2, 5);
-// Quadro novo entra no fim do painel (e o arranjo vai junto no QR).
+// Quadro novo entra no fim do painel (e o arranjo vai junto na sincronização).
 function dashAppend(id, w) { const d = Dash.get(); if (!d.blocks.some(b => b.id === id)) d.blocks.push({ id, w, on: true }); else { const b = d.blocks.find(x => x.id === id); b.on = true; } d.updatedAt = Date.now(); }
 
 const Lists = {

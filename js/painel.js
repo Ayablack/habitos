@@ -1,7 +1,7 @@
 // Hábitos · Painel do Hoje (quadros, ordem, tamanho), abas das Configurações e ajustes da tela.
 'use strict';
 /* ===================== Painel do Hoje: quadros, ordem e tamanho ===================== */
-// O arranjo fica nos dados (vai no backup e no QR). Só o PC edita; o celular mostra os mesmos quadros, na mesma ordem, em uma coluna.
+// O arranjo fica nos dados (vai no backup e na sincronização). Só o PC edita; o celular mostra os mesmos quadros, na mesma ordem, em uma coluna.
 const BLOCKS = {
   tl: { name: 'Linha do tempo', desc: 'O dia, de acordar a dormir, com o que já foi feito e os horários.' },
   dia: { name: 'Seu dia', desc: 'Anéis de progresso por período e o XP de hoje.' },
@@ -150,13 +150,6 @@ const Dash = {
     dash.addEventListener('drop', e => { if (!from) return; e.preventDefault(); const el = e.target.closest('.blk'), f = from; from = null; $$('#dash .blk').forEach(x => x.classList.remove('dragging', 'drop-a', 'drop-b')); if (el && el.dataset.b !== f) this.place(f, el.dataset.b, side(el, e)); });
     window.matchMedia('(max-width: 720px)').addEventListener('change', () => { if (isNarrow() && this.editing) this.edit(false); else this.apply(); });
   },
-  // QR: arranjo compacto, ex. "tl4,dia1,!mapa3" (tamanho 1–4, ! = escondido).
-  pack() { const d = this.get(); return { b: d.blocks.map(b => (b.on ? '' : '!') + b.id + (DSIZES.findIndex(s => s[0] === b.w) + 1)).join(','), u: d.updatedAt }; },
-  // Sem limpar aqui: listas e contadores novos do outro aparelho só existem depois de juntar (merge).
-  unpack(s, u) {
-    const blocks = String(s || '').split(',').filter(Boolean).map(x => { const m = x.match(/^(!?)(.+?)(\d)$/); return m ? { id: m[2], w: (DSIZES[+m[3] - 1] || DSIZES[0])[0], on: !m[1] } : null; }).filter(Boolean);
-    return { blocks, updatedAt: +u || 0 };
-  },
   merge(d) { if (d && newer(d, this.get())) { DATA.dash = sanitizeDash(d); this._v = -1; } }
 };
 
@@ -179,7 +172,7 @@ const CfgTabs = {
 };
 
 /* ===================== Tela: largura, tamanho, altura e animação ===================== */
-// Preferências por aparelho (não entram no QR nem no backup).
+// Preferências por aparelho (não entram na sincronização nem no backup).
 const LKEY = 'habitos.tela';
 const Layout = {
   o: (() => {

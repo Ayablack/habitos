@@ -25,7 +25,6 @@ function renderAll() {
 }
 function route() {
   const prev = VIEW;
-  if (location.hash.startsWith('#sync=')) { const raw = location.hash; history.replaceState(null, '', location.pathname + location.search + '#hoje'); Sync.receive(raw); }
   const v = (location.hash || '#hoje').slice(1); VIEW = ['hoje', 'historico', 'config'].includes(v) ? v : 'hoje';
   if (VIEW === 'historico' && prev !== 'historico') Hist.jump = true;
   for (const id of ['hoje', 'historico', 'config']) $('#view-' + id).hidden = id !== VIEW;
@@ -54,9 +53,6 @@ async function init() {
     const x = q('[data-expand]'); if (x) { expanded[x.dataset.expand] = !expanded[x.dataset.expand]; renderHoje(); Layout.apply(); }
   });
   $('#hFilter').addEventListener('click', e => { const b = e.target.closest('[data-f]'); if (b) { Hist.filter = b.dataset.f; Hist.jump = true; Hist.render(); } });
-  $('#qrShow').addEventListener('click', () => Sync.show());
-  $('#qrRead').addEventListener('click', () => Sync.read());
-  $('#scanClose').addEventListener('click', () => Sync.close());
   $('#bkExport').addEventListener('click', () => exportBackup());
   $('#bkShare').addEventListener('click', () => shareBackup());
   $('#bkImport').addEventListener('change', e => { importBackup(e.target.files[0]); e.target.value = ''; });

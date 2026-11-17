@@ -28,7 +28,7 @@
 <main id="view-hoje" class="view stack" style="gap:18px">
   <div id="dashBar" class="dashbar" role="toolbar" aria-label="Edição do painel" hidden>
     <div class="between">
-      <div class="stack" style="gap:2px"><b>Editando o painel</b><span class="xs mu">Arraste pelo <span aria-hidden="true">⠿</span> ou use ◀ ▶ pra mudar a ordem. Escolha o tamanho e esconda o que não quiser. Fica salvo na hora e vai junto no QR e no backup.</span></div>
+      <div class="stack" style="gap:2px"><b>Editando o painel</b><span class="xs mu">Arraste pelo <span aria-hidden="true">⠿</span> ou use ◀ ▶ pra mudar a ordem. Escolha o tamanho e esconda o que não quiser. Fica salvo na hora e vai junto na sincronização e no backup.</span></div>
       <div class="btnrow">
         <button type="button" class="btn sm pri" id="dashAdd">+ Adicionar quadro</button>
         <button type="button" class="btn sm" id="dashUndo" disabled>Desfazer</button>
@@ -516,24 +516,14 @@
 
   <div class="cfgtab" id="tab-dados" role="tabpanel" hidden>
   <div class="grid2">
-    <section class="card stack" aria-label="Sincronizar com o Google" style="grid-column:1/-1">
+    <section class="card stack" aria-label="Sincronizar com o Google">
       <h3 class="h">Sincronizar sozinho com o Google</h3>
       <span class="sm mu" id="nvInfo"></span>
       <div class="btnrow"><button type="button" class="btn sm pri" id="nvIn">Entrar com Google</button><button type="button" class="btn sm" id="nvOut" hidden>Parar de sincronizar neste aparelho</button></div>
     </section>
-    <section class="card stack" aria-label="Passar pro outro aparelho">
-      <h3 class="h">Passar pro outro aparelho</h3>
-      <div class="qrbox">
-        <canvas id="qrCanvas" width="0" height="0" aria-label="QR code com seus dados recentes"></canvas>
-        <div class="stack" style="gap:6px;flex:1;min-width:200px">
-          <span class="sm mu" id="qrInfo">Gera um QR com as tarefas, configurações, o arranjo do painel e os registros dos últimos dias. No outro aparelho, use “Ler QR”. Os dados se juntam sem apagar nada.</span>
-          <div class="btnrow"><button type="button" class="btn sm" id="qrShow">Mostrar QR</button><button type="button" class="btn sm" id="qrRead">Ler QR</button></div>
-        </div>
-      </div>
-    </section>
     <section class="card stack" aria-label="Backup">
       <h3 class="h">Backup</h3>
-      <span class="sm mu">Um arquivo com tudo: registros, tarefas, configurações, painel e companheiro. Use pra mudar de aparelho ou guardar uma cópia.</span>
+      <span class="sm mu">Um arquivo com tudo, inclusive as imagens do companheiro (que não vão pela sincronização). Faça um de vez em quando: se você apagar algo sem querer com a sincronização ligada, ele some dos dois aparelhos, e o backup é o jeito de voltar.</span>
       <label class="check"><input type="checkbox" id="bkImg" checked> <span id="bkImgL">Incluir as imagens do companheiro no backup</span></label>
       <span class="xs mu" id="bkSize"></span>
       <span class="xs mu" id="appVer"></span>
@@ -544,17 +534,9 @@
 </main>
 </div>
 <nav class="bottomnav" aria-label="Telas"><a href="#hoje" data-tab="hoje">Hoje</a><a href="#historico" data-tab="historico">Histórico</a><a href="#config" data-tab="config">Config</a></nav>
-<div id="scanModal" class="modal" hidden>
-  <div class="card" role="dialog" aria-modal="true" aria-labelledby="scanTitle">
-    <div class="between"><h2 class="h" id="scanTitle">Ler QR</h2><button type="button" class="mini" id="scanClose" aria-label="Fechar">×</button></div>
-    <video id="scanVideo" playsinline muted></video>
-    <span class="sm mu" id="scanInfo">Aponte a câmera pro QR mostrado no outro aparelho.</span>
-  </div>
-</div>
 <div id="toast" class="toast" role="status" hidden></div>
 
 <script src="js/versao.js"></script>
-<script src="js/qrcode.js"></script>
 <script src="js/base.js"></script>
 <script src="js/companheiro.js"></script>
 <script src="js/avisos.js"></script>

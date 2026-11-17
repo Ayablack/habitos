@@ -121,7 +121,7 @@ function occurrencesFor(k, tasks = DATA.tasks) { return sortTasks(tasks).filter(
 // Retrato das tarefas do dia. A marca “conta como copo” (w) só vale a partir do dia em que a ligação com o contador de água existe (aguaSince).
 function snapshot(k, tasks = DATA.tasks, since = DATA.aguaSince) { return occurrencesFor(k, tasks).map(o => { const s = o.time ? { oid: o.oid, xp: o.xp, time: o.time, tol: o.tol } : { oid: o.oid, xp: o.xp }; if (o.w === 1 && (!since || k >= since)) s.w = 1; else if (typeof o.w === 'string') s.w = o.w; return s; }); }
 function occLabel(o) { return o.label + (o.part ? ' (' + o.part + ')' : '') + (o.time ? ' · ' + o.time : ''); }
-// Validação de tudo que entra de fora (navegador, backup e QR): ids, horários e datas no formato certo, números nos limites, textos com tamanho máximo.
+// Validação de tudo que entra de fora (navegador, backup e nuvem): ids, horários e datas no formato certo, números nos limites, textos com tamanho máximo.
 // Assim nada que chega por um arquivo ou por um link vira código na página, e uma configuração estranha não quebra a tela.
 const SAFE_ID = /^[A-Za-z0-9_-]{1,40}$/, OID = /^[A-Za-z0-9_-]{1,40}(@[A-Za-z0-9:]{1,5})?$/, DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const okId = v => typeof v === 'string' && SAFE_ID.test(v);

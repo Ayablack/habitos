@@ -1,7 +1,7 @@
 // Service worker do Hábitos: guarda o app pra funcionar offline. Os seus dados ficam no navegador, não aqui.
 importScripts('js/versao.js');
 const CACHE = 'habitos-v' + VERSAO;
-const JS = ['versao', 'qrcode', 'base', 'companheiro', 'avisos', 'hoje', 'historico', 'config', 'sync', 'nuvem', 'editor', 'backup', 'listas', 'painel', 'main'];
+const JS = ['versao', 'base', 'companheiro', 'avisos', 'hoje', 'historico', 'config', 'sync', 'nuvem', 'editor', 'backup', 'listas', 'painel', 'main'];
 const ASSETS = ['./', './index.html', './css/app.css', ...JS.map(n => './js/' + n + '.js'), './fonts/sora.woff2', './fonts/silkscreen.woff2', './fonts/jetbrains-mono.woff2', './manifest.webmanifest', './icon.svg', './icon-192.png', './icon-512.png', './icon-maskable.png'];
 // Com internet ruim, espera a rede no máximo isso antes de abrir o que está guardado.
 const WAIT_MS = 2500;

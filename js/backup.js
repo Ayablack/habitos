@@ -30,8 +30,9 @@ async function shareBackup() {
   download(name, txt); BackupNag.done(); toast('Este navegador não compartilha arquivos: o backup foi baixado.');
 }
 /* ===================== Lembrete de backup ===================== */
-// Os dados só existem neste navegador: se o último backup ficou velho, a tela Hoje mostra um aviso discreto.
-// Vale só pra este aparelho (não vai no QR nem no backup).
+// Sem sincronização, os dados só existem neste navegador: se o último backup ficou velho, a tela Hoje mostra um aviso discreto.
+// Com a sincronização ligada, os registros já ficam na nuvem; o aviso continua, a cada 60 dias, por causa das imagens do companheiro
+// e de apagar algo sem querer. Vale só pra este aparelho.
 const BackupNag = {
   KEY: 'habitos.backup', EVERY: 14, SNOOZE: 7, MIN_DAYS: 7,
   get() { try { const o = JSON.parse(localStorage.getItem(this.KEY)); return o && typeof o === 'object' ? o : {}; } catch (e) { return {}; } },
@@ -44,11 +45,12 @@ const BackupNag = {
   // Dias com algum registro (tarefa, água, contador ou nota).
   daysWithRecords() { return Object.values(DATA.days).filter(d => Object.keys(d.done || {}).length || d.agua || (d.c && Object.keys(d.c).length) || d.note).length; },
   text() {
-    const o = this.get(), t = Date.now();
+    const o = this.get(), t = Date.now(), nuvem = typeof Nuvem !== 'undefined' && Nuvem.ativa(), every = nuvem ? 60 : this.EVERY;
     if (o.snooze && t < o.snooze) return '';
-    if (!o.last) return this.daysWithRecords() >= this.MIN_DAYS ? 'Você ainda não fez nenhum backup. Seus registros ficam só neste navegador.' : '';
+    const onde = nuvem ? 'A sincronização não guarda as imagens do companheiro nem desfaz o que foi apagado.' : 'Seus registros ficam só neste navegador.';
+    if (!o.last) return this.daysWithRecords() >= (nuvem ? 30 : this.MIN_DAYS) ? 'Você ainda não fez nenhum backup. ' + onde : '';
     const d = Math.floor((t - o.last) / 864e5);
-    return d >= this.EVERY ? `Seu último backup foi há ${d} dias. Seus registros ficam só neste navegador.` : '';
+    return d >= every ? `Seu último backup foi há ${d} dias. ` + onde : '';
   },
   paint() { const txt = this.text(); $('#bkNagText').textContent = txt; $('#bkNag').hidden = !txt || Dash.editing; }
 };

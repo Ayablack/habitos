@@ -185,11 +185,8 @@ legend{padding:0 6px;font-size:13px;color:var(--mu)}
 .days{display:flex;gap:4px;flex-wrap:wrap}
 .days button{width:40px;height:40px;border-radius:10px;border:1px solid var(--ln);background:var(--bg);cursor:pointer}
 .days button[aria-pressed="true"]{background:var(--tx);color:var(--bg);border-color:var(--tx);font-weight:700}
-.qrbox{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
-#qrCanvas{background:#fff;border-radius:12px;image-rendering:pixelated;max-width:100%;height:auto}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:grid;place-items:center;z-index:30;padding:16px}
 .modal .card{max-width:420px;width:100%;display:flex;flex-direction:column;gap:12px}
-.modal video{width:100%;border-radius:12px;background:#000}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--tx);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:13px;z-index:40;max-width:90vw}
 html.wide .app{max-width:none}
 .steps{display:flex;gap:4px;flex-wrap:wrap;background:var(--sf2);border-radius:12px;padding:4px}

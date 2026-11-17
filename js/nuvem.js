@@ -86,7 +86,7 @@ const Nuvem = {
     for (const m of Object.keys(by)) out['m:' + m] = canon(by[m]);
     return out;
   },
-  // Chegou algo da nuvem: se for diferente do que está aqui, junta (passando pela mesma validação do QR e do backup) e redesenha.
+  // Chegou algo da nuvem: se for diferente do que está aqui, junta (passando pela mesma validação do backup) e redesenha.
   chegou() {
     if (!this.veio.base || !this.veio.meses) return;
     this.pronto = true; this.erro = '';
@@ -126,7 +126,7 @@ const Nuvem = {
     const entrar = $('#nvIn'), sair = $('#nvOut');
     entrar.hidden = this.ativa(); sair.hidden = !entrar.hidden; entrar.disabled = !this.disponivel();
     if (!this.disponivel()) info.textContent = 'Só funciona pelo endereço https do app (o login do Google não aceita o arquivo aberto com dois cliques). Abra https://ayablack.github.io/habitos/ e entre por lá.';
-    else if (!entrar.hidden) info.textContent = 'Entre com a sua conta Google no PC e no celular: o que você marcar num aparelho aparece no outro em segundos, sem QR. Tarefas, registros, listas, contadores, notas e configurações vão junto; as imagens do companheiro ficam só no aparelho.';
+    else if (!entrar.hidden) info.textContent = 'Entre com a sua conta Google no PC e no celular: o que você marcar num aparelho aparece no outro em segundos. Tarefas, registros, listas, contadores, notas e configurações vão junto; as imagens do companheiro ficam só no aparelho.';
     else if (!this.user) info.textContent = this.erro ? 'Sem internet agora: o app continua funcionando e sincroniza quando a conexão voltar.' : 'Conectando à sua conta…';
     else if (this.erro === 'permission-denied') info.textContent = 'Entrou como ' + this.user.email + ', mas o banco recusou o acesso. Saia e entre de novo.';
     else if (this.erro) info.textContent = 'Entrou como ' + this.user.email + '. Sem conexão com a nuvem agora: o app continua funcionando e sincroniza quando a internet voltar.';
